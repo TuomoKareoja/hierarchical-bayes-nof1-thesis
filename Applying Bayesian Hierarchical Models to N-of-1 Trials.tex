@@ -47,13 +47,14 @@
 
 \tableofcontents
 
-\section{Introduction}\label{intro}
+\chapter*{Introduction}\label{intro}
+\addcontentsline{toc}{chapter}{Introduction}
 
 N-of-1 trials in clinical practice are multiple crossover trials conducted on
 a single patient, where treatment periods with different treatments are formed
 into multiple blocks each of which contains at least one period of each treatment
-under consideration\cite{nof1}. By comparing the measurements taken during
-different treatments, a comparisons between treatment options can be
+under consideration\cite{nofone}. By comparing the measurements taken during
+different treatment regimes, a comparisons can be
 made and the most suitable treatment option chosen for the particular patient in question.
 
 In the following pages I give a concise explanation of the experimental design
@@ -62,7 +63,7 @@ given the kinds of challenges their design poses.
 I then follow up with a how we can apply Bayesian methods in estimating the
 effectiveness of different treatments highlighting how these methods can gives us
 needed flexibility when running N-of-1 trials by not relying on hypothesis testing
-depending on a prespecified design. I then consider the case when there are
+depending on a prespecified study design. I then consider the case when there are
 multiple similar N-of-1 trials and show how it is possible to pool the
 information from these with hierarchical Bayesian methods, without loosing
 sight of the goal of N-of-1 trials: to find the best
@@ -104,14 +105,16 @@ medical issue besides the one that is being studied. This lack of comorbidity
 makes it easier to get clear results by removing confounding factors, but at
 the same time this lowers the external validity of the results, because in the
 real world patients often suffer from multiple medical issues simultaneously.
-Because of this it might be possible that, even when the scientific literature
+Because of this, it might be possible that even when the scientific literature
 provides clear results about the relative effectiveness of different treatments, these
 results don't actually generalize that well to the kinds of patients the clinical
-practitioner sees in her office.
+practitioner sees daily in her office (citation?).
 
 N-of-1 trials can be used to patch the holes in the knowledge that RCT:s cannot fill by
-changing the focus of the study from group averages to individual patient. In N-of-1
-design multiple treatments are tried sequentially in periods that are
+changing the focus of the study from group averages to the individual patient. In N-of-1
+studies instead of comparing group with different treatments the comparisons are made
+across time with single patient using different treatments. In this design
+multiple treatments are tried sequentially in periods that are
 formed into blocks each of which contains a treatment period of each treatment option
 under consideration at least once. Within each treatment period the effects of the
 treatments are measured in comparable ways. Depending on the ease of measuring the outcome
@@ -119,7 +122,9 @@ of interest, the measurements could be done just once per treatment period,
 or even multiple times per day. Each block includes a period of each treatment under
 consideration in random or balanced order to take into account time related
 effects. A simple example would be a ABBA design that includes two blocks with
-which the two treatments A and B are assigned in a balanced order. Depending on
+which the two treatments A and B are assigned in a balanced order.
+
+Depending on
 the treatments considered, there might be also be a so called ``washout'' period
 between treatments, where the patient does not receive any treatment and her state is
 allowed to return to baseline. This method is used to prevent treatment
@@ -128,7 +133,9 @@ dangerous to the patient. If the treatments under study allow, N-of-1 trial can
 also use the double-blind method, where the patient and caregiver both don't know
 which treatment is currently used and placebo treatment, where one of the
 treatments only resembles treatment, but does not contain any active
-ingredient (pharmacological or otherwise). Below is schema of a more complex
+ingredient (pharmacological or otherwise).
+
+Below is schema of a more complex
 N-of-1 trial with three treatments A, B and C, random assignment of treatments within
 blocks, three measurements within each treatment period and a washout periods between treatments:
 
@@ -154,39 +161,38 @@ Use of N-of-1 trials is appropriate in situations where there are multiple
 treatment options but there is no prior knowledge of which of these would be
 best, when there is known to be considerable variability between patients in
 treatment efficacy, or when there is reason to doubt that the results from
-scientific literature generalize to the patient in question. This would seem to
-make n-of-1 trials applicable to quite a few situations, but there are also
+scientific literature generalize to the patient in question\cite{nofone}. This would seem to
+make n-of-1 trials applicable to many situations, but there are also
 multiple factor restricting their use.
 
-Firstly, N-of-1 trials can only be used on illnesses that are chronic, progress
+Firstly, N-of-1 trials can only be used to study illnesses that are chronic, progress
 slowly and are at least somewhat stable. Also the treatments options available
 must have a noticeable treatment responses within a short timeframe. This is because
 running the trial needs time to complete and fast changing illness or slowly effecting
 treatment make it either impossible to distinguish true effects from the natural progression
 of the disease or make the trials impracticably lengthy. N-of-1 trials are also unsuitable for
 testing of preventative treatments because the effects of these
-treatments are often also impossible to measure without comparisons to other
-patients without the same treatment.
+treatments are often also impossible to assess without comparisons to other
+patients who are not receiving the treatment.
 
 Secondly, running a N-of-1 trial is costly because of added expenses of training the
 medical staff in the method, running the trial with all its measurements and analyzing
 the data. This is means that it can be hard to find cases where using this method is
-cost effective and studies making these kind calculations have come to pessimistic
-conclusions (1,2).
+cost effective and studies trying to make these kind calculations have given mixed results\cite{costs}.
 
 These limitations have kept the use of N-of-1 trials rare in clinical use,
 even though they could potentially both increase the life quality of the patients
 and lower the healthcare costs by finding most suitable medications to patients that
 might end up potentially using them for years. This state of affairs might
 be changing fast though. Aging and environmental factors are changing worlds
-disease burden so that bigger and bigger proportion of it is constituted by
-chronic diseases (3), of which common ones like non-acute
+disease burden so that a growing proportion of it is constituted by
+chronic diseases\cite{diseaseburden}, of which common ones like non-acute
 cardiovascular diseases and diabetes are excellent candidates for N-of-1
 trials. Also the cost of administering N-of-1 trials are dropping with advent of
 cheap and reliable health sensors like smartwatches and connected blood
 pressure monitors. For example in diabetic patients it is now possible to get
 real time readings of blood insuline levels with minimal effort from the
-patient (4). These factors mean that the popularity of this method could potentially
+patient\cite{cgm}. These factors mean that the popularity of this method could potentially
 rise significantly in the future.
 
 \chapter{Statistical Modeling of N-of-1 Trials}\label{modeling}
@@ -197,7 +203,7 @@ from the same study unit, there are additional complexities that are caused by t
 structure of repeating treatment periods. Trying to take into account all the
 peculiarities of the study design could end up with model too complicated to
 the small amount of data generated by a single study, so one must consider
-carefully what factors actually need to incorporated in to the model.
+carefully what factors actually need to be incorporated in to the model.
 
 Simplest model that we could employ is to just count the number of
 blocks where a treatment is considered ``better'' than others. The precise
@@ -206,12 +212,11 @@ model where the number of ``successes'' \(X\) is the number of blocks where a tr
 is considered the ``best'' one follows binomial distribution and the probability of
 each treatment option of having \(k\) successes is given by:
 
-\begin{def}\label{binom}
+\begin{def}\label{}
 \begin{equation}
-P(X = k) = {n\choose k}p^k{(1-p)}^{(n-k)}
+P(X = k) = {n\choose k}p^k{(1-p)}^{(n-k)},
 \end{equation}
-\end{def}
-, where \(k\) = number of blocks, where the treatments is considered the ``best'',
+\end{def}where \(k\) = number of blocks, where the treatments is considered the ``best'',
 \(n\) = total number of blocks and \(p\) = the probability of being considered the ``best''.
 
 This type of model is rudimentary at best, because it fails to consider the magnitude of the
@@ -221,7 +226,7 @@ more complex models are in order.
 
 \section{Basic Models}\label{conti}
 
-Before going further I make the assumption that the measurements are continuous as
+Before going further we make the assumption that the measurements are continuous as
 this is probably the most common case. Lets first look at a model where we assume
 that there are no time-trends and no autocorrelation between measurements.
 Let \(y_{mbpt}\) represent the outcome measured while on treatment \(m\) within
@@ -229,12 +234,11 @@ treatment block \(b\) within treatment period \(p\) at time \(t\). The treatment
 periods are indexed within each block and time is indexed within each treatment
 period:
 
-\begin{def}\label{allerrors}
-\begin{equation}
-y_{mbpt} = \mu_m + \gamma_b + \delta_{p(b)} + \epsilon_{t(p(b))}
+\begin{def}\label{}
+\begin{equation}\label{allerrors}
+y_{mbpt} = \mu_m + \gamma_b + \delta_{p(b)} + \epsilon_{t(p(b))},
 \end{equation}
-\end{def}
-, where \(\gamma_b \sim N(0,\sigma^2_{\gamma})\),
+\end{def}where \(\gamma_b \sim N(0,\sigma^2_{\gamma})\),
 \(\delta_{p(b)} \sim N(0,\sigma^2_{\delta})\), and
 \(\epsilon_{t(p(b))} \sim N(0,\sigma^2_{\epsilon})\)
 
@@ -242,26 +246,25 @@ This model assumes all treatment effects \(\mu_m\) to be constant. Between the n
 distributed terms \(\gamma_b\) represents random block effects, \(\delta_{p(b)}\)
 random period effects and \(\epsilon_{t(p(b))}\) random within period errors. We could choose one
 of the blocks as a reference and set \(\gamma_1 = 0\) and assume that within each block
-the between period effects follow a same pattern, e.g.\ the difference between treatment
+the between period effects follow the same pattern, e.g.\ the difference between treatment
 period one and two is the same within each block.
 
 The random effects between blocks and treatment periods could represent for example the
 random variations in the motivation of the patient and possible changes in treating
 personnel within each block and treatment period. The random within period errors represents
 the measurement error of a single measurements within treatment periods. The relative sizes
-of the these terms are important for effective design of the trial because they determine
+of the these terms are important for effective design of the trial, because they determine
 if it is more be beneficial for the statistical power of the study to add more measurements,
 treatment periods or blocks.
 
-If the measurements within blocks and within periods do not correlate, the model 3.2
+If the measurements within blocks and within periods do not correlate, the model\ \ref{allerrors}
 can be simplified by dropping \(\gamma_b\) and \(\delta_{p(b)}\):
 
-\begin{def}\label{oneerror}
-\begin{equation}
-y_{mbpt} = \mu_m + \epsilon_{t(p(b))}
+\begin{def}\label{}
+\begin{equation}\label{oneerror}
+y_{mbpt} = \mu_m + \epsilon_{t(p(b))},
 \end{equation}
-\end{def}
-, where \(\epsilon_{t(p(b))} \sim N(0,\sigma^2_{\epsilon})\)
+\end{def}where \(\epsilon_{t(p(b))} \sim N(0,\sigma^2_{\epsilon})\).
 
 This simple model is a natural fit in scenarios where there is just one measurement within each
 treatment period.
@@ -270,17 +273,16 @@ treatment period.
 
 As the symptoms of the patient might not be completely stable (e.g.\ because symptoms get
 worse with the progression of the disease) fitting some kind of time-trend to the model
-might be advisable. We can modify the model 3.3 from previous chapter to include a linear
+might be advisable. We can modify the model\ \ref{oneerror} from previous chapter to include a linear
 time-trend by adding an intercept and slope of the time-trend. In this case
 the model can expressed more concisely just in terms of the measurement \(y_t\) taken at time \(t\),
 where time is indexed from the start of the experiment:
 
-\begin{def}\label{quadratictimetrend}
-\begin{equation}
-y_t = \beta_0 + \beta_1 t + \mu_t + \epsilon_t
+\begin{def}\label{}
+\begin{equation}\label{quadratictimetrend}
+y_t = \beta_0 + \beta_1 t + \mu_t + \epsilon_t,
 \end{equation}
-\end{def}
-, where \(\epsilon_t \sim N(0,\sigma^2)\)
+\end{def}where \(\epsilon_t \sim N(0,\sigma^2)\).
 
 Here \(\beta_0\) is the intercept, \(\beta_1\) the slope of the time trend, \(\mu_t\) the
 effect of the treatment given during time \(t\) and \(\epsilon_t\) is the residual error at time \(t\).
@@ -296,10 +298,9 @@ Extending the model 3.4 with a period of constant effect \(\beta_2\) we end up w
 
 \begin{def}\label{quadratictimetrend}
 \begin{equation}
-y_t = \beta_0 + \beta_1 t + \beta_{2}Z_t + \mu_t + \epsilon_t
+y_t = \beta_0 + \beta_1 t + \beta_{2}Z_t + \mu_t + \epsilon_t,
 \end{equation}
-\end{def}
-, where \(\epsilon_t \sim N(0,\sigma^2)\) and dummy variable \(Z_t = 1\)
+\end{def}where \(\epsilon_t \sim N(0,\sigma^2)\) and dummy variable \(Z_t = 1\)
 when \(t \in (t_{period\,start} \ldots t_{period\,end}) \) and \(0\) otherwise.
 
 Lastly, to take into account that treatment effects themselves can vary with time, for example because
@@ -311,10 +312,9 @@ linear time-trend by adding an interaction term \(\mu_t\beta_1 t\):
 
 \begin{def}\label{lineartimetrendwithinteraction}
 \begin{equation}
-y_t = \beta_0 + \beta_1 t + \mu_t + \mu_t\beta_1 t + \epsilon_t
+y_t = \beta_0 + \beta_1 t + \mu_t + \mu_t\beta_1 t + \epsilon_t,
 \end{equation}
-\end{def}
-, where \(\epsilon_t \sim N(0,\sigma^2)\)
+\end{def}where \(\epsilon_t \sim N(0,\sigma^2)\)
 
 \section{The Problem of Autocorrelation}\label{autocor}
 
@@ -346,10 +346,9 @@ we express the measurement error at time \(t\) as function of one or more previo
 
 \begin{def}\label{autoregression}
 \begin{equation}
-y_t = \mu_t + \epsilon_t
+y_t = \mu_t + \epsilon_t,
 \end{equation}
-\end{def}
-, where \(\epsilon_t = \rho\epsilon_{(t - 1)} + \mu_t\) in which
+\end{def}where \(\epsilon_t = \rho\epsilon_{(t - 1)} + \mu_t\) in which
 \(\mu_t\) is the effect of the treatment given at time t,
 \(\rho \) is the correlation between consecutive errors and
 \(\epsilon_{t-1} \sim N(0,\sigma^2) \) is the error term at \(t-1\).
@@ -364,10 +363,9 @@ themselves so that the measurement at time \(t\) is a function of the measuremen
 
 \begin{def}\label{dynamicmodel}
 \begin{equation}
-y_t = \rho y_{t-1} + \mu_t + \epsilon_t
+y_t = \rho y_{t-1} + \mu_t + \epsilon_t,
 \end{equation}
-\end{def}
-, where \(\mu_t\) is the effect of the treatment given at time \(t\), \(\rho \) is the correlation
+\end{def}where \(\mu_t\) is the effect of the treatment given at time \(t\), \(\rho \) is the correlation
 between consecutive measurements and \(\epsilon_t \sim N(0,\sigma^2)\) is the error term.
 
 Although it can make more intuitive sense to the make whole observation dependent on
@@ -390,7 +388,7 @@ effects completely and will increase the complexity of our model.
 
 \section{Non-continuous Measurements}\label{noncontinuous}
 
-Up to this point I have assumed that the measurement used are continuous, but we
+Up to this point we have assumed that the measurement used are continuous, but we
 could of course have measurements that are binary, counts of events or categorical.
 With these kind of measurement the models need reformatting so that they don't
 presume normal distributions. Despite this the models still don't have to differ much
@@ -411,26 +409,25 @@ Lets work with an example of a binary outcome measurements. In this case the mea
 where the the expected value of the distribution is the probability \(p\) of observing the event in measurement \(y_t\). In this case the suitable link function is the logit
 function \(logit(p)=\log_e(\frac{p}{1-p})\). With this information we can now formulate a simple model with a linear time trend:
 
-\begin{def}\label{oneerror}
+\begin{def}\label{}
 \begin{equation}
-\log_e(\frac{p_t}{1-p_t})=\beta_0 + \beta_1 t + \mu_t
+\log_e(\frac{p_t}{1-p_t})=\beta_0 + \beta_1 t + \mu_t,
 \end{equation}
-\end{def}
-, where \(p_t\) is the the probability of observing the event at time \(t\) and \(\log_e(\frac{p_t}{1-p_t})\) are the log-odds of this event,
+\end{def}where \(p_t\) is the the probability of observing the event at time \(t\) and \(\log_e(\frac{p_t}{1-p_t})\) are the log-odds of this event,
 \(\beta_0\) is the intercept, \(\beta_1\) the slope of the time trend and \(\mu_t\) the
 effect of the treatment given during time \(t\).
 
-By first exponentiating (3.10) and then using simple algebraic manipulation we can
-express the model in terms of of the probability \(p_t\) (3.11):
+By first exponentiating\ \ref{bin_exponentiating} and then using simple algebraic manipulation we can
+express the model in terms of of the probability \(p_t\)\ \ref{bin_algmanipulation}:
 
-\begin{def}\label{oneerror}
-\begin{equation}
+\begin{def}\label{}
+\begin{equation}\label{bin_exponentiating}
 \frac{p_t}{1-p_t}=e^{\beta_0 + \beta_1 t + \mu_t}
 \end{equation}
 \end{def}
 
-\begin{def}\label{oneerror}
-\begin{equation}
+\begin{def}\label{}
+\begin{equation}\label{bin_algmanipulation}
 p_t=\frac{e^{\beta_0 + \beta_1 t + \mu_t}}{e^{\beta_0 + \beta_1 t + \mu_t}+1}=\frac{1}{1+e^{-(\beta_0 + \beta_1 t + \mu_t)}}
 \end{equation}
 \end{def}
@@ -454,20 +451,18 @@ Once again using the same simple model with linear time trend we end up with a m
 
 \begin{def}\label{oneerror}
 \begin{equation}
-\log_e(\lambda_p)=\beta_0 + \beta_1 r + \mu_{p}
+\log_e(\lambda_p)=\beta_0 + \beta_1 r + \mu_{p},
 \end{equation}
-\end{def}
-, where \(\lambda_p\) is the the rate of events between measurements during period \(p\),
+\end{def}where \(\lambda_p\) is the the rate of events between measurements during period \(p\),
 \(\beta_0\) is the intercept, \(\beta_1\) the slope of the time trend and \(\mu_p\) the
 effect of the treatment given during period \(p\). By simply exponentiating both sides
 we can express the model in terms of rate of events:
 
 \begin{def}\label{oneerror}
 \begin{equation}
-\lambda_t=e^{\beta_0 + \beta_1 t + \mu_t}
+\lambda_t=e^{\beta_0 + \beta_1 t + \mu_t},
 \end{equation}
-\end{def}
-, where we now have the familiar linear model formula in the exponent on the right side of
+\end{def}where we now have the familiar linear model formula in the exponent on the right side of
 the equation.
 
 The case of categorical measurements is more complex as there are multiple possible link functions
@@ -484,22 +479,21 @@ we get:
 
 \begin{def}\label{oneerror}
 \begin{equation}
-\log_e\bigg({\frac{P(y_i \leq j)}{1 - P(y_i \leq j)}}\bigg)=\beta_0 + \beta_1 t + \mu_t
+\log_e\bigg({\frac{P(y_i \leq j)}{1 - P(y_i \leq j)}}\bigg)=\beta_0 + \beta_1 t + \mu_t,
 \end{equation}
-\end{def}
-, where \(\beta_0\) is the intercept, \(\beta_1\) the slope of the time trend and \(\mu_t\) the
-effect of the treatment given during time \(t\). By exponentiating (3.15) and algebraic manipulation
-we end up with similar model as with binary outcomes (3.16), where we once again
-find the familiar linear model formula in the exponent:
+\end{def}where \(\beta_0\) is the intercept, \(\beta_1\) the slope of the time trend and \(\mu_t\) the
+effect of the treatment given during time \(t\). By exponentiating\ \ref{ord_exponentiating}
+and algebraic manipulation we end up with similar model as with binary outcomes\ \ref{ord_algmanipulation},
+where we once again find the familiar linear model formula in the exponent:
 
-\begin{def}\label{oneerror}
-\begin{equation}
+\begin{def}\label{}
+\begin{equation}\label{ord_exponentiating}
 \frac{P(y_i \leq j)}{1 - P(y_i \leq j)}=e^{\beta_0 + \beta_1 t + \mu_t}
 \end{equation}
 \end{def}
 
-\begin{def}\label{oneerror}
-\begin{equation}
+\begin{def}\label{}
+\begin{equation}\label{ord_algmanipulation}
 P(y_i \leq j)=\frac{e^{\beta_0 + \beta_1 t + \mu_t}}{e^{\beta_0 + \beta_1 t + \mu_t}+1}=\frac{1}{1+e^{-(\beta_0 + \beta_1 t + \mu_t)}}
 \end{equation}
 \end{def}
@@ -510,7 +504,7 @@ Now that we have some models defined we need to move into the next part of the
 analysis and actually give estimates to the parameters in these models. There are two
 broad ways to approach this task by using two different definitions of probability.
 The first is frequentist inference, where we consider the ``true'' parameters of our model fixed,
-but unknown, and randomness only applies to the process of creating our data.
+but unknown, and randomness only applies to he process of creating our data.
 The second way is Bayesian inference, where we consider the data to be fixed and instead of thinking
 about the parameters as fixed parts of nature, we conceptualize them as probability distributions
 that express our internal uncertainty about their true values.
@@ -527,17 +521,16 @@ conditional on another event:
 
 \begin{def}\label{bayesrule}
 \begin{equation}
-P(A|B) = \frac{P(B|A)P(A)}{P(B)}
+P(A|B) = \frac{P(B|A)P(A)}{P(B)},
 \end{equation}
-\end{def}
-, where \(A\) and \(B\) are events and \(P(B)\) \(\neq \) 0.
+\end{def}where \(A\) and \(B\) are events and \(P(B)\) \(\neq \) 0.
 
 \(P(A|B)\) is the conditional probability of event \(A\) happening given that event \(B\) happened and is
-called the posterior.
-\(P(A)\) is our initial probability estimate for the event \(A\), called the prior.
-The quotient \(\frac{P(B|A)}{P(B)}\) represent how much information event \(B\) gives about event \(A\) happening.
-If this number is greater than 1, then event \(B\) happening makes event A more likely and if it less than 1
-then event \(B\) happening mean that event \(A\) is less likely. If the quotient is 1, event \(B\) gives no information
+called the posterior. \(P(A)\) is our initial probability estimate for the event \(A\),
+called the prior. The quotient \(\frac{P(B|A)}{P(B)}\) represent how much information
+event \(B\) gives about event \(A\) happening. If this number is greater than 1,
+then event \(B\) happening makes event A more likely and if it less than 1
+is is less likely. If the quotient is 1, event \(B\) gives no information
 about the probability of event A.
 Breaking the quotient down further \(P(B|A)\), called the likelihood, is the reverse of the posterior
 and tells us how believable
@@ -546,40 +539,49 @@ denominator is called marginal likelihood and tells us the probability of observ
 event \(B\) with or without event \(A\).
 
 Instead of events, in our case we want to formulate the theorem with parameters \(\Theta \)
-and the data \(D\), so that the we get can estimate the posterior
+and the data \(D\)\, so that the we get can estimate the posterior
 probability (or likelihood in case of continuous parameter values) of our parameters having certain values:
 
 \begin{def}\label{bayesrulewithparameters}
 \begin{equation}
-P(\Theta|D) = \frac{P(D|\Theta)P(\Theta)}{P(D)}
+P(\Theta|D) = \frac{P(D|\Theta)P(\Theta)}{P(D)},
 \end{equation}
-\end{def}
-, where \(P(D)\) \(\neq \) 0.
+\end{def}where \(P(D)\) \(\neq \) 0.
 
-We can make it more clear what the marginal likelihood \(P(D)\) stands for by
+We could make it more clear what the marginal likelihood \(P(D)\) stands for by
 writing it as \(\sum_\Theta P(D|\Theta)P(\Theta)\) in the case when parameter value takes discrete values
 and \(\int P(D|\Theta)P(\Theta) d\Theta \), if they are continuous. That is, the possibility of
 observing the data with all different combinations of the possible values of the parameters,
 taking into account our prior belief in the probability of these value combinations.
 
-Laitetaan tähän esimerkki siitä miten kaava ilmenisi käytännössä jos otetaan esimerkki
-jossa molemmat parametrit tuntemattomia
+To tie this formula into the models we introduced previously we can demonstrate how this
+applies to the case of model\ \ref{oneerror} with only the treatment effect and a random error.
 
-% In the case when we have only one parameter \(\theta \sim N(\mu, \sigma^2)\)
-% and the likelihood is also normally distributed \(P(D|\Theta) \sim N(\theta, \delta^2)\) and
-% \(\delta\) is known:
+\begin{def}\label{}
+\begin{equation}\label{oneerror_bayes}
+y_{mbpt} = \mu_m + \epsilon_{t(p(b))},
+\end{equation}
+\end{def}where \(\epsilon_{t(p(b))} \sim N(0,\sigma^2_{\epsilon})\).
 
-% \begin{def}\label{conjugatenormal}
-% \begin{equation}
-% P(Y|\theta)P(\theta) = \prod_Y
-% \frac{1}{{\delta \sqrt {2\pi } }}e^{{{ - \left( {y - \theta } \right)^2 } \mathord{\left/ {\vphantom {{ - \left( {x - \mu } \right)^2 } {2\delta ^2 }}} \right. \kern-\nulldelimiterspace} {2\delta ^2 }}}
-% \frac{1}{{\sigma \sqrt {2\pi } }}e^{{{ - \left( {\theta - \mu } \right)^2 } \mathord{\left/ {\vphantom {{ - \left( {x - \mu } \right)^2 } {2\sigma ^2 }}} \right. \kern-\nulldelimiterspace} {2\sigma ^2 }}}
-% \end{equation}
-% \end{def}
+In this case when we want to estimate the parameters of the different treatment effect \(\mu_m \).
 
-% where we see
-% that the product also is in the form of the probability distribution of the
-% normal distribution:
+Prior normally distributed
+
+and the likelihood is also normally distributed \(P(D|\Theta) \sim N(\theta, \delta^2)\)
+
+\(\delta\) is known
+
+\begin{def}\label{conjugatenormal}
+\begin{equation}
+P(Y|\theta)P(\theta) = \prod_Y
+\frac{1}{{\delta \sqrt {2\pi } }}e^{{{ - \left( {y - \theta } \right)^2 } \mathord{\left/ {\vphantom {{ - \left( {x - \mu } \right)^2 } {2\delta ^2 }}} \right. \kern-\nulldelimiterspace} {2\delta ^2 }}}
+\frac{1}{{\sigma \sqrt {2\pi } }}e^{{{ - \left( {\theta - \mu } \right)^2 } \mathord{\left/ {\vphantom {{ - \left( {x - \mu } \right)^2 } {2\sigma ^2 }}} \right. \kern-\nulldelimiterspace} {2\sigma ^2 }}}
+\end{equation}
+\end{def}
+
+where we see
+that the product also is in the form of the probability distribution of the
+normal distribution:
 
 \subsection{Challenges of Bayesian Inference}\label{bayesproblems}
 
@@ -777,7 +779,7 @@ contain certain percentage of the probability mass of the posterior distribution
 of containing the true value of the parameter. Bayesian method it self also seems to fit really
 well with the ways that clinicians conceptualize their practice of arriving to  diagnosis for a patient as
 updating their beliefs (i.e.\ priors) with the new information gained from new observation such as
-test results\cite{cliniciansbayes}.
+test results\cite{clinbayes}.
 
 \chapter{Combining Information From Several N-of-1 Trials With Hierarchical
   Models}\label{hierarchicalbayes}
@@ -819,7 +821,7 @@ Similarly, the value of \(\theta \) depends conditionally only the value of \(\s
 \(\sigma \) is an independent variable.
 
 These kind of dependencies among parameters are useful in several respects. First, the dependencies
-are meaningful for the given application, e.g. we can model that the treatment effect for a single patient
+are meaningful for the given application, e.g.\ we can model that the treatment effect for a single patient
 as an instance from a broader population distribution of this effectiveness. Second, because of the
 dependencies across parameters, all the data can now jointly inform all the parameter estimates.
 The reduction of variance in the estimators that this effect causes, is the
@@ -864,18 +866,27 @@ have to be considered
 
 Visualization of the shrinkage
 
-\addcontentsline{toc}{chapter}{Bibliography}
+% \addcontentsline{toc}{chapter}{Bibliography}
 
-\begin{thebibliography}{9}
+\begin{thebibliography}{4}
 
-    \bibitem{nof1}
+    \bibitem{nofone}
     Richard L. Kravitz, Naihua Duan, Sunita Vohra, Jiang Li: Introduction to to N-of-1 Trials: Indications and Barriers in Design and Implementation of N-of-1 Trials: A User's Guide, AHRQ, 2014.
+   
+    \bibitem{costs}
+    Wilson D. Pace, Elizabeth W. Staton, Eric B. Larson: Financing and Economics of Conducting N-of-1 Trials in Design and Implementation of N-of-1 Trials: A User's Guide, AHRQ, 2014.
    
     \bibitem{stat}
     Christopher H. Schmid, Naihua Duan: Statistical Design and Analytic Considerations in Design and Implementation of N-of-1 Trials: A User's Guide, AHRQ, 2014.
 
-    \bibitem{cliniciansbayes}
-    Christoper J. Gill, Lora Savin, Christopher H. Schmid: Why clinicians are natural Bayesians, Bristish Medical Journal 2005;330(7499):1080-1083.
+    \bibitem{clinbayes}
+    Christoper J. Gill, Lora Savin, Christopher H. Schmid: Why clinicians are natural Bayesians, British Medical Journal 2005;330(7499):1080-1083.
+
+    \bibitem{diseaseburden}
+    Colin D. Mathers, Dejan Loncar. Projections of global mortality and burden of disease from 2002 to 2030, PLoS medicine 2016;3.11:e442.
+
+    \bibitem{cgm}
+    Irl B. Hirsch, et al. Clinical application of emerging sensor technologies in diabetes management: consensus guidelines for continuous glucose monitoring (CGM). Diabetes Technology and Therapeutics 2018;10.4:232-246.
 
 \end{thebibliography}
 \end{document}
