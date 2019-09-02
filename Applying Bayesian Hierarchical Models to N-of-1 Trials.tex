@@ -52,7 +52,7 @@
 
 N-of-1 trials in clinical practice are multiple crossover trials conducted on
 a single patient, where treatment periods with different treatments are formed
-into multiple blocks each of which contains at least one period of each treatment
+into multiple blocks each containing at least one period of each treatment
 under consideration\cite{nofone}. By comparing the measurements taken during
 different treatment regimes, a comparisons can be
 made and the most suitable treatment option chosen for the particular patient in question.
@@ -61,7 +61,7 @@ In the following pages I give a concise explanation of the experimental design
 of N-of-1 trials and how we can statistically model these kinds of experiments
 given the kinds of challenges their design poses.
 I then follow up with a how we can apply Bayesian methods in estimating the
-effectiveness of different treatments highlighting how these methods can gives us
+effectiveness of different treatments, highlighting how these methods can gives us
 needed flexibility when running N-of-1 trials by not relying on hypothesis testing
 depending on a prespecified study design. I then consider the case when there are
 multiple similar N-of-1 trials and show how it is possible to pool the
@@ -74,7 +74,7 @@ data.
 
 \chapter{What Are N-of-1 Trials?}\label{nof1}
 
-In the appraisal of any medical treatment the ``gold standard'' is a randomized
+In the assessment of any medical treatment the ``gold standard'' is a randomized
 controlled trial (RCT), where subjects are randomized to two or more groups
 that are given different treatments or no treatment at all. The measurement
 from theses groups are then compared and a result derived about which treatment
@@ -85,7 +85,7 @@ between groups. By comparing the groups against each other and not just to the
 same patients at the beginning and end of the study, it also takes into account
 time related effects like natural progression of disease. Despite its
 unquestionable value in finding general effects, this method can run into problems
-when we actually try to apply its results to individual patients in practice.
+when we actually try to apply its results to individual patients in clinical practice.
 
 Knowing the best treatment in average might not help much in finding right
 treatment for a particular patient if the variability in treatment
@@ -93,7 +93,7 @@ effectiveness between patients is high. Although we can use covariates like
 age, gender, or certain gene variant to explain the variance between patients
 in RCT:s, there usually is still much unexplained variance. Some of this
 variance is of course caused by random factors like measurement error, but a
-significant part might be caused real and significant differences between the
+significant part might be caused by real differences between the
 patients. In other words, there might be significant factors that explain the
 variability of the efficacy of different treatments between patients that
 might either be too specific to be considered in a RCT study or unknown and
@@ -104,16 +104,16 @@ practice to accept patients to RCT:s only if they don't suffer from any
 medical issue besides the one that is being studied. This lack of comorbidity
 makes it easier to get clear results by removing confounding factors, but at
 the same time this lowers the external validity of the results, because in the
-real world patients often suffer from multiple medical issues simultaneously.
+real world patients often suffer from multiple medical issues simultaneously (TODO source?).
 Because of this, it might be possible that even when the scientific literature
 provides clear results about the relative effectiveness of different treatments, these
 results don't actually generalize that well to the kinds of patients the clinical
-practitioner sees daily in her office (citation?).
+practitioner sees daily in her office (TODO source?).
 
 N-of-1 trials can be used to patch the holes in the knowledge that RCT:s cannot fill by
 changing the focus of the study from group averages to the individual patient. In N-of-1
 studies instead of comparing group with different treatments the comparisons are made
-across time with single patient using different treatments. In this design
+across time with a single patient using different treatments. In this design
 multiple treatments are tried sequentially in periods that are
 formed into blocks each of which contains a treatment period of each treatment option
 under consideration at least once. Within each treatment period the effects of the
@@ -154,7 +154,7 @@ This means that where as comorbidity and other factors that cause
 systematic variation between the patients in treatment outcomes are a problem
 in RCT:s, these are not an issue in N-of-1 trials because there is no need to
 generalize beyond the one patient. There is also no actual need to know
-what is the factor causing a certain treatment to work better or worse, as long
+what is causing a certain treatment to work better or worse, as long
 as it is not because of measurement errors or time related effect.
 
 Use of N-of-1 trials is appropriate in situations where there are multiple
@@ -163,7 +163,7 @@ best, when there is known to be considerable variability between patients in
 treatment efficacy, or when there is reason to doubt that the results from
 scientific literature generalize to the patient in question\cite{nofone}. This would seem to
 make n-of-1 trials applicable to many situations, but there are also
-multiple factor restricting their use.
+multiple factor restricting their use\cite{nofone}.
 
 Firstly, N-of-1 trials can only be used to study illnesses that are chronic, progress
 slowly and are at least somewhat stable. Also the treatments options available
@@ -221,13 +221,13 @@ P(X = k) = {n\choose k}p^k{(1-p)}^{(n-k)},
 
 This type of model is rudimentary at best, because it fails to consider the magnitude of the
 differences between treatment effects and does not take into account the actual number of
-measurements within each treatment period. To take these factors into account
+measurements within each treatment period. To take these factors into account,
 more complex models are in order.
 
 \section{Basic Models}\label{conti}
 
 Before going further we make the assumption that the measurements are continuous as
-this is probably the most common case. Lets first look at a model where we assume
+this is probably the most common use case. Lets first look at a model where we assume
 that there are no time-trends and no autocorrelation between measurements.
 Let \(y_{mbpt}\) represent the outcome measured while on treatment \(m\) within
 treatment block \(b\) within treatment period \(p\) at time \(t\). The treatment
@@ -276,10 +276,10 @@ worse with the progression of the disease) fitting some kind of time-trend to th
 might be advisable. We can modify the model\ \ref{oneerror} from previous chapter to include a linear
 time-trend by adding an intercept and slope of the time-trend. In this case
 the model can expressed more concisely just in terms of the measurement \(y_t\) taken at time \(t\),
-where time is indexed from the start of the experiment:
+where time is indexed from the start of the study:
 
 \begin{def}\label{}
-\begin{equation}\label{quadratictimetrend}
+\begin{equation}\label{simpletimetrend}
 y_t = \beta_0 + \beta_1 t + \mu_t + \epsilon_t,
 \end{equation}
 \end{def}where \(\epsilon_t \sim N(0,\sigma^2)\).
@@ -296,8 +296,8 @@ medications and part of the trial falls within the pollen season. A simple way t
 is to use a dummy variable that takes the value 1 within the period and 0 outside it.
 Extending the model 3.4 with a period of constant effect \(\beta_2\) we end up with:
 
-\begin{def}\label{quadratictimetrend}
-\begin{equation}
+\begin{def}\label{}
+\begin{equation}\label{}
 y_t = \beta_0 + \beta_1 t + \beta_{2}Z_t + \mu_t + \epsilon_t,
 \end{equation}
 \end{def}where \(\epsilon_t \sim N(0,\sigma^2)\) and dummy variable \(Z_t = 1\)
@@ -307,11 +307,11 @@ Lastly, to take into account that treatment effects themselves can vary with tim
 treatment works better during periods of greater disease severity, we can add a time-by-treatment
 interaction effect into the model. For example in the case where we expect that the
 illness gets steadily (e.g.\ linearly) worse with time, but the treatments compensate this
-by being similarly more effective, we can extend the model 3.4 that includes a simple
-linear time-trend by adding an interaction term \(\mu_t\beta_1 t\):
+by being similarly more effective, we can extend the model \ref{simpletimetrend} that
+includes a simple linear time-trend by adding an interaction term \(\mu_t\beta_1 t\):
 
-\begin{def}\label{lineartimetrendwithinteraction}
-\begin{equation}
+\begin{def}\label{}
+\begin{equation}\label{}
 y_t = \beta_0 + \beta_1 t + \mu_t + \mu_t\beta_1 t + \epsilon_t,
 \end{equation}
 \end{def}where \(\epsilon_t \sim N(0,\sigma^2)\)
@@ -320,19 +320,19 @@ y_t = \beta_0 + \beta_1 t + \mu_t + \mu_t\beta_1 t + \epsilon_t,
 
 A common occurrence in time-series data is the autocorrelation between
 measurements, so that there is similarity between observations defined by
-a function of time lag between them. A common first response to this problem
-is to add a time-trend to the model like we did in the previous chapter.
+a function of time lag between them. Often a good first response to this problem
+is to add a time-trend to the model like we did previously.
 This detrending often removes a substantial proportion of the autocorrelation
 that could be caused for example by the natural progression of disease or seasonal
-variations in its symptoms\cite{stat}. Unfortunately in N-of-1 trials the problems of carryover effects and
-slow onset of treatment effect can lead to very complex autocorrelation patterns
-that are hard to remove with simple time-trend.
+variations in its symptoms\cite{stat}. Unfortunately in N-of-1 trials the problems
+of carryover effects and slow onset of treatment effect can lead to very complex
+autocorrelation patterns that are hard to remove with simple time-trend.
 
 Carryover effects refer to the lingering effects of the treatment even after it has
 beed stopped. This can make the treatment effects in next treatment period with
-a different treatment seem larger (or smaller in the unfortunate and hopefully rare case
-where the previous treatment was actually harmful) than they actually are. Carryover effects also
-encompass the effects of interactions between sequential the treatments, which could
+a different treatment seem larger than they actually are (or smaller in the unfortunate
+and hopefully rare case where the previous treatment was actually harmful). Carryover effects also
+encompass the effects of interactions between sequential treatments, which could
 even be dangerous depending on the nature of the treatments. On the other hand treatment
 effects that manifest slowly can often give the opposite effect of carryover effects by making
 the treatments look less effective than they really are during the first measurements of
@@ -344,8 +344,8 @@ is roughly constant and so we can index the time so that each measurement is sep
 time unit. First possible solution to autocorrelation is to use an autoregressive model where
 we express the measurement error at time \(t\) as function of one or more previous measurement errors:
 
-\begin{def}\label{autoregression}
-\begin{equation}
+\begin{def}\label{}
+\begin{equation}\label{}
 y_t = \mu_t + \epsilon_t,
 \end{equation}
 \end{def}where \(\epsilon_t = \rho\epsilon_{(t - 1)} + \mu_t\) in which
@@ -361,8 +361,8 @@ between the errors separated by \(x\) time units (e.g.\ measurements).
 Second approach is to use a dynamic model where we express the autocorrelation in the measurements
 themselves so that the measurement at time \(t\) is a function of the measurement at \(t-1\):
 
-\begin{def}\label{dynamicmodel}
-\begin{equation}
+\begin{def}\label{}
+\begin{equation}\label{}
 y_t = \rho y_{t-1} + \mu_t + \epsilon_t,
 \end{equation}
 \end{def}where \(\mu_t\) is the effect of the treatment given at time \(t\), \(\rho \) is the correlation
@@ -370,12 +370,13 @@ between consecutive measurements and \(\epsilon_t \sim N(0,\sigma^2)\) is the er
 
 Although it can make more intuitive sense to the make whole observation dependent on
 the previous observation, it is important to recognize that in this case the treatment effects
-\(\mu_t\) must be interpreted differently as they are now conditioned on the these measurements.
+\(\mu_t\) must be interpreted differently as they are in this case conditioned on
+previous measurements.
 
 Although we can try to solve problems created by carryover effect and slow manifestation
 of treatment effect with modelling, a better way could be to take
 measures to mitigate the effects in the study design itself. By having long
-enough washout period between different treatments we can minimize the carryover effect. If
+enough washout period between different treatments, we can minimize the carryover effect. If
 there are no harmful interactions between the treatment the next treatment
 can be started within the washout period so that we minimize the problem of
 slow treatment effects. If there are interactions to be taken into
@@ -399,8 +400,7 @@ as generalized linear models. We do this by keeping the right-hand sides in the 
 side in terms of link function of the mean of the probability distribution of the outcomes.
 So instead of expressing the model in terms
 of individual observations \(y_t\), we express it as the expected value of these measurements conditional
-on the data (and experimental design, because this decides which treatment is given at which point in the experiment)
-\(E(Y|D)\) that we feed to the link function.
+on the data \(E(Y|D)\) that we feed to the link function.
 The link function allows us to model measurements with arbitrary distributions, as now the link function can linearly depend on the parameters of the model,
 rather than needing the measurements themselves to do so. We need to do this to prevent the models from giving impossible predictions,
 e.g.\ negative counts or probabilities of under 0 or over 1.
@@ -418,7 +418,7 @@ function \(logit(p)=\log_e(\frac{p}{1-p})\). With this information we can now fo
 effect of the treatment given during time \(t\).
 
 By first exponentiating and then using simple algebraic manipulation we can
-express the model in terms of of the probability:
+express the model in terms of the probability \(p_t\):
 
 \begin{def}\label{}
 \begin{equation}\label{}
@@ -434,9 +434,10 @@ p_t=\frac{e^{\beta_0 + \beta_1 t + \mu_t}}{e^{\beta_0 + \beta_1 t + \mu_t}+1}=\f
 
 We notice that there are no error terms in this model. This is because we are not modelling individual observations,
 but the expected value of these values (probability of observing the event under treatment used at time \(t\) in this case). Even though there is random variations in
-the individual observations, when we talk about the their expected value
+the individual observations, when we talk about their expected value,
 there is just a single value with no random errors. Apart from this difference we can see that we find the same model
-from the denominator that we used when modelling a continuous measurement with a linear time-trend in equation 3.4.
+from the denominator that we used when modelling a continuous measurement with
+a linear time-trend in model\ \ref{simpletimetrend}, but without the aforementioned error term.
 This means that to build the models described before, we would just insert the right side of the equations
 into the denominator, apart from the error term.
 
@@ -466,16 +467,15 @@ we can express the model in terms of rate of events:
 the equation.
 
 The case of categorical measurements is more complex as there are multiple possible link functions
-depending on which way we want to model the measurements. Because of this so we don't go trough all of them here.
+depending on which way we want to model the measurements, so we don't go trough all of them here.
 The one that is probably the most relevant is the case when categorical measurements
-are ordinal, that is they have a natural ordering (like in Likert-scale).
+are ordinal, that is they have a natural ordering (like in a Likert-scale).
 In this case the we can use the cumulative logit as the link function.
 So if we assume that our ordinal measurement
 has \(J\) categorical choices ordered from 1 to \(J\),
-we can model the cumulative probability of getting a response at least as ``severe'',
-which follows the cumulative distribution (CDF) of logit-normal distribution
-\(P(y_i \leq j) \sim CDF(\)logit-normal\((\mu, \sigma^2))\). Using the same basic model as before
-we get:
+we can model the cumulative probability of getting a response \(y\) at time
+\(t\) that is at least as ``severe'',
+by putting this to the logit function and Using the same basic model as before:
 
 \begin{def}\label{oneerror}
 \begin{equation}
@@ -526,12 +526,12 @@ P(A|B) = \frac{P(B|A)P(A)}{P(B)},
 \end{def}where \(A\) and \(B\) are events and \(P(B)\) \(\neq \) 0.
 
 \(P(A|B)\) is the conditional probability of event \(A\) happening given that event \(B\) happened and is
-called the posterior. \(P(A)\) is our initial probability estimate for the event \(A\),
+called the posterior. \(P(A)\) is our initial probability estimate for the event \(A\)
 called the prior. The quotient \(\frac{P(B|A)}{P(B)}\) represent how much information
 event \(B\) gives about event \(A\) happening. If this number is greater than 1,
-then event \(B\) happening makes event A more likely and if it less than 1
+then event \(B\) happening makes event \(A\) more likely and if it less than 1
 is is less likely. If the quotient is 1, event \(B\) gives no information
-about the probability of event A.
+about the probability of event \(A\).
 Breaking the quotient down further \(P(B|A)\), called the likelihood, is the reverse of the posterior
 and tells us how believable
 it is to see the event \(B\) given that event \(A\) happened. Finally \(P(B)\) in the
@@ -539,14 +539,16 @@ denominator is called marginal likelihood and tells us the probability of observ
 event \(B\) with or without event \(A\).
 
 Instead of events, in our case we want to formulate the theorem with parameters \(\Theta \)
-and the data \(D\)\, so that the we get can estimate the posterior
+and the data \(D\), so that the we get can estimate the posterior
 probability (or likelihood in case of continuous parameter values) of our parameters having certain values:
 
 \begin{def}\label{}
 \begin{equation}
 P(\Theta|D) = \frac{P(D|\Theta)P(\Theta)}{P(D)},
 \end{equation}
-\end{def}where \(P(D)\) \(\neq \) 0.
+\end{def}where \(P(D)\) \(\neq \) 0. To be pedantic the parameters are of course dependent
+on our study design and the fact that our model is a good representation of reality, but
+we omit to express these in the formula to keeps things simple.
 
 We could make it more explicit what the marginal likelihood \(P(D)\) stands for by
 writing it as \(\sum_\Theta P(D|\Theta)P(\Theta)\) in the case when parameter value takes discrete values
@@ -555,46 +557,48 @@ observing the data with all different combinations of the possible values of the
 taking into account our prior belief in the probability of these value combinations.
 
 To tie this formula into the models we introduced previously we can demonstrate how this
-applies to a simple model\ \ref{oneerror} with only the treatment effects \(\mu \) and a random error \(\epsilon \).
+applies to a simple model with only the treatment effects \(\mu \) of the given treatment
+and a random error \(\epsilon \) at time \(t\):
 
 \begin{def}\label{}
 \begin{equation}\label{}
-P(A|B) = \frac{P(B|A)P(A)}{P(B)},
-y_{t} = \mu_m + \epsilon_{t},
+y_t = \mu_t + \epsilon_t,
 \end{equation}
 \end{def}where \(\epsilon_{t} \sim N(0,\sigma^2)\). Time \(t\) is indexed from the
 beginning of the study.
 
-In this case when we want to estimate the parameters of the different treatment effect \(\mu_m \).
+In this case when we want to estimate the parameters of the effects of the treatments \(m\).
 For simplicity lets only examine one of the treatments. We refer to this treatment as \(\mu_1 \).
 To do this we only use data from times \(t\) when the treatment were are interested was given, that is \(\mu_m=\mu_1\)
 According to our model the single observations follow a normal distribution defined by \(\mu_1 \)
-and the error term \(\epsilon_t \) so \(y_t \sim N(\mu_1,\sigma^2) \). This is means that the likelihood
-term in bayesian formula is a simple product of the probability density functions of
+and the error term \(\epsilon_t \) so \(y_t \sim N(\mu_1,\sigma^2) \), when the treatment we are
+interested is given. As our model assumes that the observations \(y_t\) are independent
+(e.g.\ no autocorrelation included) the likelihood term in the bayesian
+formula is a simple product of the probability density functions of
 a normal distribution with mean \(\mu_1 \) and variance \(\sigma^2 \), because our model assumes
-that the observations are independent (e.g.\ no autocorrelation included):
+that the observations are independent
 
 \begin{def}\label{}
 \begin{equation}\label{}
-    P(Y_{t_{\mu_1}}|\mu_1, \sigma)
+    P(Y_{\mu_1}|\mu_1, \sigma)
     =
-    \prod_{Y_{t_{\mu_1}}}
+    \prod_{Y_{\mu_1}}
     \frac{1}
     {{\sqrt {2\pi \sigma^2} }}
     \exp{
         \left \{
-            \frac{-(y - \mu_1)^2}
+            \frac{-(y_t - \mu_1)^2}
             {2\sigma^2}
         \right \}
     },
 \end{equation}
-\end{def}where during \(t_{\mu_1}\) the treatment of interest was given \(\mu_m=\mu_1\). We assumed
-in our model that observations are independent
+\end{def}where \(Y_{\mu_1}\) represents the observations taken during times where treatment \(\mu_1\)
+was given.
 
-To avoid the complexity of dealing with multiple unknown variables (\(\mu_1 \) and \(\sigma \)
-in this case) we assume that \(\sigma \) is known. Now we have to define only one
-prior distribution (we will later come back later to the case of multiple unknown variables).
-We choose a normal distribution for the prior of \(\mu_1\) is defined by mean \(\lambda_0 \)
+To avoid the complexity of dealing with multiple unknown variables we assume
+that \(\sigma \) is known. We will later come back later to the case of multiple unknown variables.
+Now we have to define only one prior distribution as there is just one parameter.
+We choose a normal distribution for the prior of \(\mu_1\) that is defined by mean \(\lambda_0 \)
 and variance \(\delta_0^2 \), whose values we define ourself based on
 our previous knowledge:
 
@@ -618,15 +622,19 @@ our previous knowledge:
 We could of course choose whatever distribution best
 matches our previous knowledge and uncertainty about the parameter,
 but using a normal distribution for prior when the likelihood also follows a normal distribution,
-has some nice algebraic properties that we will soon see.
+we get some nice algebraic properties that we will soon see.
 
 Now the only missing term from our bayesian equation is the marginal likelihood \(P(Y_{t_{\mu_1}}) \).
 When we express the term more precisely as the probability of getting the data we observed
-over possible values of our unknown parameter \(\int P(Y_{t_{\mu_1}}|\mu_1)P(\mu_1) d\mu_1 \),
-we can see that the term is not dependent on the specific values of \(\mu_1 \), but just the data.
-This means that the term is just a constant and as such does not affect shape of the posterior distribution,
-that is \(P(\mu_1|Y_{t_{\mu_1}}) \propto P(Y_{t_{\mu_1}}|\mu_1)P(\mu_1) \). If we look at this more
+over possible values of our unknown parameter \(\int P(Y_{\mu_1}|\mu_1)P(\mu_1) d\mu_1 \),
+we can see that the term is not dependent on the specific values of \(\mu_1 \), but just the data,
+as we integrate over all the possible values of \(\mu_1 \).
+This means that the marginal likelihood is just a constant and as such does not affect shape of the posterior distribution,
+that is the shape of the posterior is defined by the likelihood and the prior
+\(P(\mu_1|Y_{t_{\mu_1}}) \propto P(Y_{t_{\mu_1}}|\mu_1)P(\mu_1) \). If we look at this more
 closely we will see that the posterior follow a normal distribution with a mean...
+
+% TODO check terms and make them clearer
 
 \begin{def}\label{}
 \begin{equation}\label{}
@@ -797,8 +805,13 @@ closely we will see that the posterior follow a normal distribution with a mean.
 
 \subsection{Challenges of Bayesian Inference}\label{bayesproblems}
 
-Although the Bayes formula is simple, when actually utilizing it, we ran into two
-big problems. First is that in the cases when parameter values are continuous
+Although the Bayes formula is conceptually simple, but when actually utilizing it we run into two
+big problems. The first problem is the marginal likelihood. In the example above we cleverly
+dodged the need to solve it by using prior distribution that solved our need to
+
+% TODO definition of conjugate prior
+
+First is that in the cases when parameter values are continuous
 and the probability distributions of the prior and/or the likelihood or their
 product are not well defined distributions with known properties. This can make
 the integral in the marginal likelihood impossible to solve analytically.
