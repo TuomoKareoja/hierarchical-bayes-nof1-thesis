@@ -101,13 +101,7 @@ target/
 *.gz
 *.toc
 
-# LaTeX auxialiary files
-/data/clean/*
-/data/interim/*
-/data/predictions/*
-/data/processed/*
-!/data/clean/.gitkeep
-!/data/interim/.gitkeep
-!/data/predictions/.gitkeep
-!/data/processed/.gitkeep
+# simulated datasets
+/data/*
+!/data/.gitkeep
 

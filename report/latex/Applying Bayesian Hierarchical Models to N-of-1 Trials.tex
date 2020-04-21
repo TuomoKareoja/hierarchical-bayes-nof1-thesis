@@ -39,7 +39,7 @@
 
 \title{Applying Bayesian Hierarchical Models to N-of-1 Trials}
 \author{Tuomo Kareoja}
-\date{27/06/19}
+\date{\today}
 
 \begin{document}
 
@@ -51,11 +51,11 @@
 \addcontentsline{toc}{chapter}{Introduction}
 
 N-of-1 trials in clinical practice are multiple crossover trials conducted on
-a single patient, where treatment periods with different treatments are formed
+a single patient, where periods with different treatments are formed
 into multiple blocks each containing at least one period of each treatment
 under consideration\cite{nofone}. By comparing the measurements taken during
-different treatment regimes, a comparisons can be
-made and the most suitable treatment option chosen for the particular patient in question.
+different treatment regimes over multiple blocks the most suitable treatment
+option can be chosen for the particular patient in question.
 
 In the following pages I give a concise explanation of the experimental design
 of N-of-1 trials and how we can statistically model these kinds of experiments
@@ -63,13 +63,13 @@ given the kinds of challenges their design poses.
 I then follow up with a how we can apply Bayesian methods in estimating the
 effectiveness of different treatments, highlighting how these methods can gives us
 needed flexibility when running N-of-1 trials by not relying on hypothesis testing
-depending on a prespecified study design. I then consider the case when there are
+tied to a prespecified study design. I then consider the case when there are
 multiple similar N-of-1 trials and show how it is possible to pool the
 information from these with hierarchical Bayesian methods, without loosing
 sight of the goal of N-of-1 trials: to find the best
-treatment most suitable for each patients particularities.
+treatment most suitable for each individual patient.
 Finally I end by with a complete example of analyzing multiple N-of-1
-trials with hierarchical Bayesian methods using RStan-package with simulated
+trials with hierarchical Bayesian methods using PyStan-package with simulated
 data.
 
 \chapter{What Are N-of-1 Trials?}\label{nof1}
@@ -91,7 +91,7 @@ Knowing the best treatment in average might not help much in finding right
 treatment for a particular patient if the variability in treatment
 effectiveness between patients is high. Although we can use covariates like
 age, gender, or certain gene variant to explain the variance between patients
-in RCT:s, there usually is still much unexplained variance. Some of this
+in RCT:s, there usually is still much unexplained variance (TODO source). Some of this
 variance is of course caused by random factors like measurement error, but a
 significant part might be caused by real differences between the
 patients. In other words, there might be significant factors that explain the
@@ -121,7 +121,7 @@ treatments are measured in comparable ways. Depending on the ease of measuring t
 of interest, the measurements could be done just once per treatment period,
 or even multiple times per day. Each block includes a period of each treatment under
 consideration in random or balanced order to take into account time related
-effects. A simple example would be a ABBA design that includes two blocks with
+effects. A simple example would be a ABBA design that includes two blocks within
 which the two treatments A and B are assigned in a balanced order.
 
 Depending on
@@ -130,8 +130,8 @@ between treatments, where the patient does not receive any treatment and her sta
 allowed to return to baseline. This method is used to prevent treatment
 interactions, that could make it difficult to analyze the results or could be
 dangerous to the patient. If the treatments under study allow, N-of-1 trial can
-also use the double-blind method, where the patient and caregiver both don't know
-which treatment is currently used and placebo treatment, where one of the
+also use the double-blind method, where both the patient and caregiver don't know
+which treatment is currently used, and placebo treatment, where one of the
 treatments only resembles treatment, but does not contain any active
 ingredient (pharmacological or otherwise).
 
@@ -213,9 +213,9 @@ is considered the ``best'' one follows binomial distribution and the probability
 each treatment option of having \(k\) successes is given by:
 
 \begin{def}\label{}
-\begin{equation}
-P(X = k) = {n\choose k}p^k{(1-p)}^{(n-k)},
-\end{equation}
+    \begin{equation}
+        P(X = k) = {n\choose k}p^k{(1-p)}^{(n-k)},
+    \end{equation}
 \end{def}where \(k\) = number of blocks, where the treatments is considered the ``best'',
 \(n\) = total number of blocks and \(p\) = the probability of being considered the ``best''.
 
@@ -235,9 +235,9 @@ periods are indexed within each block and time is indexed within each treatment
 period:
 
 \begin{def}\label{}
-\begin{equation}\label{allerrors}
-y_{mbpt} = \mu_m + \gamma_b + \delta_{p(b)} + \epsilon_{t(p(b))},
-\end{equation}
+    \begin{equation}\label{allerrors}
+        y_{mbpt} = \mu_m + \gamma_b + \delta_{p(b)} + \epsilon_{t(p(b))},
+    \end{equation}
 \end{def}where \(\gamma_b \sim N(0,\sigma^2_{\gamma})\),
 \(\delta_{p(b)} \sim N(0,\sigma^2_{\delta})\), and
 \(\epsilon_{t(p(b))} \sim N(0,\sigma^2_{\epsilon})\)
@@ -261,9 +261,9 @@ If the measurements within blocks and within periods do not correlate, the model
 can be simplified by dropping \(\gamma_b\) and \(\delta_{p(b)}\):
 
 \begin{def}\label{}
-\begin{equation}\label{oneerror}
-y_{mbpt} = \mu_m + \epsilon_{t(p(b))},
-\end{equation}
+    \begin{equation}\label{oneerror}
+        y_{mbpt} = \mu_m + \epsilon_{t(p(b))},
+    \end{equation}
 \end{def}where \(\epsilon_{t(p(b))} \sim N(0,\sigma^2_{\epsilon})\).
 
 This simple model is a natural fit in scenarios where there is just one measurement within each
@@ -279,9 +279,9 @@ the model can expressed more concisely just in terms of the measurement \(y_t\) 
 where time is indexed from the start of the study:
 
 \begin{def}\label{}
-\begin{equation}\label{simpletimetrend}
-y_t = \beta_0 + \beta_1 t + \mu_t + \epsilon_t,
-\end{equation}
+    \begin{equation}\label{simpletimetrend}
+        y_t = \beta_0 + \beta_1 t + \mu_t + \epsilon_t,
+    \end{equation}
 \end{def}where \(\epsilon_t \sim N(0,\sigma^2)\).
 
 Here \(\beta_0\) is the intercept, \(\beta_1\) the slope of the time trend, \(\mu_t\) the
@@ -297,9 +297,9 @@ is to use a dummy variable that takes the value 1 within the period and 0 outsid
 Extending the model 3.4 with a period of constant effect \(\beta_2\) we end up with:
 
 \begin{def}\label{}
-\begin{equation}\label{}
-y_t = \beta_0 + \beta_1 t + \beta_{2}Z_t + \mu_t + \epsilon_t,
-\end{equation}
+    \begin{equation}\label{}
+        y_t = \beta_0 + \beta_1 t + \beta_{2}Z_t + \mu_t + \epsilon_t,
+    \end{equation}
 \end{def}where \(\epsilon_t \sim N(0,\sigma^2)\) and dummy variable \(Z_t = 1\)
 when \(t \in (t_{period\,start} \ldots t_{period\,end}) \) and \(0\) otherwise.
 
@@ -311,9 +311,9 @@ by being similarly more effective, we can extend the model \ref{simpletimetrend}
 includes a simple linear time-trend by adding an interaction term \(\mu_t\beta_1 t\):
 
 \begin{def}\label{}
-\begin{equation}\label{}
-y_t = \beta_0 + \beta_1 t + \mu_t + \mu_t\beta_1 t + \epsilon_t,
-\end{equation}
+    \begin{equation}\label{}
+        y_t = \beta_0 + \beta_1 t + \mu_t + \mu_t\beta_1 t + \epsilon_t,
+    \end{equation}
 \end{def}where \(\epsilon_t \sim N(0,\sigma^2)\)
 
 \section{The Problem of Autocorrelation}\label{autocor}
@@ -324,14 +324,14 @@ a function of time lag between them. Often a good first response to this problem
 is to add a time-trend to the model like we did previously.
 This detrending often removes a substantial proportion of the autocorrelation
 that could be caused for example by the natural progression of disease or seasonal
-variations in its symptoms\cite{stat}. Unfortunately in N-of-1 trials the problems
-of carryover effects and slow onset of treatment effect can lead to very complex
+variations in its symptoms\cite{stat}. Unfortunately in N-of-1 trials the carryover effects
+from previous treatments and slow onset of treatment effects can lead to very complex
 autocorrelation patterns that are hard to remove with simple time-trend.
 
 Carryover effects refer to the lingering effects of the treatment even after it has
 beed stopped. This can make the treatment effects in next treatment period with
-a different treatment seem larger than they actually are (or smaller in the unfortunate
-and hopefully rare case where the previous treatment was actually harmful). Carryover effects also
+a different treatment seem larger than they actually are or smaller in the unfortunate
+and hopefully rare case where the previous treatment was actually harmful. Carryover effects also
 encompass the effects of interactions between sequential treatments, which could
 even be dangerous depending on the nature of the treatments. On the other hand treatment
 effects that manifest slowly can often give the opposite effect of carryover effects by making
@@ -345,9 +345,9 @@ time unit. First possible solution to autocorrelation is to use an autoregressiv
 we express the measurement error at time \(t\) as function of one or more previous measurement errors:
 
 \begin{def}\label{}
-\begin{equation}\label{}
-y_t = \mu_t + \epsilon_t,
-\end{equation}
+    \begin{equation}\label{}
+        y_t = \mu_t + \epsilon_t,
+    \end{equation}
 \end{def}where \(\epsilon_t = \rho\epsilon_{(t - 1)} + \mu_t\) in which
 \(\mu_t\) is the effect of the treatment given at time t,
 \(\rho \) is the correlation between consecutive errors and
@@ -362,9 +362,9 @@ Second approach is to use a dynamic model where we express the autocorrelation i
 themselves so that the measurement at time \(t\) is a function of the measurement at \(t-1\):
 
 \begin{def}\label{}
-\begin{equation}\label{}
-y_t = \rho y_{t-1} + \mu_t + \epsilon_t,
-\end{equation}
+    \begin{equation}\label{}
+        y_t = \rho y_{t-1} + \mu_t + \epsilon_t,
+    \end{equation}
 \end{def}where \(\mu_t\) is the effect of the treatment given at time \(t\), \(\rho \) is the correlation
 between consecutive measurements and \(\epsilon_t \sim N(0,\sigma^2)\) is the error term.
 
@@ -410,9 +410,9 @@ where the the expected value of the distribution is the probability \(p\) of obs
 function \(logit(p)=\log_e(\frac{p}{1-p})\). With this information we can now formulate a simple model with a linear time trend:
 
 \begin{def}\label{}
-\begin{equation}
-\log_e(\frac{p_t}{1-p_t})=\beta_0 + \beta_1 t + \mu_t,
-\end{equation}
+    \begin{equation}
+        \log_e(\frac{p_t}{1-p_t})=\beta_0 + \beta_1 t + \mu_t,
+    \end{equation}
 \end{def}where \(p_t\) is the the probability of observing the event at time \(t\) and \(\log_e(\frac{p_t}{1-p_t})\) are the log-odds of this event,
 \(\beta_0\) is the intercept, \(\beta_1\) the slope of the time trend and \(\mu_t\) the
 effect of the treatment given during time \(t\).
@@ -421,15 +421,15 @@ By first exponentiating and then using simple algebraic manipulation we can
 express the model in terms of the probability \(p_t\):
 
 \begin{def}\label{}
-\begin{equation}\label{}
-\frac{p_t}{1-p_t}=e^{\beta_0 + \beta_1 t + \mu_t}
-\end{equation}
+    \begin{equation}\label{}
+        \frac{p_t}{1-p_t}=e^{\beta_0 + \beta_1 t + \mu_t}
+    \end{equation}
 \end{def}
 
 \begin{def}\label{}
-\begin{equation}\label{}
-p_t=\frac{e^{\beta_0 + \beta_1 t + \mu_t}}{e^{\beta_0 + \beta_1 t + \mu_t}+1}=\frac{1}{1+e^{-(\beta_0 + \beta_1 t + \mu_t)}}
-\end{equation}
+    \begin{equation}\label{}
+        p_t=\frac{e^{\beta_0 + \beta_1 t + \mu_t}}{e^{\beta_0 + \beta_1 t + \mu_t}+1}=\frac{1}{1+e^{-(\beta_0 + \beta_1 t + \mu_t)}}
+    \end{equation}
 \end{def}
 
 We notice that there are no error terms in this model. This is because we are not modelling individual observations,
@@ -451,18 +451,18 @@ that is we have \(\log_e(\lambda_p)\) on the left side of the equation.
 Once again using the same simple model with linear time trend we end up with a model:
 
 \begin{def}\label{oneerror}
-\begin{equation}
-\log_e(\lambda_p)=\beta_0 + \beta_1 r + \mu_{p},
-\end{equation}
+    \begin{equation}
+        \log_e(\lambda_p)=\beta_0 + \beta_1 r + \mu_{p},
+    \end{equation}
 \end{def}where \(\lambda_p\) is the the rate of events between measurements during period \(p\),
 \(\beta_0\) is the intercept, \(\beta_1\) the slope of the time trend and \(\mu_p\) the
 effect of the treatment given during period \(p\). By simply exponentiating both sides
 we can express the model in terms of rate of events:
 
 \begin{def}\label{oneerror}
-\begin{equation}
-\lambda_t=e^{\beta_0 + \beta_1 t + \mu_t},
-\end{equation}
+    \begin{equation}
+        \lambda_t=e^{\beta_0 + \beta_1 t + \mu_t},
+    \end{equation}
 \end{def}where we now have the familiar linear model formula in the exponent on the right side of
 the equation.
 
@@ -478,24 +478,24 @@ we can model the cumulative probability of getting a response \(y\) at time
 by putting this to the logit function and Using the same basic model as before:
 
 \begin{def}\label{oneerror}
-\begin{equation}
-\log_e\bigg({\frac{P(y_i \leq j)}{1 - P(y_i \leq j)}}\bigg)=\beta_0 + \beta_1 t + \mu_t,
-\end{equation}
+    \begin{equation}
+        \log_e\bigg({\frac{P(y_i \leq j)}{1 - P(y_i \leq j)}}\bigg)=\beta_0 + \beta_1 t + \mu_t,
+    \end{equation}
 \end{def}where \(\beta_0\) is the intercept, \(\beta_1\) the slope of the time trend and \(\mu_t\) the
 effect of the treatment given during time \(t\). By exponentiating
 and algebraic manipulation we end up with similar model as with binary outcomes
 where we once again find the familiar linear model formula in the exponent:
 
 \begin{def}\label{}
-\begin{equation}\label{ord_exponentiating}
-\frac{P(y_i \leq j)}{1 - P(y_i \leq j)}=e^{\beta_0 + \beta_1 t + \mu_t}
-\end{equation}
+    \begin{equation}\label{ord_exponentiating}
+        \frac{P(y_i \leq j)}{1 - P(y_i \leq j)}=e^{\beta_0 + \beta_1 t + \mu_t}
+    \end{equation}
 \end{def}
 
 \begin{def}\label{}
-\begin{equation}\label{ord_algmanipulation}
-P(y_i \leq j)=\frac{e^{\beta_0 + \beta_1 t + \mu_t}}{e^{\beta_0 + \beta_1 t + \mu_t}+1}=\frac{1}{1+e^{-(\beta_0 + \beta_1 t + \mu_t)}}
-\end{equation}
+    \begin{equation}\label{ord_algmanipulation}
+        P(y_i \leq j)=\frac{e^{\beta_0 + \beta_1 t + \mu_t}}{e^{\beta_0 + \beta_1 t + \mu_t}+1}=\frac{1}{1+e^{-(\beta_0 + \beta_1 t + \mu_t)}}
+    \end{equation}
 \end{def}
 
 \chapter{Bayesian Estimation}\label{bayes}
@@ -511,7 +511,7 @@ that express our internal uncertainty about their true values.
 
 Although both of these inference methods work for all the models covered before,
 there are several factors that favor the use of
-Bayesian inference in N-of-1 studies N-of-1 studies that are related to their design and use context.
+Bayesian inference in N-of-1 studies that are related to their design and use context.
 I will return to these later when I have first introduced the principles of Bayesian inference.
 
 \section{Principles of Bayesian Inference}\label{whybayes}
@@ -520,9 +520,9 @@ Bayesian inference is based on the Bayes' Theorem that states the probability of
 conditional on another event:
 
 \begin{def}\label{bayesrule}
-\begin{equation}
-P(A|B) = \frac{P(B|A)P(A)}{P(B)},
-\end{equation}
+    \begin{equation}
+        P(A|B) = \frac{P(B|A)P(A)}{P(B)},
+    \end{equation}
 \end{def}where \(A\) and \(B\) are events and \(P(B)\) \(\neq \) 0.
 
 \(P(A|B)\) is the conditional probability of event \(A\) happening given that event \(B\) happened and is
@@ -543,9 +543,9 @@ and the data \(D\), so that the we get can estimate the posterior
 probability (or likelihood in case of continuous parameter values) of our parameters having certain values:
 
 \begin{def}\label{}
-\begin{equation}
-P(\Theta|D) = \frac{P(D|\Theta)P(\Theta)}{P(D)},
-\end{equation}
+    \begin{equation}
+        P(\Theta|D) = \frac{P(D|\Theta)P(\Theta)}{P(D)},
+    \end{equation}
 \end{def}where \(P(D)\) \(\neq \) 0. To be pedantic the parameters are of course dependent
 on our study design and the fact that our model is a good representation of reality, but
 we omit to express these in the formula to keeps things simple.
@@ -561,9 +561,9 @@ applies to a simple model with only the treatment effects \(\mu \) of the given 
 and a random error \(\epsilon \) at time \(t\):
 
 \begin{def}\label{}
-\begin{equation}\label{}
-y_t = \mu_t + \epsilon_t,
-\end{equation}
+    \begin{equation}\label{}
+        y_t = \mu_t + \epsilon_t,
+    \end{equation}
 \end{def}where \(\epsilon_{t} \sim N(0,\sigma^2)\). Time \(t\) is indexed from the
 beginning of the study.
 
@@ -575,23 +575,23 @@ and the error term \(\epsilon_t \) so \(y_t \sim N(\mu_1,\sigma^2) \), when the 
 interested is given. As our model assumes that the observations \(y_t\) are independent
 (e.g.\ no autocorrelation included) the likelihood term in the bayesian
 formula is a simple product of the probability density functions of
-a normal distribution with mean \(\mu_1 \) and variance \(\sigma^2 \), because our model assumes
-that the observations are independent
+a normal distribution with mean \(\mu_1 \) and variance \(\sigma^2 \)
+that the observations are independent:
 
 \begin{def}\label{}
-\begin{equation}\label{}
-    P(Y_{\mu_1}|\mu_1, \sigma)
-    =
-    \prod_{Y_{\mu_1}}
-    \frac{1}
-    {{\sqrt {2\pi \sigma^2} }}
-    \exp{
-        \left \{
+    \begin{equation}\label{}
+        P(Y_{\mu_1}|\mu_1, \sigma)
+        =
+        \prod_{Y_{\mu_1}}
+        \frac{1}
+        {{\sqrt {2\pi \sigma^2} }}
+        \exp{
+            \left \{
             \frac{-(y_t - \mu_1)^2}
             {2\sigma^2}
-        \right \}
-    },
-\end{equation}
+            \right \}
+        },
+    \end{equation}
 \end{def}where \(Y_{\mu_1}\) represents the observations taken during times where treatment \(\mu_1\)
 was given.
 
@@ -603,20 +603,20 @@ and variance \(\delta_0^2 \), whose values we define ourself based on
 our previous knowledge:
 
 \begin{def}\label{}
-\begin{equation}\label{}
-    P(\mu_1)
-    =
-    \frac{1}
-    {{\sqrt {2\pi \delta_0^2} }}
-    \exp{
-        \left \{
+    \begin{equation}\label{}
+        P(\mu_1)
+        =
+        \frac{1}
+        {{\sqrt {2\pi \delta_0^2} }}
+        \exp{
+            \left \{
             \frac{
-            -(\mu_1 - \lambda_0)^2
+                -(\mu_1 - \lambda_0)^2
             }
             {2\delta_0^2}
-        \right \}
-    }
-\end{equation}
+            \right \}
+        }
+    \end{equation}
 \end{def}
 
 We could of course choose whatever distribution best
@@ -637,111 +637,111 @@ closely we will see that the posterior follow a normal distribution with a mean.
 % TODO check terms and make them clearer
 
 \begin{def}\label{}
-\begin{equation}\label{}
-    P(\mu_1|Y)
-    \propto
-    P(Y|\mu_1, \sigma)
-    =
-    \frac{1}
-    {{\sqrt {2\pi \delta_0^2} }}
-    \exp{
-        \left \{
+    \begin{equation}\label{}
+        P(\mu_1|Y)
+        \propto
+        P(Y|\mu_1, \sigma)
+        =
+        \frac{1}
+        {{\sqrt {2\pi \delta_0^2} }}
+        \exp{
+            \left \{
             \frac{
-            -(\mu_1 - \lambda_0)^2
+                -(\mu_1 - \lambda_0)^2
             }
             {2\delta_0^2}
-        \right \}
-    }
-    \prod_{Y}
-    \frac{1}
-    {{\sqrt {2\pi \sigma^2} }}
-    \exp{
-        \left \{
+            \right \}
+        }
+        \prod_{Y}
+        \frac{1}
+        {{\sqrt {2\pi \sigma^2} }}
+        \exp{
+            \left \{
             \frac{-(y - \mu_1)^2}
             {2\sigma^2}
-        \right \}
-    }
-\end{equation}
+            \right \}
+        }
+    \end{equation}
 \end{def}Combining the terms
 \begin{def}\label{}
-\begin{equation}\label{}
-    =
-    \frac{1}
-    {
-        (2\pi)^{\frac{n+1}{2}}
-        \sqrt{ \delta_0^2 \sigma^{2n}}
-    }
-    \exp{
-        \left \{
+    \begin{equation}\label{}
+        =
+        \frac{1}
+        {
+            (2\pi)^{\frac{n+1}{2}}
+            \sqrt{ \delta_0^2 \sigma^{2n}}
+        }
+        \exp{
+            \left \{
             \frac{- \mu_1^2 + 2 \mu_1 \lambda_0 - \lambda_0^2}{2\delta_0^2}
             -
             \sum_{Y}
             \frac{y^2 - 2 \mu_1 y + \mu_1^2}{2\sigma^2}
-        \right \}
-    }
-\end{equation}
+            \right \}
+        }
+    \end{equation}
 \end{def}Dropping the constant terms
 \begin{def}\label{}
-\begin{equation}\label{}
-    \propto
-    \exp{
-        \left \{
+    \begin{equation}\label{}
+        \propto
+        \exp{
+            \left \{
             \frac{
                 -\mu_1^2 (\sigma^2 + n\delta_0^2)
                 + 2 \mu_1 (\lambda_0 \sigma^2 + \delta_0^2 y_1 + \ldots + \delta_0^2 y_n)
                 - (\lambda_0^2 \sigma^2 + \delta_0^2 y_1^2 + \ldots + \delta_0^2 y_n^2)
             }
             {2\delta_0^2 \sigma^2}
-        \right \}
-    }
-\end{equation}
-\begin{equation}\label{}
-\propto
-\exp{
-    \left \{
-        \frac{
-            - \mu_1^2
-            + 2 \mu_1 \frac{\mu_0 \sigma^2 + \sum_{Y} \delta_0^2 y}
+            \right \}
+        }
+    \end{equation}
+    \begin{equation}\label{}
+        \propto
+        \exp{
+            \left \{
+            \frac{
+                - \mu_1^2
+                + 2 \mu_1 \frac{\mu_0 \sigma^2 + \sum_{Y} \delta_0^2 y}
                 {\sigma^2 + n \delta_0^2}
-            - \left(
+                - \left(
                 \frac{
                     \lambda_0 \sigma^2 + \sum_{Y} \delta_0^2 y
                 }
                 {\sigma^2 + n \delta_0^2}
-            \right)^2
+                \right)^2
+            }
+            {
+                2 \frac{\delta_0^2 \sigma^2}{\sigma^2 + n\delta_0^2}
+            }
+            \right \}
         }
-        {
-        2 \frac{\delta_0^2 \sigma^2}{\sigma^2 + n\delta_0^2}
+        \times
+        \exp{
+            \left \{
+            -\frac{
+                \lambda_0 \sigma^2 + \sum_{Y} \delta_0^2 y
+            }
+            {
+                2 \delta_0^2 \sigma^2
+            }
+            \right \}
         }
-    \right \}
-}
-\times
-\exp{
-    \left \{
-        -\frac{
-            \lambda_0 \sigma^2 + \sum_{Y} \delta_0^2 y
-        }
-        {
-            2 \delta_0^2 \sigma^2
-        }
-    \right \}
-}
-\end{equation}
-\begin{equation}
-    \propto
-    \exp{
-        \left \{
+    \end{equation}
+    \begin{equation}
+        \propto
+        \exp{
+            \left \{
             -
             \frac{
                 \left(
-                    \mu_1
-                    -
-                    \frac{
-                        \lambda_0 \sigma^2 + \sum_{Y} \delta_0^2 y
-                    }
-                    {
-                        \sigma^2 + n \delta_0^2
-                    }
+                \mu_1
+                -
+                \frac{
+                    \lambda_0 \sigma^2 + \sum_{Y} \delta_0^2 y
+                }
+                {
+                    \sigma^2 + n \delta_0^2
+                }
                 \right)^2
             }
             {
@@ -750,24 +750,24 @@ closely we will see that the posterior follow a normal distribution with a mean.
                 }
                 {\sigma^2 + n \delta_0^2}
             }
-        \right \}
-    }
-\end{equation}
-\begin{equation}
-    =
-    \exp{
-        \left \{
+            \right \}
+        }
+    \end{equation}
+    \begin{equation}
+        =
+        \exp{
+            \left \{
             -
             \frac{
                 \left(
-                    \mu_1
-                    -
-                    \frac{
-                        \lambda_0 \delta_0^{-2} + \sum_{Y} y \sigma^2
-                    }
-                    {
-                        \delta_0^{-2} + n \sigma_0^{-2}
-                    }
+                \mu_1
+                -
+                \frac{
+                    \lambda_0 \delta_0^{-2} + \sum_{Y} y \sigma^2
+                }
+                {
+                    \delta_0^{-2} + n \sigma_0^{-2}
+                }
                 \right)^2
             }
             {
@@ -776,31 +776,31 @@ closely we will see that the posterior follow a normal distribution with a mean.
                     \sigma^{-2} + n \delta_0^{-2}
                 }
             }
-        \right \}
-    }
-\end{equation}
+            \right \}
+        }
+    \end{equation}
 \end{def}Defining
 \begin{def}\label{}
-\begin{equation}\label{}
-    \delta_1^2
-    =
-    \frac{1}{\delta_0^{-2}+n\delta^{-2}}
-\end{equation}
-\begin{equation}\label{}
-    \lambda_1
-    =
-    \frac{
-        \lambda_0 \delta_0^{-2} + \sum_{Y} y \sigma^2
-    }
-    {
-        \delta_0^{-2} + n \sigma_0^{-2}
-    }
-    =
-    \delta_1^2
-    \left(
+    \begin{equation}\label{}
+        \delta_1^2
+        =
+        \frac{1}{\delta_0^{-2}+n\delta^{-2}}
+    \end{equation}
+    \begin{equation}\label{}
+        \lambda_1
+        =
+        \frac{
+            \lambda_0 \delta_0^{-2} + \sum_{Y} y \sigma^2
+        }
+        {
+            \delta_0^{-2} + n \sigma_0^{-2}
+        }
+        =
+        \delta_1^2
+        \left(
         \lambda_0 \delta_0^{-2} + \sum_{Y} y \sigma^{-2}
-    \right)
-\end{equation}
+        \right)
+    \end{equation}
 \end{def}
 
 \subsection{Challenges of Bayesian Inference}\label{bayesproblems}
@@ -851,9 +851,9 @@ constant across them. Therefore we can drop it from the formula 4.2 and state th
 distribution follows the shape of the distribution of the likelihood times the prior:
 
 \begin{def}\label{bayespropto}
-\begin{equation}
-P(\Theta|D) \propto P(D|\Theta)P(\Theta)
-\end{equation}
+    \begin{equation}
+        P(\Theta|D) \propto P(D|\Theta)P(\Theta)
+    \end{equation}
 \end{def}
 
 Even though we can't calculate the exact posterior probability any set value of values for
@@ -864,28 +864,28 @@ The general method to get this kind of sample is the following:
 
 \begin{enumerate}
     \item Pick a set of values for our parameters as our starting position in the parameter space. The starting
-    location has to be a plausible set of values. We can check this As we can know
-    that \(P(D|\Theta)P(\Theta)\) has the same shape as our posterior and so if the value of the this function is zero when
-    we pluck our set of parameter values in it, these values are impossible and should not be use as a starting point
+          location has to be a plausible set of values. We can check this As we can know
+          that \(P(D|\Theta)P(\Theta)\) has the same shape as our posterior and so if the value of the this function is zero when
+          we pluck our set of parameter values in it, these values are impossible and should not be use as a starting point
     \item Pick a another set values for our parameters
     \item Calculate the probability of moving from our current position in the parameter space to the second set of parameter
-    values with the following formula:
+          values with the following formula:
 
-\begin{def}\label{randomwalk}
-\begin{equation}
-p_{move\ to\ new\ location} = \min \bigg(\frac{P(D|\Theta = proposed\ set)P(\Theta = proposed\ set)}{P(D|\Theta = current\ set)P(\Theta = current\ set)}, 1 \bigg)
-\end{equation}
-\end{def}
-, that is, if the value calculated with the proposed parameter value set is higher than the value for the current set
-we always move to the new proposed location in the parameter space and if the value is lower we move there
-with a probability defined by the ratio of the two values
+          \begin{def}\label{randomwalk}
+              \begin{equation}
+                  p_{move\ to\ new\ location} = \min \bigg(\frac{P(D|\Theta = proposed\ set)P(\Theta = proposed\ set)}{P(D|\Theta = current\ set)P(\Theta = current\ set)}, 1 \bigg)
+              \end{equation}
+          \end{def}
+          , that is, if the value calculated with the proposed parameter value set is higher than the value for the current set
+          we always move to the new proposed location in the parameter space and if the value is lower we move there
+          with a probability defined by the ratio of the two values
 
     \item Generate a random number between 0 and 1 and move to the proposed location
-    in the parameter space if the number is lower than the probability that we calculated
-    in the previous step. Otherwise we stay in the same place
+          in the parameter space if the number is lower than the probability that we calculated
+          in the previous step. Otherwise we stay in the same place
     \item Mark down the values of our current location in the parameter space
     \item Repeat from step 2
-    
+
 \end{enumerate}
 
 This method takes us on a random walk on the distribution defined by the likelihood times prior,
@@ -921,8 +921,8 @@ the example of practical implementation of this kind of calculation with R and R
 \subsubsection{Defining the Prior}\label{bayesproblems}
 
 formulation of the prior
-    previous information
-    uninformed prior
+previous information
+uninformed prior
 Computation difficulties
 
 \section{Why Bayesian Inference Fits N-of-1 Studies}\label{whybayes}
@@ -1035,9 +1035,9 @@ the formulas practically. Lets take example where we have two parameters instead
 the familiar Bayes’ rule and see how it applies to the joint parameter space:
 
 \begin{def}\label{conjugatebayesrule}
-\begin{equation}
-p(\theta, \sigma|D) \propto p(D|\theta, \sigma) p(\theta, \sigma) = p(D|\theta) p(\theta|\sigma) p(\sigma)
-\end{equation}
+    \begin{equation}
+        p(\theta, \sigma|D) \propto p(D|\theta, \sigma) p(\theta, \sigma) = p(D|\theta) p(\theta|\sigma) p(\sigma)
+    \end{equation}
 \end{def}
 
 We can see that the data \(D\) depends only on the value of \(\theta \), so that
@@ -1097,10 +1097,10 @@ Visualization of the shrinkage
 
     \bibitem{nofone}
     Richard L. Kravitz, Naihua Duan, Sunita Vohra, Jiang Li: Introduction to to N-of-1 Trials: Indications and Barriers in Design and Implementation of N-of-1 Trials: A User's Guide, AHRQ, 2014.
-   
+
     \bibitem{costs}
     Wilson D. Pace, Elizabeth W. Staton, Eric B. Larson: Financing and Economics of Conducting N-of-1 Trials in Design and Implementation of N-of-1 Trials: A User's Guide, AHRQ, 2014.
-   
+
     \bibitem{stat}
     Christopher H. Schmid, Naihua Duan: Statistical Design and Analytic Considerations in Design and Implementation of N-of-1 Trials: A User's Guide, AHRQ, 2014.
 
