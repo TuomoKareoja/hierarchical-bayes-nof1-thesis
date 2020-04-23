@@ -57,13 +57,13 @@ patient_base_level_array = np.random.normal(
 patient_treatment_effect_array = np.random.normal(
     population_treatment_effect_mean, population_treatment_effect_sd, patients_n
 )
-patient_trend_list = np.random.normal(
+patient_trend_array = np.random.normal(
     population_trend_mean, population_trend_sd, patients_n
 )
-patient_measurement_error_sd = np.random.gamma(
+patient_measurement_error_sd_array = np.random.gamma(
     population_measurement_error_shape, population_measurement_error_scale, patients_n
 )
-patient_autocorrelation = np.random.beta(
+patient_autocorrelation_array = np.random.beta(
     population_autocorrelation_alpha, population_autocorrelation_beta, patients_n
 )
 
@@ -74,10 +74,10 @@ patient_params_df = pd.DataFrame(
     {
         "patient_number": [i for i in range(1, patients_n + 1)],
         "base_level": patient_base_level_array,
-        "trend": patient_treatment_effect_array,
         "treatment_effect": patient_treatment_effect_array,
-        "measurement_error_sd": patient_treatment_effect_array,
-        "autocorrelation": patient_autocorrelation,
+        "trend": patient_trend_array,
+        "measurement_error_sd": patient_measurement_error_sd_array,
+        "autocorrelation": patient_autocorrelation_array,
     }
 )
 
