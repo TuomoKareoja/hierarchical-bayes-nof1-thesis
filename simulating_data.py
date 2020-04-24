@@ -15,7 +15,7 @@ random.seed(123)
 
 # %%
 
-data_folder = os.path.join("..", "..", "data")
+data_folder = os.path.join("data")
 params_file_name = "patient_parameters.csv"
 measurements_file_name = "patient_measurements.csv"
 params_path = os.path.join(data_folder, params_file_name)
@@ -38,13 +38,13 @@ total_measurements_n = blocks_n * treatment_measurements_n * 2
 # normal distribution
 population_base_level_mean = 10
 population_base_level_sd = 1
-population_treatment_effect_mean = 1.5
-population_treatment_effect_sd = 0.9
+population_treatment_effect_mean = 1
+population_treatment_effect_sd = 0.5
 population_trend_mean = 0.02
 population_trend_sd = 0.01
 # gamma distribution
-population_measurement_error_shape = 0.02
-population_measurement_error_scale = 0.005
+population_measurement_error_shape = 1.5
+population_measurement_error_scale = 1.5
 # beta distribution
 population_autocorrelation_alpha = 80
 population_autocorrelation_beta = 200
@@ -72,7 +72,7 @@ patient_autocorrelation_array = np.random.beta(
 # creating patient dataframe
 patient_params_df = pd.DataFrame(
     {
-        "patient_number": [i for i in range(1, patients_n + 1)],
+        "patient_index": [i for i in range(patients_n)],
         "base_level": patient_base_level_array,
         "treatment_effect": patient_treatment_effect_array,
         "trend": patient_trend_array,
@@ -148,15 +148,14 @@ for index, patient in patient_params_df.iterrows():
 
     patient_df = pd.DataFrame(
         {
-            "patient_number": [patient["patient_number"]] * total_measurements_n,
+            "patient_index": [patient["patient_index"]] * total_measurements_n,
             "measurement_index": [
-                measurement_index + 1
-                for measurement_index in range(total_measurements_n)
+                measurement_index for measurement_index in range(total_measurements_n)
             ],
             "treatment_period_index": list(
                 pd.core.common.flatten(
                     [
-                        [treatment_period_index + 1] * treatment_measurements_n
+                        [treatment_period_index] * treatment_measurements_n
                         for treatment_period_index in range(blocks_n * 2)
                     ]
                 )
@@ -164,7 +163,7 @@ for index, patient in patient_params_df.iterrows():
             "block_index": list(
                 pd.core.common.flatten(
                     [
-                        [block_index + 1] * treatment_measurements_n * 2
+                        [block_index] * treatment_measurements_n * 2
                         for block_index in range(blocks_n)
                     ]
                 )
