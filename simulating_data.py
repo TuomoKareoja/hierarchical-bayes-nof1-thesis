@@ -38,15 +38,15 @@ total_measurements_n = blocks_n * treatment_measurements_n * 2
 # normal distribution
 population_base_level_mean = 10
 population_base_level_sd = 1
-population_treatment_effect_mean = 1
-population_treatment_effect_sd = 0.5
+population_treatment_effect_mean = 0.6
+population_treatment_effect_sd = 0.8
 population_trend_mean = 0.02
 population_trend_sd = 0.01
 # gamma distribution
-population_measurement_error_shape = 1.5
-population_measurement_error_scale = 1.5
+population_measurement_error_shape = 2.5
+population_measurement_error_scale = 0.05
 # beta distribution
-population_autocorrelation_alpha = 80
+population_autocorrelation_alpha = 200
 population_autocorrelation_beta = 200
 
 
