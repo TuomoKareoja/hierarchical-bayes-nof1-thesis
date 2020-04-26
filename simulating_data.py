@@ -140,7 +140,7 @@ ax3.plot(
 )
 ax3.spines["top"].set_visible(False)
 ax3.spines["right"].set_visible(False)
-ax3.set_xlabel("Measurement Error")
+ax3.set_xlabel("Measurement Error\nStandard Deviation")
 
 # AUTOCORRELATION
 x = np.linspace(

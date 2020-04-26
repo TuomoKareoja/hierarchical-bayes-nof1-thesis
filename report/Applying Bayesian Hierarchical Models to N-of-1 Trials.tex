@@ -1070,6 +1070,21 @@ Imagined experimental design
 
 \subsection{Simulating the Data}
 
+\begin{def}\label{populationparameters}
+    \begin{equation}
+        Baselevel \sim \mathcal{N}(\mu,\sigma^2)
+    \end{equation}
+    \begin{equation}
+        Treatment Effect \sim \mathcal{N}(\mu,\sigma^2)
+    \end{equation}
+    \begin{equation}
+        Measurement Error \sim \mathcal{N}(0,\sigma^2), where \sigma \sim Beta(\alpha, \beta)
+    \end{equation}
+    \begin{equation}
+        Autocorrelation \sim Gamma(\alpha, \beta)
+    \end{equation}
+\end{def}
+
 \bigskip
 {
     \centering
