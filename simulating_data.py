@@ -2,9 +2,13 @@
 
 import pandas as pd
 import numpy as np
+import scipy
+import matplotlib.pyplot as plt
 import random
 import os
 import statsmodels.api as sm
+
+plt.style.use("seaborn-white")
 
 # %%
 
@@ -16,6 +20,7 @@ random.seed(123)
 # %%
 
 data_folder = os.path.join("data")
+visualization_folder = os.path.join("figures")
 params_file_name = "patient_parameters.csv"
 measurements_file_name = "patient_measurements.csv"
 params_path = os.path.join(data_folder, params_file_name)
@@ -27,7 +32,7 @@ measurements_path = os.path.join(data_folder, measurements_file_name)
 patients_n = 40
 # must be an even number, because of balanced design
 blocks_n = 4
-treatment_measurements_n = 7
+treatment_measurements_n = 4
 # treatment and no treatment only. No multiple treatments
 total_measurements_n = blocks_n * treatment_measurements_n * 2
 
@@ -36,8 +41,8 @@ total_measurements_n = blocks_n * treatment_measurements_n * 2
 # Population Level Parameters
 
 # normal distribution
-population_base_level_mean = 10
-population_base_level_sd = 1
+population_baselevel_mean = 10
+population_baselevel_sd = 1
 population_treatment_effect_mean = 0.6
 population_treatment_effect_sd = 0.8
 population_trend_mean = 0.02
@@ -46,13 +51,13 @@ population_trend_sd = 0.01
 population_measurement_error_shape = 2.5
 population_measurement_error_scale = 0.05
 # beta distribution
-population_autocorrelation_alpha = 200
+population_autocorrelation_alpha = 100
 population_autocorrelation_beta = 200
 
 
 # Patient Level Parameters
-patient_base_level_array = np.random.normal(
-    population_base_level_mean, population_base_level_sd, patients_n
+patient_baselevel_array = np.random.normal(
+    population_baselevel_mean, population_baselevel_sd, patients_n
 )
 patient_treatment_effect_array = np.random.normal(
     population_treatment_effect_mean, population_treatment_effect_sd, patients_n
@@ -69,11 +74,105 @@ patient_autocorrelation_array = np.random.beta(
 
 # %%
 
+# visualizing the population and patient parameter distributions
+
+
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(nrows=1, ncols=4, figsize=(8, 2))
+
+# BASELEVEL
+x = np.linspace(
+    scipy.stats.norm.ppf(
+        0.01, loc=population_baselevel_mean, scale=population_baselevel_sd
+    ),
+    scipy.stats.norm.ppf(
+        0.99, loc=population_baselevel_mean, scale=population_baselevel_sd
+    ),
+)
+y = scipy.stats.norm.pdf(
+    x, loc=population_baselevel_mean, scale=population_baselevel_sd
+)
+
+ax1.plot(x, y, "r-", lw=2)
+ax1.spines["top"].set_visible(False)
+ax1.spines["right"].set_visible(False)
+ax1.set_xlabel("Baselevel")
+ax1.set_ylabel("Probability Density")
+
+# TREATMENT EFFECT
+x = np.linspace(
+    scipy.stats.norm.ppf(
+        0.01, loc=population_treatment_effect_mean, scale=population_treatment_effect_sd
+    ),
+    scipy.stats.norm.ppf(
+        0.99,
+        loc=population_treatment_effect_mean,
+        scale=population_treatment_effect_sd,
+    ),
+)
+y = scipy.stats.norm.pdf(
+    x, loc=population_treatment_effect_mean, scale=population_treatment_effect_sd,
+)
+
+ax2.plot(x, y, "r-", lw=2)
+ax2.spines["top"].set_visible(False)
+ax2.spines["right"].set_visible(False)
+ax2.set_xlabel("Treatment Effect")
+
+# MEASUREMENT ERROR
+x = np.linspace(
+    scipy.stats.gamma.ppf(
+        0.01,
+        a=population_measurement_error_shape,
+        scale=population_measurement_error_scale,
+    ),
+    scipy.stats.gamma.ppf(
+        0.99,
+        a=population_measurement_error_shape,
+        scale=population_measurement_error_scale,
+    ),
+)
+y = scipy.stats.gamma.pdf(
+    x, a=population_measurement_error_shape, scale=population_measurement_error_scale,
+)
+
+ax3.plot(
+    x, y, "r-", lw=2,
+)
+ax3.spines["top"].set_visible(False)
+ax3.spines["right"].set_visible(False)
+ax3.set_xlabel("Measurement Error")
+
+# AUTOCORRELATION
+x = np.linspace(
+    scipy.stats.beta.ppf(
+        0.01, a=population_autocorrelation_alpha, b=population_autocorrelation_beta
+    ),
+    scipy.stats.beta.ppf(
+        0.99, a=population_autocorrelation_alpha, b=population_autocorrelation_beta,
+    ),
+)
+y = scipy.stats.beta.pdf(
+    x, a=population_autocorrelation_alpha, b=population_autocorrelation_beta
+)
+
+ax4.plot(x, y, "r-", lw=2)
+ax4.spines["top"].set_visible(False)
+ax4.spines["right"].set_visible(False)
+ax4.set_xlabel("Autocorrelation")
+
+plt.savefig(
+    os.path.join(visualization_folder, "population_parameter_distributions.pdf"),
+    bbox_inches="tight",
+)
+plt.show()
+
+# %%
+
 # creating patient dataframe
 patient_params_df = pd.DataFrame(
     {
         "patient_index": [i for i in range(patients_n)],
-        "base_level": patient_base_level_array,
+        "baselevel": patient_baselevel_array,
         "treatment_effect": patient_treatment_effect_array,
         "trend": patient_trend_array,
         "measurement_error_sd": patient_measurement_error_sd_array,
@@ -127,7 +226,7 @@ for index, patient in patient_params_df.iterrows():
     # BASE LEVEL AND TREND
     base_and_trend_array = np.array(
         [
-            patient["base_level"] + patient["trend"] * measurement_index
+            patient["baselevel"] + patient["trend"] * measurement_index
             for measurement_index in range(total_measurements_n)
         ]
     )

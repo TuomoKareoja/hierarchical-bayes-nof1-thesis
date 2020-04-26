@@ -6,7 +6,7 @@
 \usepackage{amsfonts}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{tikz}
+\usepackage{graphicx}
 
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\C}{\mathbb{C}}
@@ -36,6 +36,8 @@
 \addtolength{\textwidth}{2.3cm}
 \addtolength{\voffset}{0.45cm}
 \addtolength{\textheight}{-0.9cm}
+
+\graphicspath{{../figures/}}
 
 \title{Applying Bayesian Hierarchical Models to N-of-1 Trials}
 \author{Tuomo Kareoja}
@@ -1066,7 +1068,16 @@ distributions and in this in turn leads to greater shrinkage.
 
 Imagined experimental design
 
-How the data was simulated
+\subsection{Simulating the Data}
+
+\bigskip
+{
+    \centering
+    \includegraphics{population_parameter_distributions.pdf}
+    \par
+}
+\bigskip
+
 
 What makes the simulated data hierarchical?
 
