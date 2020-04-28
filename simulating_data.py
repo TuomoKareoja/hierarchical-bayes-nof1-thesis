@@ -29,7 +29,7 @@ measurements_path = os.path.join(data_folder, measurements_file_name)
 # %%
 
 # Study design
-patients_n = 40
+patients_n = 10
 # must be an even number, because of balanced design
 blocks_n = 4
 treatment_measurements_n = 4
@@ -164,7 +164,6 @@ plt.savefig(
     os.path.join(visualization_folder, "population_parameter_distributions.pdf"),
     bbox_inches="tight",
 )
-plt.show()
 
 # %%
 
