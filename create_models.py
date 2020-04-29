@@ -18,8 +18,8 @@ all_parameters_df = pd.read_csv(parameters_path)
 # %%
 
 # Choosing one patient (patient 1)
-measurements_df = all_measurements_df[all_measurements_df["patient_index"] == 1]
-parameters_df = all_parameters_df[all_parameters_df["patient_index"] == 1]
+measurements_df = all_measurements_df[all_measurements_df["patient_index"] == 0]
+parameters_df = all_parameters_df[all_parameters_df["patient_index"] == 0]
 
 # %%
 
@@ -29,8 +29,8 @@ parameters_df = all_parameters_df[all_parameters_df["patient_index"] == 1]
 
 with pm.Model() as single_patient_no_trend_model:
 
-    baseline_prior = pm.Normal("baseline", mu=10, sigma=10)
-    treatment_effect_prior = pm.Normal("treatment_effect", mu=2, sigma=3)
+    baseline_prior = pm.Normal("baseline", mu=10, sigma=3)
+    treatment_effect_prior = pm.Normal("treatment_effect", mu=0, sigma=0)
     sigma_prior = pm.HalfCauchy("sigma", beta=10, testval=1.0)
 
     # likelihood is not a well defined distribution
@@ -107,8 +107,8 @@ with pm.Model() as single_patient_no_trend_model:
 
 with pm.Model() as single_patient_with_trend_model:
 
-    baseline_prior = pm.Normal("baseline", mu=10, sigma=10)
-    treatment_effect_prior = pm.Normal("treatment_effect", mu=2, sigma=3)
+    baseline_prior = pm.Normal("baseline", mu=10, sigma=3)
+    treatment_effect_prior = pm.Normal("treatment_effect", mu=0, sigma=1)
     trend_prior = pm.Normal("trend", mu=0, sigma=1)
     sigma_prior = pm.HalfCauchy("sigma", beta=10, testval=1.0)
 
@@ -205,9 +205,9 @@ patient_index = all_measurements_df["patient_index"]
 with pm.Model() as all_patients_no_trend_model:
 
     # separate parameter for each patient
-    baseline_prior = pm.Normal("baseline", mu=10, sigma=10, shape=patients_n)
+    baseline_prior = pm.Normal("baseline", mu=10, sigma=3, shape=patients_n)
     treatment_effect_prior = pm.Normal(
-        "treatment_effect", mu=2, sigma=3, shape=patients_n
+        "treatment_effect", mu=0, sigma=1, shape=patients_n
     )
     sigma_prior = pm.HalfCauchy("sigma", beta=10, testval=1.0, shape=patients_n)
 
@@ -258,9 +258,9 @@ with pm.Model() as all_patients_no_trend_model:
 with pm.Model() as all_patients_with_trend_model:
 
     # separate parameter for each patient
-    baseline_prior = pm.Normal("baseline", mu=10, sigma=10, shape=patients_n)
+    baseline_prior = pm.Normal("baseline", mu=10, sigma=3, shape=patients_n)
     treatment_effect_prior = pm.Normal(
-        "treatment_effect", mu=2, sigma=3, shape=patients_n
+        "treatment_effect", mu=0, sigma=1, shape=patients_n
     )
     trend_prior = pm.Normal("trend", mu=0, sigma=1, shape=patients_n)
     sigma_prior = pm.HalfCauchy("sigma", beta=10, testval=1.0, shape=patients_n)
@@ -368,7 +368,7 @@ with pm.Model() as hierarchical_no_trend_model:
     )
 
     population_treatment_effect_mean_prior = pm.Normal(
-        "population_treatment_effect_mean", mu=1, sigma=2
+        "population_treatment_effect_mean", mu=0, sigma=1
     )
     population_treatment_effect_sd_prior = pm.HalfCauchy(
         "population_treatment_effect_sd", beta=10, testval=1
@@ -503,7 +503,7 @@ with pm.Model() as hierarchical_with_trend_model:
     )
 
     population_treatment_effect_mean_prior = pm.Normal(
-        "population_treatment_effect_mean", mu=1, sigma=2
+        "population_treatment_effect_mean", mu=0, sigma=1
     )
     population_treatment_effect_sd_prior = pm.HalfCauchy(
         "population_treatment_effect_sd", beta=10, testval=1
