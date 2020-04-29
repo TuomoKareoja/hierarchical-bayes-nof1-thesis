@@ -32,7 +32,7 @@ measurements_path = os.path.join(data_folder, measurements_file_name)
 patients_n = 10
 # must be an even number, because of balanced design
 blocks_n = 4
-treatment_measurements_n = 4
+treatment_measurements_n = 1
 # treatment and no treatment only. No multiple treatments
 total_measurements_n = blocks_n * treatment_measurements_n * 2
 
@@ -43,13 +43,13 @@ total_measurements_n = blocks_n * treatment_measurements_n * 2
 # normal distribution
 population_baselevel_mean = 10
 population_baselevel_sd = 1
-population_treatment_effect_mean = 0.6
-population_treatment_effect_sd = 0.8
+population_treatment_effect_mean = -0.1
+population_treatment_effect_sd = 0.1
 population_trend_mean = 0.02
 population_trend_sd = 0.01
-# gamma distribution
-population_measurement_error_shape = 2.5
-population_measurement_error_scale = 0.05
+# inverse gamma distribution
+population_measurement_error_shape = 3
+population_measurement_error_scale = 0.8
 # beta distribution
 population_autocorrelation_alpha = 100
 population_autocorrelation_beta = 200
@@ -65,8 +65,11 @@ patient_treatment_effect_array = np.random.normal(
 patient_trend_array = np.random.normal(
     population_trend_mean, population_trend_sd, patients_n
 )
-patient_measurement_error_sd_array = np.random.gamma(
-    population_measurement_error_shape, population_measurement_error_scale, patients_n
+# scipy uses the numpy random seed
+patient_measurement_error_sd_array = scipy.stats.invgamma.rvs(
+    a=population_measurement_error_shape,
+    scale=population_measurement_error_scale,
+    size=patients_n,
 )
 patient_autocorrelation_array = np.random.beta(
     population_autocorrelation_alpha, population_autocorrelation_beta, patients_n
@@ -120,18 +123,18 @@ ax2.set_xlabel("Treatment Effect")
 
 # MEASUREMENT ERROR
 x = np.linspace(
-    scipy.stats.gamma.ppf(
+    scipy.stats.invgamma.ppf(
         0.01,
         a=population_measurement_error_shape,
         scale=population_measurement_error_scale,
     ),
-    scipy.stats.gamma.ppf(
+    scipy.stats.invgamma.ppf(
         0.99,
         a=population_measurement_error_shape,
         scale=population_measurement_error_scale,
     ),
 )
-y = scipy.stats.gamma.pdf(
+y = scipy.stats.invgamma.pdf(
     x, a=population_measurement_error_shape, scale=population_measurement_error_scale,
 )
 
