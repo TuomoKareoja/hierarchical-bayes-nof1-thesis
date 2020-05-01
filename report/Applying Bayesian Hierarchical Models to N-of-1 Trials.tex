@@ -1070,18 +1070,37 @@ Imagined experimental design
 
 \subsection{Simulating the Data}
 
+\begin{def}\label{simulationmodel}
+    \begin{equation}\label{}
+        y_t = \mu_i + t\beta_i + Z_t\theta_i + \epsilon_t + \rho_i\epsilon_{t-1}
+    \end{equation}
+\end{def}where \(\mu_i\) is the baseline of the patient \(i\), \(\beta_i\) is the trend,
+\(\theta_i\) is the treatment effect with \(Z_t\) being an indicator variable that is 1 when
+\(t\) is within a period where treatment was applied and 0 otherwise.
+\(\epsilon_t \sim N(0,\sigma_i^2) \) is the error term at \(t\) and \(\rho_i\) is the is the correlation
+between consecutive errors.
+
+So we have a data generating model with both and trend and lag 1 autocorrelation making the
+generated model more complex. The trend and autocorrelation are parts of the generation process
+that likely cannot be modeled with the generated data because of limited observations.
+This way the example tries to be more realistic by having the data generation function
+to be such complexity that it cannot be fully modeled and some decisions have to be made
+of how to try to approximate the process with a simpler model.
+
+These patient level terms are generated from population level distributions
+
 \begin{def}\label{populationparameters}
     \begin{equation}
-        Baselevel \sim \mathcal{N}(\mu,\sigma^2)
+        \mu_i \sim \mathcal{N}(\mu,\sigma^2)
     \end{equation}
     \begin{equation}
-        Treatment Effect \sim \mathcal{N}(\mu,\sigma^2)
+        \theta_i \sim \mathcal{N}(\theta,\sigma^2)
     \end{equation}
     \begin{equation}
-        Measurement Error \sim \mathcal{N}(0,\sigma^2), where \sigma \sim Beta(\alpha, \beta)
+        \sigma_i \sim Beta(\alpha, \beta)
     \end{equation}
     \begin{equation}
-        Autocorrelation \sim InvGamma(\alpha, \beta)
+        \rho_i \sim InvGamma(\alpha, \beta)
     \end{equation}
 \end{def}
 
@@ -1127,6 +1146,29 @@ picture of the hierarchical parameter structure used to create the data
 
 \subsection{Defining the Model}\label{1model}
 
+\begin{def}\label{simulationmodel}
+    \begin{equation}\label{}
+        y_t = \mu + Z_t\theta + \epsilon_t
+    \end{equation}
+\end{def}where \(\mu\) is the baseline
+\(\theta\) is the treatment effect with \(Z_t\) being an indicator variable that is 1 when
+\(t\) is within a period where treatment was applied and 0 otherwise and finally
+\(\epsilon_t \sim N(0,\sigma^2) \) is the error term.
+
+Priors:
+
+\begin{def}\label{simulationmodel}
+    \begin{equation}\label{}
+        \mu \sim N(10, 3^2)
+    \end{equation}
+    \begin{equation}\label{}
+        \theta \sim N(0, 1^2)
+    \end{equation}
+    \begin{equation}\label{}
+        \epsilon \sim HalfCauchy(loc=0, scale=10)
+    \end{equation}
+\end{def}
+
 Defining the priors and incorporating our previous knowledge.
 
 Defining the model in a technical sense with STAN, with mention of the problems that
@@ -1137,6 +1179,49 @@ have to be considered
 \section{Analyzing Multiple Trials With Hierarchical Models}\label{pooling}
 
 \subsection{Defining the Model}\label{hiermodel}
+
+\begin{def}\label{simulationmodel}
+    \begin{equation}\label{}
+        y_t = \mu_i + Z_t\theta_i + \epsilon_i
+    \end{equation}
+\end{def}where \(\mu_i\) is the baseline of the patient \(i\),
+\(\theta_i\) is the treatment effect with \(Z_t\) being an indicator variable that is 1 when
+\(t\) is within a period where treatment was applied and 0 otherwise and finally
+\(\epsilon_i \sim N(0,\sigma_i^2) \) is the error term.
+
+Individual parameters relation to population distribution:
+
+\begin{def}\label{simulationmodel}
+    \begin{equation}\label{}
+        \mu_i \sim N(\mu_{pop}, \sigma_{pop}^2)
+    \end{equation}
+    \begin{equation}\label{}
+        \theta_i \sim N(\theta_{pop}, \sigma_{pop}^2)
+    \end{equation}
+    \begin{equation}\label{}
+        \sigma_i \sim HalfCauchy(loc=0, scale=\sigma_{pop})
+    \end{equation}
+\end{def}
+
+Defining priors for the population distribution:
+
+\begin{def}\label{population_priors}
+    \begin{equation}\label{}
+        \mu_{pop} \sim N(10, 3^2)
+    \end{equation}
+    \begin{equation}\label{}
+        \sigma_{pop} \sim HalfCauchy(loc=0, scale=10)
+    \end{equation}
+    \begin{equation}\label{}
+        \theta_{pop} \sim N(0, 1^2)
+    \end{equation}
+    \begin{equation}\label{}
+        \sigma_{pop} \sim HalfCauchy(loc=0, scale=10)
+    \end{equation}
+    \begin{equation}\label{}
+        \sigma_{pop} \sim HalfCauchy(loc=0, scale=10)
+    \end{equation}
+\end{def}
 
 \subsection{Results}\label{hierresults}
 
