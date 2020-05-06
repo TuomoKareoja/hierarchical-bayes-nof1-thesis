@@ -32,7 +32,7 @@ measurements_path = os.path.join(data_folder, measurements_file_name)
 patients_n = 10
 # must be an even number, because of balanced design
 blocks_n = 4
-treatment_measurements_n = 1
+treatment_measurements_n = 4
 # treatment and no treatment only. No multiple treatments
 total_measurements_n = blocks_n * treatment_measurements_n * 2
 
@@ -41,26 +41,26 @@ total_measurements_n = blocks_n * treatment_measurements_n * 2
 # Population Level Parameters
 
 # normal distribution
-population_baselevel_mean = 10
-population_baselevel_sd = 1
-population_treatment_effect_mean = -0.1
-population_treatment_effect_sd = 0.1
+population_treatment1_mean = 10
+population_treatment1_sd = 0.2
+population_treatment2_mean = 9.7
+population_treatment2_sd = 0.3
 population_trend_mean = 0.02
 population_trend_sd = 0.01
 # inverse gamma distribution
 population_measurement_error_shape = 3
-population_measurement_error_scale = 0.8
+population_measurement_error_scale = 0.3
 # beta distribution
 population_autocorrelation_alpha = 100
 population_autocorrelation_beta = 200
 
 
 # Patient Level Parameters
-patient_baselevel_array = np.random.normal(
-    population_baselevel_mean, population_baselevel_sd, patients_n
+patient_treatment1_array = np.random.normal(
+    population_treatment1_mean, population_treatment1_sd, patients_n
 )
-patient_treatment_effect_array = np.random.normal(
-    population_treatment_effect_mean, population_treatment_effect_sd, patients_n
+patient_treatment2_array = np.random.normal(
+    population_treatment2_mean, population_treatment2_sd, patients_n
 )
 patient_trend_array = np.random.normal(
     population_trend_mean, population_trend_sd, patients_n
@@ -82,38 +82,36 @@ patient_autocorrelation_array = np.random.beta(
 
 fig, (ax1, ax2, ax3, ax4) = plt.subplots(nrows=1, ncols=4, figsize=(8, 2))
 
-# BASELEVEL
+# treatment1
 x = np.linspace(
     scipy.stats.norm.ppf(
-        0.01, loc=population_baselevel_mean, scale=population_baselevel_sd
+        0.01, loc=population_treatment1_mean, scale=population_treatment1_sd
     ),
     scipy.stats.norm.ppf(
-        0.99, loc=population_baselevel_mean, scale=population_baselevel_sd
+        0.99, loc=population_treatment1_mean, scale=population_treatment1_sd
     ),
 )
 y = scipy.stats.norm.pdf(
-    x, loc=population_baselevel_mean, scale=population_baselevel_sd
+    x, loc=population_treatment1_mean, scale=population_treatment1_sd
 )
 
 ax1.plot(x, y, "r-", lw=2)
 ax1.spines["top"].set_visible(False)
 ax1.spines["right"].set_visible(False)
-ax1.set_xlabel("Baselevel")
+ax1.set_xlabel("treatment1")
 ax1.set_ylabel("Probability Density")
 
 # TREATMENT EFFECT
 x = np.linspace(
     scipy.stats.norm.ppf(
-        0.01, loc=population_treatment_effect_mean, scale=population_treatment_effect_sd
+        0.01, loc=population_treatment2_mean, scale=population_treatment2_sd
     ),
     scipy.stats.norm.ppf(
-        0.99,
-        loc=population_treatment_effect_mean,
-        scale=population_treatment_effect_sd,
+        0.99, loc=population_treatment2_mean, scale=population_treatment2_sd,
     ),
 )
 y = scipy.stats.norm.pdf(
-    x, loc=population_treatment_effect_mean, scale=population_treatment_effect_sd,
+    x, loc=population_treatment2_mean, scale=population_treatment2_sd,
 )
 
 ax2.plot(x, y, "r-", lw=2)
@@ -174,8 +172,8 @@ plt.savefig(
 patient_params_df = pd.DataFrame(
     {
         "patient_index": [i for i in range(patients_n)],
-        "baselevel": patient_baselevel_array,
-        "treatment_effect": patient_treatment_effect_array,
+        "treatment1": patient_treatment1_array,
+        "treatment2": patient_treatment2_array,
         "trend": patient_trend_array,
         "measurement_error_sd": patient_measurement_error_sd_array,
         "autocorrelation": patient_autocorrelation_array,
@@ -225,27 +223,39 @@ for index, patient in patient_params_df.iterrows():
         nsample=total_measurements_n, scale=patient["measurement_error_sd"],
     )
 
-    # BASE LEVEL AND TREND
-    base_and_trend_array = np.array(
-        [
-            patient["baselevel"] + patient["trend"] * measurement_index
-            for measurement_index in range(total_measurements_n)
-        ]
-    )
-
-    # TREATMENT EFFECT
-    treatment_effects_array = np.array(
+    # TREATMENT1
+    treatment1_array = np.array(
         list(
             pd.core.common.flatten(
                 [
-                    [patient["treatment_effect"] * indicator] * treatment_measurements_n
+                    [patient["treatment1"] * abs(indicator - 1)]
+                    * treatment_measurements_n
+                    for indicator in patient["treatment_order"]
+                ]
+            )
+        )
+    )
+    # TREATMENT22
+    treatment2_array = np.array(
+        list(
+            pd.core.common.flatten(
+                [
+                    [patient["treatment2"] * indicator] * treatment_measurements_n
                     for indicator in patient["treatment_order"]
                 ]
             )
         )
     )
 
-    measurements = ma_process_array + base_and_trend_array + treatment_effects_array
+    # TREND
+    trend_array = np.array(
+        [
+            patient["trend"] * measurement_index
+            for measurement_index in range(total_measurements_n)
+        ]
+    )
+
+    measurements = ma_process_array + treatment1_array + treatment2_array + trend_array
 
     patient_df = pd.DataFrame(
         {
@@ -289,3 +299,6 @@ patient_measurements_df = pd.concat(patient_measurements_df_list, ignore_index=T
 
 patient_params_df.to_csv(params_path, index=False)
 patient_measurements_df.to_csv(measurements_path, index=False)
+
+
+# %%
