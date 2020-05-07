@@ -1144,6 +1144,12 @@ picture of the hierarchical parameter structure used to create the data
 
 \section{Analyzing a Single Trial}\label{1trial}
 
+PYMC3 requires that we appropriate give it functional forms for likelihoods to represent the information from the data. This can be bit tricky
+when it is clear that likelihood does not take form a well known distribution. For these cases we must define the log-likelihood function
+of the likelihood manually.
+
+Theano is a package that allows us to define functions involving array operations and linear algebra
+
 \subsection{Defining the Model}\label{1model}
 
 \begin{def}\label{simulationmodel}
@@ -1177,6 +1183,9 @@ have to be considered
 \subsection{Results}\label{1results}
 
 \section{Analyzing Multiple Trials With Hierarchical Models}\label{pooling}
+
+With the shape parameter we can initialise the parameters as vectors with the length of out number of patients. This way each
+patient get her own parameter.
 
 \subsection{Defining the Model}\label{hiermodel}
 

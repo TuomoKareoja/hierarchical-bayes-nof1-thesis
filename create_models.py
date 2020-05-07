@@ -37,10 +37,87 @@ parameters_df = all_parameters_df[all_parameters_df["patient_index"] == 0]
 # SINGLE PATIENT MODEL WITHOUT TREND
 
 
-def create_simulations(treatment1, treatment2, sigma, size):
+def draw_posterior_checks(model, treatment_order, observations_per_treatment):
 
-    # we get these from the environment. No possibility to pass trough
-    # the functions it seems:
+    with model as model:
+        post_pred = pm.sample_posterior_predictive(trace, samples=1000)
+
+    treatment2_indexer = np.repeat(treatment_order, observations_per_treatment)
+    treatment1_indexer = np.abs(treatment2_indexer - 1)
+    # convert to boolean indexer
+    treatment2_indexer = np.array(treatment2_indexer, dtype=bool)
+    treatment1_indexer = np.array(treatment1_indexer, dtype=bool)
+
+    _, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(14, 6))
+
+    # Treatment 1
+    sns.distplot(
+        post_pred["y"][:, treatment1_indexer].mean(axis=1),
+        label="Posterior Predictive Means",
+        ax=ax1,
+    )
+    ax1.axvline(
+        measurements_df[measurements_df["treatment"] == 0]["measurement"].mean(),
+        ls="--",
+        color="orange",
+        label="True Mean of Treatment 1 in Data",
+    )
+    ax1.axvline(
+        parameters_df["treatment1"][0],
+        ls="--",
+        color="r",
+        label="True Treatment 1 Value",
+    )
+    ax1.legend()
+
+    # Treatment 2
+    sns.distplot(
+        post_pred["y"][:, treatment2_indexer].mean(axis=1),
+        label="Posterior Predictive Means",
+        ax=ax2,
+    )
+    ax2.axvline(
+        measurements_df[measurements_df["treatment"] == 1]["measurement"].mean(),
+        ls="--",
+        color="orange",
+        label="True Mean of Treatment 2 in Data",
+    )
+    ax2.axvline(
+        parameters_df["treatment2"][0],
+        ls="--",
+        color="r",
+        label="True Treatment 2 Value",
+    )
+
+    # Treatment difference
+    sns.distplot(
+        post_pred["y"][:, treatment1_indexer].mean(axis=1)
+        - post_pred["y"][:, treatment2_indexer].mean(axis=1),
+        label="Posterior Predictive Means",
+        ax=ax3,
+    )
+    ax3.axvline(
+        measurements_df[measurements_df["treatment"] == 0]["measurement"].mean()
+        - measurements_df[measurements_df["treatment"] == 1]["measurement"].mean(),
+        ls="--",
+        color="orange",
+        label="True Mean Difference in Treatments in Data",
+    )
+    ax3.axvline(
+        parameters_df["treatment1"][0] - parameters_df["treatment2"][0],
+        ls="--",
+        color="r",
+        label="True Difference in Treatments",
+    )
+    ax3.legend()
+
+    plt.show()
+
+
+def create_simulations(treatment1, treatment2, sigma, trend, size):
+
+    # We get these straight from the environment. No possibility to
+    # pass them trough as parameters all the way from DensityDist
     #
     # treatment_order
     # observations_per_treatment
@@ -67,11 +144,22 @@ def create_simulations(treatment1, treatment2, sigma, size):
         )
     )
 
+    trend_array = np.array(
+        [
+            trend * measurement_index
+            for measurement_index in range(
+                observations_per_treatment * len(treatment_order)
+            )
+        ]
+    )
+
     measurement_error_array = np.random.normal(
         loc=0, scale=sigma, size=observations_per_treatment * len(treatment_order)
     )
 
-    measurements = treatment1_array + treatment2_array + measurement_error_array
+    measurements = (
+        treatment1_array + treatment2_array + trend_array + measurement_error_array
+    )
 
     return measurements
 
@@ -79,9 +167,17 @@ def create_simulations(treatment1, treatment2, sigma, size):
 # defining a sampling function to be able to create posterior samples
 def random(point=None, size=None):
 
-    treatment1_, treatment2_, sigma_ = pm.distributions.draw_values(
-        [model.treatment1, model.treatment2, model.sigma], point=point
-    )
+    try:
+        treatment1_, treatment2_, sigma_, trend_ = pm.distributions.draw_values(
+            [model.treatment1, model.treatment2, model.sigma, model.trend], point=point
+        )
+
+    except AttributeError:
+        treatment1_, treatment2_, sigma_ = pm.distributions.draw_values(
+            [model.treatment1, model.treatment2, model.sigma], point=point
+        )
+
+        trend_ = 0
 
     size = 1 if size is None else size
 
@@ -90,15 +186,15 @@ def random(point=None, size=None):
         treatment1=treatment1_,
         treatment2=treatment2_,
         sigma=sigma_,
+        trend=trend_,
         size=size,
-        # broadcast_shape=(size,),
     )
 
 
 # %%
 
 
-with pm.Model() as single_patient_no_trend_model:
+with pm.Model() as model:
 
     treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10)
     treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
@@ -158,7 +254,7 @@ with pm.Model() as single_patient_no_trend_model:
     # look very similar. Long tails in the distribution of energy levels
     # indicates deteriorated sampler efficiency.
     # pm.energyplot(trace)
-    # plt.show()
+    plt.show()
 
     # %%
 
@@ -184,85 +280,21 @@ with pm.Model() as single_patient_no_trend_model:
 
 # posterior sampling
 
+
 treatment_order = parameters_df["treatment_order"][0]
 observations_per_treatment = 4
 
-with single_patient_no_trend_model as model:
-    post_pred = pm.sample_posterior_predictive(trace, samples=1000)
+draw_posterior_checks(model, treatment_order, observations_per_treatment)
 
-treatment2_indexer = np.repeat(treatment_order, observations_per_treatment)
-treatment1_indexer = np.abs(treatment2_indexer - 1)
-# convert to boolean indexer
-treatment2_indexer = np.array(treatment2_indexer, dtype=bool)
-treatment1_indexer = np.array(treatment1_indexer, dtype=bool)
-
-
-fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(14, 6))
-
-# Treatment 1
-sns.distplot(
-    post_pred["y"][:, treatment1_indexer].mean(axis=1),
-    label="Posterior Predictive Means",
-    ax=ax1,
-)
-ax1.axvline(
-    measurements_df[measurements_df["treatment"] == 0]["measurement"].mean(),
-    ls="--",
-    color="orange",
-    label="True Mean of Treatment 1 in Data",
-)
-ax1.axvline(
-    parameters_df["treatment1"][0], ls="--", color="r", label="True Treatment 1 Value",
-)
-ax1.legend()
-
-# Treatment 2
-sns.distplot(
-    post_pred["y"][:, treatment2_indexer].mean(axis=1),
-    label="Posterior Predictive Means",
-    ax=ax2,
-)
-ax2.axvline(
-    measurements_df[measurements_df["treatment"] == 1]["measurement"].mean(),
-    ls="--",
-    color="orange",
-    label="True Mean of Treatment 2 in Data",
-)
-ax2.axvline(
-    parameters_df["treatment2"][0], ls="--", color="r", label="True Treatment 2 Value",
-)
-
-# Treatment difference
-sns.distplot(
-    post_pred["y"][:, treatment1_indexer].mean(axis=1)
-    - post_pred["y"][:, treatment2_indexer].mean(axis=1),
-    label="Posterior Predictive Means",
-    ax=ax3,
-)
-ax3.axvline(
-    measurements_df[measurements_df["treatment"] == 0]["measurement"].mean()
-    - measurements_df[measurements_df["treatment"] == 1]["measurement"].mean(),
-    ls="--",
-    color="orange",
-    label="True Mean Difference in Treatments in Data",
-)
-ax3.axvline(
-    parameters_df["treatment1"][0] - parameters_df["treatment2"][0],
-    ls="--",
-    color="r",
-    label="True Treatment 2 Value",
-)
-
-plt.show()
 
 # %%
 
 # SINGLE PATIENT MODEL WITH TREND
 
-with pm.Model() as single_patient_with_trend_model:
+with pm.Model() as model:
 
-    baseline_prior = pm.Normal("baseline", mu=10, sigma=3)
-    treatment_effect_prior = pm.Normal("treatment_effect", mu=0, sigma=1)
+    treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10)
+    treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
     trend_prior = pm.Normal("trend", mu=0, sigma=1)
     sigma_prior = pm.HalfCauchy("sigma", beta=10)
 
@@ -270,7 +302,7 @@ with pm.Model() as single_patient_with_trend_model:
     # so using prebuilt parts does not work. Writing
     # custom function calculating the log likelihood
 
-    def likelihood(baseline, treatment, trend, sigma):
+    def likelihood(treatment1, treatment2, trend, sigma):
         def logp_(value):
 
             return (-1 / 2.0) * (
@@ -278,7 +310,14 @@ with pm.Model() as single_patient_with_trend_model:
                 + value[0].shape[0] * theano.tensor.log(sigma ** 2)
                 + (1 / sigma ** 2)
                 * (
-                    (value[0] - (baseline + trend * value[2] + treatment * value[1]))
+                    (
+                        value[0]
+                        - (
+                            treatment1 * abs(value[1] - 1)
+                            + treatment2 * value[1]
+                            + trend * value[2]
+                        )
+                    )
                     ** 2
                 ).sum(axis=0)
             )
@@ -288,8 +327,8 @@ with pm.Model() as single_patient_with_trend_model:
     like = pm.DensityDist(
         "y",
         likelihood(
-            baseline=baseline_prior,
-            treatment=treatment_effect_prior,
+            treatment1=treatment1_prior,
+            treatment2=treatment2_prior,
             trend=trend_prior,
             sigma=sigma_prior,
         ),
@@ -298,32 +337,33 @@ with pm.Model() as single_patient_with_trend_model:
             measurements_df["treatment"],
             measurements_df["measurement_index"],
         ],
+        random=random,
     )
 
-    trace = pm.sample(1000, tune=500, cores=3)
+    trace = pm.sample(800, tune=600, cores=3)
 
-    pm.traceplot(trace, ["baseline", "treatment_effect", "trend", "sigma"])
+    pm.traceplot(trace, ["treatment1", "treatment2", "trend", "sigma"])
     plt.show()
 
     # posteriors should look reasonable
-    pm.plot_posterior(trace)
-    plt.show()
+    # pm.plot_posterior(trace)
+    # plt.show()
 
     # check if your variables have reasonable credible intervals,
     # and Gelman–Rubin scores close to 1
-    pm.forestplot(trace)
-    plt.show()
+    # pm.forestplot(trace)
+    # plt.show()
 
     # check if your chains are impaired by high autocorrelation.
     # Also remember that thinning your chains is a waste of time
     # at best, and deluding yourself at worst
-    pm.autocorrplot(trace)
-    plt.show()
+    # pm.autocorrplot(trace)
+    # plt.show()
 
     # ideally the energy and marginal energy distributions should
     # look very similar. Long tails in the distribution of energy levels
     # indicates deteriorated sampler efficiency.
-    pm.energyplot(trace)
+    # pm.energyplot(trace)
     plt.show()
 
     # %%
@@ -344,6 +384,14 @@ with pm.Model() as single_patient_with_trend_model:
     # uncertainties might indicate that your model needs
     # interaction terms.)
     pm.summary(trace)
+
+# %%
+
+treatment_order = parameters_df["treatment_order"][0]
+observations_per_treatment = 4
+
+draw_posterior_checks(model, treatment_order, observations_per_treatment)
+
 
 # %%
 
@@ -506,6 +554,7 @@ with pm.Model() as all_patients_with_trend_model:
     pm.summary(trace)
 
 # %%
+
 
 # HIERARCHICAL MODELS
 
