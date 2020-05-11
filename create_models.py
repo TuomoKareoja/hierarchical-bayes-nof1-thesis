@@ -409,17 +409,15 @@ patient_index = all_measurements_df["patient_index"]
 with pm.Model() as all_patients_no_trend_model:
 
     # separate parameter for each patient
-    baseline_prior = pm.Normal("baseline", mu=10, sigma=3, shape=patients_n)
-    treatment_effect_prior = pm.Normal(
-        "treatment_effect", mu=0, sigma=1, shape=patients_n
-    )
+    treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10, shape=patients_n)
+    treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10, shape=patients_n)
     sigma_prior = pm.HalfCauchy("sigma", beta=10, shape=patients_n)
 
     # likelihood is not a well defined distribution
     # so using prebuilt parts does not work. Writing
     # custom function calculating the log likelihood
 
-    def likelihood(baseline, treatment, sigma):
+    def likelihood(treatment1, treatment2, sigma):
         def logp_(value):
 
             return (-1 / 2.0) * (
@@ -430,8 +428,8 @@ with pm.Model() as all_patients_no_trend_model:
                     (
                         value[0]
                         - (
-                            baseline[patient_index]
-                            + treatment[patient_index] * value[1]
+                            treatment1[patient_index] * abs(value[1] - 1)
+                            + treatment2[patient_index] * value[1]
                         )
                     )
                     ** 2
@@ -443,37 +441,34 @@ with pm.Model() as all_patients_no_trend_model:
     like = pm.DensityDist(
         "y",
         likelihood(
-            baseline=baseline_prior,
-            treatment=treatment_effect_prior,
-            sigma=sigma_prior,
+            treatment1=treatment1_prior, treatment2=treatment2_prior, sigma=sigma_prior,
         ),
-        observed=[all_measurements_df["measurement"], all_measurements_df["treatment"]],
+        observed=[all_measurements_df["measurement"], all_measurements_df["treatment"]]
+        # random=random,
     )
 
-    trace = pm.sample(1000, tune=500, cores=3)
+    trace = pm.sample(800, tune=600, cores=3)
 
-    pm.traceplot(trace, ["baseline", "treatment_effect", "sigma"])
+    pm.traceplot(trace, ["treatment1", "treatment2", "sigma"])
     plt.show()
 
 # %%
 
 # UNPOOLED MODEL WITH TREND
 
-with pm.Model() as all_patients_with_trend_model:
+with pm.Model() as model:
 
     # separate parameter for each patient
-    baseline_prior = pm.Normal("baseline", mu=10, sigma=3, shape=patients_n)
-    treatment_effect_prior = pm.Normal(
-        "treatment_effect", mu=0, sigma=1, shape=patients_n
-    )
-    trend_prior = pm.Normal("trend", mu=0, sigma=1, shape=patients_n)
+    treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10, shape=patients_n)
+    treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10, shape=patients_n)
+    # trend_prior = pm.Normal("trend", mu=0, sigma=1, shape=patients_n)
     sigma_prior = pm.HalfCauchy("sigma", beta=10, shape=patients_n)
 
     # likelihood is not a well defined distribution
     # so using prebuilt parts does not work. Writing
     # custom function calculating the log likelihood
 
-    def likelihood(baseline, treatment, trend, sigma):
+    def likelihood(treatment1, treatment2, sigma):
         def logp_(value):
 
             return (-1 / 2.0) * (
@@ -484,9 +479,9 @@ with pm.Model() as all_patients_with_trend_model:
                     (
                         value[0]
                         - (
-                            baseline[patient_index]
-                            + trend[patient_index] * value[2]
-                            + treatment[patient_index] * value[1]
+                            treatment1[patient_index] * abs(value[1] - 1)
+                            + treatment2[patient_index] * value[1]
+                            # + trend[patient_index] * value[2]
                         )
                     )
                     ** 2
@@ -498,43 +493,44 @@ with pm.Model() as all_patients_with_trend_model:
     like = pm.DensityDist(
         "y",
         likelihood(
-            baseline=baseline_prior,
-            treatment=treatment_effect_prior,
-            trend=trend_prior,
+            treatment1=treatment1_prior,
+            treatment2=treatment2_prior,
+            # trend=trend_prior,
             sigma=sigma_prior,
         ),
         observed=[
             all_measurements_df["measurement"],
             all_measurements_df["treatment"],
-            all_measurements_df["measurement_index"],
+            # all_measurements_df["measurement_index"],
         ],
+        # random=random,
     )
 
     trace = pm.sample(1000, tune=500, cores=3)
 
-    pm.traceplot(trace, ["baseline", "treatment_effect", "trend", "sigma"])
+    pm.traceplot(trace, ["treatment1", "treatment2", "sigma"])
     plt.show()
 
     # posteriors should look reasonable
-    pm.plot_posterior(trace)
-    plt.show()
+    # pm.plot_posterior(trace)
+    # plt.show()
 
     # check if your variables have reasonable credible intervals,
     # and Gelman–Rubin scores close to 1
-    pm.forestplot(trace)
-    plt.show()
+    # pm.forestplot(trace)
+    # plt.show()
 
     # check if your chains are impaired by high autocorrelation.
     # Also remember that thinning your chains is a waste of time
     # at best, and deluding yourself at worst
-    pm.autocorrplot(trace)
-    plt.show()
+    # pm.autocorrplot(trace)
+    # plt.show()
 
     # ideally the energy and marginal energy distributions should
     # look very similar. Long tails in the distribution of energy levels
     # indicates deteriorated sampler efficiency.
-    pm.energyplot(trace)
-    plt.show()
+    # pm.energyplot(trace)
+    # plt.show()
 
     # summary statistics
     # Look out for:
@@ -565,33 +561,31 @@ with pm.Model() as all_patients_with_trend_model:
 with pm.Model() as hierarchical_no_trend_model:
 
     # population priors
-    population_baseline_mean_prior = pm.Normal(
-        "population_baseline_mean", mu=10, sigma=3
+    population_treatment1_mean_prior = pm.Normal(
+        "population_treatment1_mean", mu=10, sigma=10
     )
-    population_baseline_sd_prior = pm.HalfCauchy("population_baseline_sd", beta=10)
+    population_treatment1_sd_prior = pm.HalfCauchy("population_treatment1_sd", beta=10)
 
-    population_treatment_effect_mean_prior = pm.Normal(
-        "population_treatment_effect_mean", mu=0, sigma=1
+    population_treatment2_mean_prior = pm.Normal(
+        "population_treatment2_mean", mu=10, sigma=10
     )
-    population_treatment_effect_sd_prior = pm.HalfCauchy(
-        "population_treatment_effect_sd", beta=10
-    )
+    population_treatment2_sd_prior = pm.HalfCauchy("population_treatment2_sd", beta=10)
 
     population_measurement_error_beta_prior = pm.HalfCauchy(
         "population_measurement_error_beta", beta=10
     )
 
     # separate parameter for each patient
-    baseline_prior = pm.Normal(
-        "baseline",
-        mu=population_baseline_mean_prior,
-        sigma=population_baseline_sd_prior,
+    treatment1_prior = pm.Normal(
+        "treatment1",
+        mu=population_treatment1_mean_prior,
+        sigma=population_treatment1_sd_prior,
         shape=patients_n,
     )
-    treatment_effect_prior = pm.Normal(
-        "treatment_effect",
-        mu=population_treatment_effect_mean_prior,
-        sigma=population_treatment_effect_sd_prior,
+    treatment2_prior = pm.Normal(
+        "treatment2",
+        mu=population_treatment2_mean_prior,
+        sigma=population_treatment2_sd_prior,
         shape=patients_n,
     )
     sigma_prior = pm.HalfCauchy(
@@ -602,7 +596,7 @@ with pm.Model() as hierarchical_no_trend_model:
     # so using prebuilt parts does not work. Writing
     # custom function calculating the log likelihood
 
-    def likelihood(baseline, treatment, sigma):
+    def likelihood(treatment1, treatment2, sigma):
         def logp_(value):
 
             return (-1 / 2.0) * (
@@ -613,8 +607,8 @@ with pm.Model() as hierarchical_no_trend_model:
                     (
                         value[0]
                         - (
-                            baseline[patient_index]
-                            + treatment[patient_index] * value[1]
+                            treatment1[patient_index] * abs(value[1] - 1)
+                            + treatment2[patient_index] * value[1]
                         )
                     )
                     ** 2
@@ -626,9 +620,7 @@ with pm.Model() as hierarchical_no_trend_model:
     like = pm.DensityDist(
         "y",
         likelihood(
-            baseline=baseline_prior,
-            treatment=treatment_effect_prior,
-            sigma=sigma_prior,
+            treatment1=treatment1_prior, treatment2=treatment2_prior, sigma=sigma_prior,
         ),
         observed=[all_measurements_df["measurement"], all_measurements_df["treatment"]],
     )
@@ -638,13 +630,13 @@ with pm.Model() as hierarchical_no_trend_model:
     pm.traceplot(
         trace,
         [
-            "baseline",
-            "treatment_effect",
+            "treatment1",
+            "treatment2",
             "sigma",
-            "population_baseline_mean",
-            "population_baseline_sd",
-            "population_treatment_effect_mean",
-            "population_treatment_effect_sd",
+            "population_treatment1_mean",
+            "population_treatment1_sd",
+            "population_treatment2_mean",
+            "population_treatment2_sd",
             "population_measurement_error_beta",
         ],
     )
@@ -656,20 +648,20 @@ with pm.Model() as hierarchical_no_trend_model:
 
     # check if your variables have reasonable credible intervals,
     # and Gelman–Rubin scores close to 1
-    pm.forestplot(trace)
-    plt.show()
+    # pm.forestplot(trace)
+    # plt.show()
 
     # check if your chains are impaired by high autocorrelation.
     # Also remember that thinning your chains is a waste of time
     # at best, and deluding yourself at worst
-    pm.autocorrplot(trace)
-    plt.show()
+    # pm.autocorrplot(trace)
+    # plt.show()
 
     # ideally the energy and marginal energy distributions should
     # look very similar. Long tails in the distribution of energy levels
     # indicates deteriorated sampler efficiency.
-    pm.energyplot(trace)
-    plt.show()
+    # pm.energyplot(trace)
+    # plt.show()
 
     # %%
 
@@ -697,17 +689,15 @@ with pm.Model() as hierarchical_no_trend_model:
 with pm.Model() as hierarchical_with_trend_model:
 
     # population priors
-    population_baseline_mean_prior = pm.Normal(
-        "population_baseline_mean", mu=10, sigma=3
+    population_treatment1_mean_prior = pm.Normal(
+        "population_treatment1_mean", mu=10, sigma=3
     )
-    population_baseline_sd_prior = pm.HalfCauchy("population_baseline_sd", beta=10)
+    population_treatment1_sd_prior = pm.HalfCauchy("population_treatment1_sd", beta=10)
 
-    population_treatment_effect_mean_prior = pm.Normal(
-        "population_treatment_effect_mean", mu=0, sigma=1
+    population_treatment2_mean_prior = pm.Normal(
+        "population_treatment2_mean", mu=0, sigma=1
     )
-    population_treatment_effect_sd_prior = pm.HalfCauchy(
-        "population_treatment_effect_sd", beta=10
-    )
+    population_treatment2_sd_prior = pm.HalfCauchy("population_treatment2_sd", beta=10)
 
     population_measurement_error_beta_prior = pm.HalfCauchy(
         "population_measurement_error_beta", beta=10
@@ -717,16 +707,16 @@ with pm.Model() as hierarchical_with_trend_model:
     population_trend_sd_prior = pm.HalfCauchy("population_trend_sd", beta=2)
 
     # separate parameter for each patient
-    baseline_prior = pm.Normal(
-        "baseline",
-        mu=population_baseline_mean_prior,
-        sigma=population_baseline_sd_prior,
+    treatment1_prior = pm.Normal(
+        "treatment1",
+        mu=population_treatment1_mean_prior,
+        sigma=population_treatment1_sd_prior,
         shape=patients_n,
     )
-    treatment_effect_prior = pm.Normal(
-        "treatment_effect",
-        mu=population_treatment_effect_mean_prior,
-        sigma=population_treatment_effect_sd_prior,
+    treatment2_prior = pm.Normal(
+        "treatment2",
+        mu=population_treatment2_mean_prior,
+        sigma=population_treatment2_sd_prior,
         shape=patients_n,
     )
     sigma_prior = pm.HalfCauchy(
@@ -743,7 +733,7 @@ with pm.Model() as hierarchical_with_trend_model:
     # so using prebuilt parts does not work. Writing
     # custom function calculating the log likelihood
 
-    def likelihood(baseline, treatment, trend, sigma):
+    def likelihood(treatment1, treatment2, trend, sigma):
         def logp_(value):
 
             return (-1 / 2.0) * (
@@ -754,9 +744,9 @@ with pm.Model() as hierarchical_with_trend_model:
                     (
                         value[0]
                         - (
-                            baseline[patient_index]
+                            treatment1[patient_index] * abs(value[1] - 1)
+                            + treatment2[patient_index] * value[1]
                             + trend[patient_index] * value[2]
-                            + treatment[patient_index] * value[1]
                         )
                     )
                     ** 2
@@ -768,8 +758,8 @@ with pm.Model() as hierarchical_with_trend_model:
     like = pm.DensityDist(
         "y",
         likelihood(
-            baseline=baseline_prior,
-            treatment=treatment_effect_prior,
+            treatment1=treatment1_prior,
+            treatment2=treatment2_prior,
             trend=trend_prior,
             sigma=sigma_prior,
         ),
@@ -780,18 +770,18 @@ with pm.Model() as hierarchical_with_trend_model:
         ],
     )
 
-    trace = pm.sample(1000, tune=500, cores=3)
+    trace = pm.sample(1000, tune=800, cores=3)
 
     pm.traceplot(
         trace,
         [
-            "baseline",
-            "treatment_effect",
+            "treatment1",
+            "treatment2",
             "sigma",
-            "population_baseline_mean",
-            "population_baseline_sd",
-            "population_treatment_effect_mean",
-            "population_treatment_effect_sd",
+            "population_treatment1_mean",
+            "population_treatment1_sd",
+            "population_treatment2_mean",
+            "population_treatment2_sd",
             "population_measurement_error_beta",
             "population_trend_mean",
             "population_trend_sd",
@@ -804,20 +794,20 @@ with pm.Model() as hierarchical_with_trend_model:
 
     # check if your variables have reasonable credible intervals,
     # and Gelman–Rubin scores close to 1
-    pm.forestplot(trace)
-    plt.show()
+    # pm.forestplot(trace)
+    # plt.show()
 
     # check if your chains are impaired by high autocorrelation.
     # Also remember that thinning your chains is a waste of time
     # at best, and deluding yourself at worst
-    pm.autocorrplot(trace)
-    plt.show()
+    # pm.autocorrplot(trace)
+    # plt.show()
 
     # ideally the energy and marginal energy distributions should
     # look very similar. Long tails in the distribution of energy levels
     # indicates deteriorated sampler efficiency.
-    pm.energyplot(trace)
-    plt.show()
+    # pm.energyplot(trace)
+    # plt.show()
 
     # summary statistics
     # Look out for:
@@ -834,4 +824,7 @@ with pm.Model() as hierarchical_with_trend_model:
     # (E.g. parameters of the unexpected sign that have low
     # uncertainties might indicate that your model needs
     # interaction terms.)
-    pm.summary(trace)
+    # pm.summary(trace)
+
+
+# %%
