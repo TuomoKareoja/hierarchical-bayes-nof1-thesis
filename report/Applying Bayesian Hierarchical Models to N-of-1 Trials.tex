@@ -548,13 +548,11 @@ probability (or likelihood in case of continuous parameter values) of our parame
     \begin{equation}
         P(\Theta|D) = \frac{P(D|\Theta)P(\Theta)}{P(D)},
     \end{equation}
-\end{def}where \(P(D)\) \(\neq \) 0. To be pedantic the parameters are of course dependent
-on our study design and the fact that our model is a good representation of reality, but
-we omit to express these in the formula to keeps things simple.
+\end{def}where \(P(D)\) \(\neq \) 0.
 
 We could make it more explicit what the marginal likelihood \(P(D)\) stands for by
 writing it as \(\sum_\Theta P(D|\Theta)P(\Theta)\) in the case when parameter value takes discrete values
-and \(\int P(D|\Theta)P(\Theta) d\Theta \), if they are continuous. That is, the possibility of
+and \(\int_\Theta P(D|\Theta)P(\Theta) d\Theta \), if they are continuous. That is, the possibility of
 observing the data with all different combinations of the possible values of the parameters,
 taking into account our prior belief in the probability of these value combinations.
 
@@ -569,51 +567,51 @@ and a random error \(\epsilon \) at time \(t\):
 \end{def}where \(\epsilon_{t} \sim N(0,\sigma^2)\). Time \(t\) is indexed from the
 beginning of the study.
 
-In this case when we want to estimate the parameters of the effects of the treatments \(m\).
-For simplicity lets only examine one of the treatments. We refer to this treatment as \(\mu_1 \).
-To do this we only use data from times \(t\) when the treatment were are interested was given, that is \(\mu_m=\mu_1\)
-According to our model the single observations follow a normal distribution defined by \(\mu_1 \)
-and the error term \(\epsilon_t \) so \(y_t \sim N(\mu_1,\sigma^2) \), when the treatment we are
-interested is given. As our model assumes that the observations \(y_t\) are independent
-(e.g.\ no autocorrelation included) the likelihood term in the bayesian
+In this case when we want to estimate the parameters of the effects of the treatments \(\mu_t\).
+For simplicity lets assume that only one treatment was given \(\mu_t\) is constant. Let's refer to this treatment
+effect simply as \(\mu \).
+According to our model single observations follow a normal distribution defined by constant \(\mu \)
+and the error term \(\epsilon_t \). As our model assumes that the
+observations \(y_t\) are independent
+(no autocorrelation included in the model) individual observations are defined as \(y_t \sim N(\mu,\sigma^2) \)
+and the likelihood term in the bayesian
 formula is a simple product of the probability density functions of
-a normal distribution with mean \(\mu_1 \) and variance \(\sigma^2 \)
+a normal distribution with mean \(\mu \) and variance \(\sigma^2 \)
 that the observations are independent:
 
 \begin{def}\label{}
     \begin{equation}\label{}
-        P(Y_{\mu_1}|\mu_1, \sigma)
+        P(Y|\mu, \sigma)
         =
-        \prod_{Y_{\mu_1}}
+        \prod_{Y}
         \frac{1}
         {{\sqrt {2\pi \sigma^2} }}
         \exp{
             \left \{
-            \frac{-(y_t - \mu_1)^2}
+            \frac{-(y_t - \mu)^2}
             {2\sigma^2}
             \right \}
         },
     \end{equation}
-\end{def}where \(Y_{\mu_1}\) represents the observations taken during times where treatment \(\mu_1\)
-was given.
+\end{def}where \(Y\) represents all the observations.
 
 To avoid the complexity of dealing with multiple unknown variables we assume
 that \(\sigma \) is known. We will later come back later to the case of multiple unknown variables.
-Now we have to define only one prior distribution as there is just one parameter.
-We choose a normal distribution for the prior of \(\mu_1\) that is defined by mean \(\lambda_0 \)
+Now we have to define only one prior distribution as there is just one unknown parameter.
+We choose a normal distribution for the prior of \(\mu\) that is defined by mean \(\lambda_0 \)
 and variance \(\delta_0^2 \), whose values we define ourself based on
 our previous knowledge:
 
 \begin{def}\label{}
     \begin{equation}\label{}
-        P(\mu_1)
+        P(\mu)
         =
         \frac{1}
         {{\sqrt {2\pi \delta_0^2} }}
         \exp{
             \left \{
             \frac{
-                -(\mu_1 - \lambda_0)^2
+                -(\mu - \lambda_0)^2
             }
             {2\delta_0^2}
             \right \}
@@ -628,39 +626,39 @@ we get some nice algebraic properties that we will soon see.
 
 Now the only missing term from our bayesian equation is the marginal likelihood \(P(Y_{t_{\mu_1}}) \).
 When we express the term more precisely as the probability of getting the data we observed
-over possible values of our unknown parameter \(\int P(Y_{\mu_1}|\mu_1)P(\mu_1) d\mu_1 \),
-we can see that the term is not dependent on the specific values of \(\mu_1 \), but just the data,
-as we integrate over all the possible values of \(\mu_1 \).
+over possible values of our unknown parameter \(\int P(Y|\mu)P(\mu) d\mu \),
+we can see that as we integrate over all the possible values of \(\mu \).
+the term is not dependent on the specific values of \(\mu \).
 This means that the marginal likelihood is just a constant and as such does not affect shape of the posterior distribution,
-that is the shape of the posterior is defined by the likelihood and the prior
-\(P(\mu_1|Y_{t_{\mu_1}}) \propto P(Y_{t_{\mu_1}}|\mu_1)P(\mu_1) \). If we look at this more
+So the shape of posterior distribution is defined by just by the likelihood and the prior
+\(P(\mu|Y) \propto P(Y|\mu, \sigma^2)P(\mu) \). If we look at this more
 closely we will see that the posterior follow a normal distribution with a mean...
 
 % TODO check terms and make them clearer
 
 \begin{def}\label{}
     \begin{equation}\label{}
-        P(\mu_1|Y)
+        P(\mu|Y)
         \propto
-        P(Y|\mu_1, \sigma)
+        P(Y|\mu, \sigma)P(\mu)
         =
-        \frac{1}
-        {{\sqrt {2\pi \delta_0^2} }}
-        \exp{
-            \left \{
-            \frac{
-                -(\mu_1 - \lambda_0)^2
-            }
-            {2\delta_0^2}
-            \right \}
-        }
         \prod_{Y}
         \frac{1}
         {{\sqrt {2\pi \sigma^2} }}
         \exp{
             \left \{
-            \frac{-(y - \mu_1)^2}
+            \frac{-(y_t - \mu)^2}
             {2\sigma^2}
+            \right \}
+        }
+        \frac{1}
+        {{\sqrt {2\pi \delta_0^2} }}
+        \exp{
+            \left \{
+            \frac{
+                -(\mu - \lambda_0)^2
+            }
+            {2\delta_0^2}
             \right \}
         }
     \end{equation}
@@ -675,10 +673,10 @@ closely we will see that the posterior follow a normal distribution with a mean.
         }
         \exp{
             \left \{
-            \frac{- \mu_1^2 + 2 \mu_1 \lambda_0 - \lambda_0^2}{2\delta_0^2}
+            \frac{- \mu^2 + 2 \mu \lambda_0 - \lambda_0^2}{2\delta_0^2}
             -
             \sum_{Y}
-            \frac{y^2 - 2 \mu_1 y + \mu_1^2}{2\sigma^2}
+            \frac{y_t^2 - 2 \mu y + \mu^2}{2\sigma^2}
             \right \}
         }
     \end{equation}
@@ -689,9 +687,9 @@ closely we will see that the posterior follow a normal distribution with a mean.
         \exp{
             \left \{
             \frac{
-                -\mu_1^2 (\sigma^2 + n\delta_0^2)
-                + 2 \mu_1 (\lambda_0 \sigma^2 + \delta_0^2 y_1 + \ldots + \delta_0^2 y_n)
-                - (\lambda_0^2 \sigma^2 + \delta_0^2 y_1^2 + \ldots + \delta_0^2 y_n^2)
+                -\mu^2 (\sigma^2 + n\delta_0^2)
+                + 2 \mu (\lambda_0 \sigma^2 + \delta_0^2 y_1 + \ldots + \delta_0^2 y_t)
+                - (\lambda_0^2 \sigma^2 + \delta_0^2 y_1^2 + \ldots + \delta_0^2 y_t^2)
             }
             {2\delta_0^2 \sigma^2}
             \right \}
@@ -702,8 +700,8 @@ closely we will see that the posterior follow a normal distribution with a mean.
         \exp{
             \left \{
             \frac{
-                - \mu_1^2
-                + 2 \mu_1 \frac{\mu_0 \sigma^2 + \sum_{Y} \delta_0^2 y}
+                - \mu^2
+                + 2 \mu \frac{\mu_0 \sigma^2 + \sum_{Y} \delta_0^2 y}
                 {\sigma^2 + n \delta_0^2}
                 - \left(
                 \frac{
@@ -736,7 +734,7 @@ closely we will see that the posterior follow a normal distribution with a mean.
             -
             \frac{
                 \left(
-                \mu_1
+                \mu
                 -
                 \frac{
                     \lambda_0 \sigma^2 + \sum_{Y} \delta_0^2 y
@@ -762,7 +760,7 @@ closely we will see that the posterior follow a normal distribution with a mean.
             -
             \frac{
                 \left(
-                \mu_1
+                \mu
                 -
                 \frac{
                     \lambda_0 \delta_0^{-2} + \sum_{Y} y \sigma^2
