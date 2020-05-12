@@ -37,81 +37,98 @@ parameters_df = all_parameters_df[all_parameters_df["patient_index"] == 0]
 # SINGLE PATIENT MODEL WITHOUT TREND
 
 
-def draw_posterior_checks(model, treatment_order, observations_per_treatment):
+def draw_posterior_checks(predictions, treatment_order, observations_per_treatment):
 
-    with model as model:
-        post_pred = pm.sample_posterior_predictive(trace, samples=1000)
+    for patient, patient_treatment_order in zip(
+        range(predictions.shape[1]), treatment_order
+    ):
 
-    treatment2_indexer = np.repeat(treatment_order, observations_per_treatment)
-    treatment1_indexer = np.abs(treatment2_indexer - 1)
-    # convert to boolean indexer
-    treatment2_indexer = np.array(treatment2_indexer, dtype=bool)
-    treatment1_indexer = np.array(treatment1_indexer, dtype=bool)
+        treatment2_indexer = np.repeat(
+            patient_treatment_order, observations_per_treatment
+        )
+        treatment1_indexer = np.abs(treatment2_indexer - 1)
+        # convert to boolean indexer
+        treatment2_indexer = np.array(treatment2_indexer, dtype=bool)
+        treatment1_indexer = np.array(treatment1_indexer, dtype=bool)
 
-    _, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(14, 6))
+        _, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(14, 6))
 
-    # Treatment 1
-    sns.distplot(
-        post_pred["y"][:, treatment1_indexer].mean(axis=1),
-        label="Posterior Predictive Means",
-        ax=ax1,
-    )
-    ax1.axvline(
-        measurements_df[measurements_df["treatment"] == 0]["measurement"].mean(),
-        ls="--",
-        color="orange",
-        label="True Mean of Treatment 1 in Data",
-    )
-    ax1.axvline(
-        parameters_df["treatment1"][0],
-        ls="--",
-        color="r",
-        label="True Treatment 1 Value",
-    )
-    ax1.legend()
+        # Treatment 1
+        sns.distplot(
+            predictions[:, patient][:, treatment1_indexer].mean(axis=1),
+            label="Posterior Predictive Means",
+            ax=ax1,
+        )
+        ax1.axvline(
+            all_measurements_df[
+                (all_measurements_df["treatment"] == 0)
+                & (all_measurements_df["patient_index"] == patient)
+            ]["measurement"].mean(),
+            ls="--",
+            color="orange",
+            label="Mean in Data",
+        )
+        ax1.axvline(
+            all_parameters_df["treatment1"][patient],
+            ls="--",
+            color="r",
+            label="Real Parameter Value",
+        )
+        ax1.set_title("Treatment 1")
+        ax1.legend()
 
-    # Treatment 2
-    sns.distplot(
-        post_pred["y"][:, treatment2_indexer].mean(axis=1),
-        label="Posterior Predictive Means",
-        ax=ax2,
-    )
-    ax2.axvline(
-        measurements_df[measurements_df["treatment"] == 1]["measurement"].mean(),
-        ls="--",
-        color="orange",
-        label="True Mean of Treatment 2 in Data",
-    )
-    ax2.axvline(
-        parameters_df["treatment2"][0],
-        ls="--",
-        color="r",
-        label="True Treatment 2 Value",
-    )
+        # Treatment 2
+        sns.distplot(
+            predictions[:, patient][:, treatment2_indexer].mean(axis=1),
+            label="Posterior Predictive Means",
+            ax=ax2,
+        )
+        ax2.axvline(
+            all_measurements_df[
+                (all_measurements_df["treatment"] == 1)
+                & (all_measurements_df["patient_index"] == patient)
+            ]["measurement"].mean(),
+            ls="--",
+            color="orange",
+            label="Mean in Data",
+        )
+        ax2.axvline(
+            all_parameters_df["treatment2"][patient],
+            ls="--",
+            color="r",
+            label="Real Parameter Value",
+        )
+        ax2.set_title("Treatment 2")
 
-    # Treatment difference
-    sns.distplot(
-        post_pred["y"][:, treatment1_indexer].mean(axis=1)
-        - post_pred["y"][:, treatment2_indexer].mean(axis=1),
-        label="Posterior Predictive Means",
-        ax=ax3,
-    )
-    ax3.axvline(
-        measurements_df[measurements_df["treatment"] == 0]["measurement"].mean()
-        - measurements_df[measurements_df["treatment"] == 1]["measurement"].mean(),
-        ls="--",
-        color="orange",
-        label="True Mean Difference in Treatments in Data",
-    )
-    ax3.axvline(
-        parameters_df["treatment1"][0] - parameters_df["treatment2"][0],
-        ls="--",
-        color="r",
-        label="True Difference in Treatments",
-    )
-    ax3.legend()
-
-    plt.show()
+        # Treatment difference
+        sns.distplot(
+            predictions[:, patient][:, treatment1_indexer].mean(axis=1)
+            - predictions[:, patient][:, treatment2_indexer].mean(axis=1),
+            label="Posterior Predictive Means",
+            ax=ax3,
+        )
+        ax3.axvline(
+            all_measurements_df[
+                (all_measurements_df["treatment"] == 0)
+                & (all_measurements_df["patient_index"] == patient)
+            ]["measurement"].mean()
+            - all_measurements_df[
+                (all_measurements_df["treatment"] == 1)
+                & (all_measurements_df["patient_index"] == patient)
+            ]["measurement"].mean(),
+            ls="--",
+            color="orange",
+            label="Mean in Data",
+        )
+        ax3.axvline(
+            all_parameters_df["treatment1"][patient]
+            - all_parameters_df["treatment2"][patient],
+            ls="--",
+            color="r",
+            label="Real Parameter Value",
+        )
+        ax3.set_title("Treatment 1 - Treatment 2")
+        plt.show()
 
 
 def create_simulations(treatment1, treatment2, sigma, trend, size):
@@ -122,51 +139,88 @@ def create_simulations(treatment1, treatment2, sigma, trend, size):
     # treatment_order
     # observations_per_treatment
 
-    treatment1_array = np.array(
-        list(
-            pd.core.common.flatten(
-                [
-                    [treatment1 * abs(indicator - 1)] * observations_per_treatment
-                    for indicator in treatment_order
-                ]
+    def create_simulated_experiment(
+        treatment1_, treatment2_, sigma_, trend_, treatment_order_
+    ):
+
+        treatment1_array = np.array(
+            list(
+                pd.core.common.flatten(
+                    [
+                        [treatment1_ * abs(indicator - 1)] * observations_per_treatment
+                        for indicator in treatment_order_
+                    ]
+                )
             )
         )
-    )
 
-    treatment2_array = np.array(
-        list(
-            pd.core.common.flatten(
-                [
-                    [treatment2 * indicator] * observations_per_treatment
-                    for indicator in treatment_order
-                ]
+        treatment2_array = np.array(
+            list(
+                pd.core.common.flatten(
+                    [
+                        [treatment2_ * indicator] * observations_per_treatment
+                        for indicator in treatment_order_
+                    ]
+                )
             )
         )
-    )
 
-    trend_array = np.array(
-        [
-            trend * measurement_index
-            for measurement_index in range(
-                observations_per_treatment * len(treatment_order)
+        trend_array = np.array(
+            [
+                trend_ * measurement_index
+                for measurement_index in range(
+                    observations_per_treatment * len(treatment_order_)
+                )
+            ]
+        )
+
+        measurement_error_array = np.random.normal(
+            loc=0, scale=sigma_, size=observations_per_treatment * len(treatment_order_)
+        )
+
+        measurements = (
+            treatment1_array + treatment2_array + trend_array + measurement_error_array
+        )
+
+        return measurements
+
+    if type(treatment1) is np.ndarray:
+
+        results_list = []
+
+        for patient, (treatment1_, treatment2_, sigma_, trend_) in enumerate(
+            zip(treatment1, treatment2, sigma, trend)
+        ):
+
+            patient_treatment_order = treatment_order[patient]
+
+            results_list.append(
+                create_simulated_experiment(
+                    treatment1_, treatment2_, sigma_, trend_, patient_treatment_order
+                )
             )
-        ]
-    )
 
-    measurement_error_array = np.random.normal(
-        loc=0, scale=sigma, size=observations_per_treatment * len(treatment_order)
-    )
+        # returning each simulations for each patient in separate "rows"
+        return np.vstack(results_list)
 
-    measurements = (
-        treatment1_array + treatment2_array + trend_array + measurement_error_array
-    )
+    else:
 
-    return measurements
+        patient_treatment_order = treatment_order[0]
+        # we want to keep the same output format regardless
+        # if there is one or multiple patients
+        return np.vstack(
+            [
+                create_simulated_experiment(
+                    treatment1, treatment2, sigma, trend, patient_treatment_order
+                )
+            ]
+        )
 
 
 # defining a sampling function to be able to create posterior samples
 def random(point=None, size=None):
 
+    # check if there is a trend defined in the model
     try:
         treatment1_, treatment2_, sigma_, trend_ = pm.distributions.draw_values(
             [model.treatment1, model.treatment2, model.sigma, model.trend], point=point
@@ -177,7 +231,13 @@ def random(point=None, size=None):
             [model.treatment1, model.treatment2, model.sigma], point=point
         )
 
-        trend_ = 0
+        # if more than one patient (more than one treatment effect)
+        # create a list of 0 trend values for each patient
+        if type(treatment1_) is np.ndarray:
+            trend_ = np.repeat(0, len(treatment1_))
+
+        else:
+            trend_ = 0
 
     size = 1 if size is None else size
 
@@ -194,7 +254,7 @@ def random(point=None, size=None):
 # %%
 
 
-with pm.Model() as model:
+with pm.Model() as single_patient_no_trend_model:
 
     treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10)
     treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
@@ -280,18 +340,20 @@ with pm.Model() as model:
 
 # posterior sampling
 
-
-treatment_order = parameters_df["treatment_order"][0]
+treatment_order = parameters_df["treatment_order"]
 observations_per_treatment = 4
 
-draw_posterior_checks(model, treatment_order, observations_per_treatment)
+with single_patient_no_trend_model as model:
+    post_pred = pm.sample_posterior_predictive(trace, samples=500)
+    predictions = post_pred["y"]
 
+draw_posterior_checks(predictions, treatment_order, observations_per_treatment)
 
 # %%
 
 # SINGLE PATIENT MODEL WITH TREND
 
-with pm.Model() as model:
+with pm.Model() as single_patient_with_trend_model:
 
     treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10)
     treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
@@ -340,7 +402,7 @@ with pm.Model() as model:
         random=random,
     )
 
-    trace = pm.sample(800, tune=600, cores=3)
+    trace = pm.sample(700, tune=600, cores=3)
 
     pm.traceplot(trace, ["treatment1", "treatment2", "trend", "sigma"])
     plt.show()
@@ -387,11 +449,14 @@ with pm.Model() as model:
 
 # %%
 
-treatment_order = parameters_df["treatment_order"][0]
+treatment_order = parameters_df["treatment_order"]
 observations_per_treatment = 4
 
-draw_posterior_checks(model, treatment_order, observations_per_treatment)
+with single_patient_with_trend_model as model:
+    post_pred = pm.sample_posterior_predictive(trace, samples=500)
+    predictions = post_pred["y"]
 
+draw_posterior_checks(predictions, treatment_order, observations_per_treatment)
 
 # %%
 
@@ -443,8 +508,8 @@ with pm.Model() as all_patients_no_trend_model:
         likelihood(
             treatment1=treatment1_prior, treatment2=treatment2_prior, sigma=sigma_prior,
         ),
-        observed=[all_measurements_df["measurement"], all_measurements_df["treatment"]]
-        # random=random,
+        observed=[all_measurements_df["measurement"], all_measurements_df["treatment"]],
+        random=random,
     )
 
     trace = pm.sample(800, tune=600, cores=3)
@@ -454,21 +519,32 @@ with pm.Model() as all_patients_no_trend_model:
 
 # %%
 
+treatment_order = all_parameters_df["treatment_order"]
+observations_per_treatment = 4
+
+with all_patients_no_trend_model as model:
+    post_pred = pm.sample_posterior_predictive(trace, samples=500)
+    predictions = post_pred["y"]
+
+draw_posterior_checks(predictions, treatment_order, observations_per_treatment)
+
+# %%
+
 # UNPOOLED MODEL WITH TREND
 
-with pm.Model() as model:
+with pm.Model() as all_patients_with_trend_model:
 
     # separate parameter for each patient
     treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10, shape=patients_n)
     treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10, shape=patients_n)
-    # trend_prior = pm.Normal("trend", mu=0, sigma=1, shape=patients_n)
+    trend_prior = pm.Normal("trend", mu=0, sigma=1, shape=patients_n)
     sigma_prior = pm.HalfCauchy("sigma", beta=10, shape=patients_n)
 
     # likelihood is not a well defined distribution
     # so using prebuilt parts does not work. Writing
     # custom function calculating the log likelihood
 
-    def likelihood(treatment1, treatment2, sigma):
+    def likelihood(treatment1, treatment2, trend, sigma):
         def logp_(value):
 
             return (-1 / 2.0) * (
@@ -481,7 +557,7 @@ with pm.Model() as model:
                         - (
                             treatment1[patient_index] * abs(value[1] - 1)
                             + treatment2[patient_index] * value[1]
-                            # + trend[patient_index] * value[2]
+                            + trend[patient_index] * value[2]
                         )
                     )
                     ** 2
@@ -495,18 +571,18 @@ with pm.Model() as model:
         likelihood(
             treatment1=treatment1_prior,
             treatment2=treatment2_prior,
-            # trend=trend_prior,
+            trend=trend_prior,
             sigma=sigma_prior,
         ),
         observed=[
             all_measurements_df["measurement"],
             all_measurements_df["treatment"],
-            # all_measurements_df["measurement_index"],
+            all_measurements_df["measurement_index"],
         ],
-        # random=random,
+        random=random,
     )
 
-    trace = pm.sample(1000, tune=500, cores=3)
+    trace = pm.sample(800, tune=600, cores=3)
 
     pm.traceplot(trace, ["treatment1", "treatment2", "sigma"])
     plt.show()
@@ -551,10 +627,19 @@ with pm.Model() as model:
 
 # %%
 
+treatment_order = all_parameters_df["treatment_order"]
+observations_per_treatment = 4
+
+with all_patients_with_trend_model as model:
+    post_pred = pm.sample_posterior_predictive(trace, samples=500)
+    predictions = post_pred["y"]
+
+draw_posterior_checks(predictions, treatment_order, observations_per_treatment)
+
+# %%
 
 # HIERARCHICAL MODELS
 
-# %%
 
 # HIERARCHICAL MODEL WITHOUT TREND
 
@@ -623,9 +708,10 @@ with pm.Model() as hierarchical_no_trend_model:
             treatment1=treatment1_prior, treatment2=treatment2_prior, sigma=sigma_prior,
         ),
         observed=[all_measurements_df["measurement"], all_measurements_df["treatment"]],
+        random=random,
     )
 
-    trace = pm.sample(1000, tune=500, cores=3)
+    trace = pm.sample(800, tune=600, cores=3)
 
     pm.traceplot(
         trace,
@@ -681,6 +767,19 @@ with pm.Model() as hierarchical_no_trend_model:
     # uncertainties might indicate that your model needs
     # interaction terms.)
     pm.summary(trace)
+
+# %%
+
+# posterior sampling
+
+treatment_order = all_parameters_df["treatment_order"]
+observations_per_treatment = 4
+
+with hierarchical_no_trend_model as model:
+    post_pred = pm.sample_posterior_predictive(trace, samples=500)
+    predictions = post_pred["y"]
+
+draw_posterior_checks(predictions, treatment_order, observations_per_treatment)
 
 # %%
 
@@ -768,9 +867,10 @@ with pm.Model() as hierarchical_with_trend_model:
             all_measurements_df["treatment"],
             all_measurements_df["measurement_index"],
         ],
+        random=random,
     )
 
-    trace = pm.sample(1000, tune=800, cores=3)
+    trace = pm.sample(800, tune=800, cores=3)
 
     pm.traceplot(
         trace,
@@ -825,6 +925,20 @@ with pm.Model() as hierarchical_with_trend_model:
     # uncertainties might indicate that your model needs
     # interaction terms.)
     # pm.summary(trace)
+
+
+# %%
+
+# posterior sampling
+
+treatment_order = all_parameters_df["treatment_order"]
+observations_per_treatment = 4
+
+with hierarchical_with_trend_model as model:
+    post_pred = pm.sample_posterior_predictive(trace, samples=500)
+    predictions = post_pred["y"]
+
+draw_posterior_checks(predictions, treatment_order, observations_per_treatment)
 
 
 # %%
