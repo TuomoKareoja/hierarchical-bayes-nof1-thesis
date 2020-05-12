@@ -37,7 +37,9 @@ parameters_df = all_parameters_df[all_parameters_df["patient_index"] == 0]
 # SINGLE PATIENT MODEL WITHOUT TREND
 
 
-def draw_posterior_checks(predictions, treatment_order, observations_per_treatment):
+def draw_posterior_checks(
+    predictions, treatment_order, observations_per_treatment, trend=False
+):
 
     for patient, patient_treatment_order in zip(
         range(predictions.shape[1]), treatment_order
@@ -65,17 +67,10 @@ def draw_posterior_checks(predictions, treatment_order, observations_per_treatme
                 & (all_measurements_df["patient_index"] == patient)
             ]["measurement"].mean(),
             ls="--",
-            color="orange",
+            color="red",
             label="Mean in Data",
         )
-        ax1.axvline(
-            all_parameters_df["treatment1"][patient],
-            ls="--",
-            color="r",
-            label="Real Parameter Value",
-        )
         ax1.set_title("Treatment 1")
-        ax1.legend()
 
         # Treatment 2
         sns.distplot(
@@ -89,14 +84,8 @@ def draw_posterior_checks(predictions, treatment_order, observations_per_treatme
                 & (all_measurements_df["patient_index"] == patient)
             ]["measurement"].mean(),
             ls="--",
-            color="orange",
+            color="red",
             label="Mean in Data",
-        )
-        ax2.axvline(
-            all_parameters_df["treatment2"][patient],
-            ls="--",
-            color="r",
-            label="Real Parameter Value",
         )
         ax2.set_title("Treatment 2")
 
@@ -117,17 +106,18 @@ def draw_posterior_checks(predictions, treatment_order, observations_per_treatme
                 & (all_measurements_df["patient_index"] == patient)
             ]["measurement"].mean(),
             ls="--",
-            color="orange",
+            color="red",
             label="Mean in Data",
         )
         ax3.axvline(
             all_parameters_df["treatment1"][patient]
             - all_parameters_df["treatment2"][patient],
-            ls="--",
-            color="r",
+            ls="-",
+            color="green",
             label="Real Parameter Value",
         )
         ax3.set_title("Treatment 1 - Treatment 2")
+        ax3.legend()
         plt.show()
 
 
@@ -931,12 +921,12 @@ with pm.Model() as hierarchical_with_trend_model:
 
 # posterior sampling
 
-treatment_order = all_parameters_df["treatment_order"]
-observations_per_treatment = 4
+# treatment_order = all_parameters_df["treatment_order"]
+# observations_per_treatment = 4
 
-with hierarchical_with_trend_model as model:
-    post_pred = pm.sample_posterior_predictive(trace, samples=500)
-    predictions = post_pred["y"]
+# with hierarchical_with_trend_model as model:
+#     post_pred = pm.sample_posterior_predictive(trace, samples=500)
+#     predictions = post_pred["y"]
 
 draw_posterior_checks(predictions, treatment_order, observations_per_treatment)
 
