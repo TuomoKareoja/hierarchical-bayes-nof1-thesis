@@ -624,184 +624,177 @@ matches our previous knowledge and uncertainty about the parameter,
 but using a normal distribution for prior when the likelihood also follows a normal distribution,
 we get some nice algebraic properties that we will soon see.
 
-Now the only missing term from our bayesian equation is the marginal likelihood \(P(Y_{t_{\mu_1}}) \).
+Now the only missing term from our bayesian equation is the marginal likelihood \(P(Y) \).
 When we express the term more precisely as the probability of getting the data we observed
 over possible values of our unknown parameter \(\int P(Y|\mu)P(\mu) d\mu \),
 we can see that as we integrate over all the possible values of \(\mu \).
 the term is not dependent on the specific values of \(\mu \).
 This means that the marginal likelihood is just a constant and as such does not affect shape of the posterior distribution,
 So the shape of posterior distribution is defined by just by the likelihood and the prior
-\(P(\mu|Y) \propto P(Y|\mu, \sigma^2)P(\mu) \). If we look at this more
-closely we will see that the posterior follow a normal distribution with a mean...
-
+\(P(\mu|Y) \propto P(Y|\mu, \sigma^2)P(\mu) \). With some arithmetic manipulation we can
+see that the posterior probability is actually a normal distribution with mean
+\(\lambda_1 = \delta_1^2 \left( \lambda_0 \delta_0^{-2} + \sum_{Y} y \sigma^{-2} \right) \)
+and standard deviation \(\delta_1^2 = \frac{1}{\delta_0^{-2}+n\delta^{-2}} \):
 % TODO check terms and make them clearer
 
-\begin{def}\label{}
-    \begin{equation}\label{}
-        P(\mu|Y)
-        \propto
-        P(Y|\mu, \sigma)P(\mu)
-        =
-        \prod_{Y}
-        \frac{1}
-        {{\sqrt {2\pi \sigma^2} }}
-        \exp{
-            \left \{
-            \frac{-(y_t - \mu)^2}
-            {2\sigma^2}
-            \right \}
-        }
-        \frac{1}
-        {{\sqrt {2\pi \delta_0^2} }}
-        \exp{
-            \left \{
-            \frac{
-                -(\mu - \lambda_0)^2
-            }
-            {2\delta_0^2}
-            \right \}
-        }
-    \end{equation}
-\end{def}Combining the terms
-\begin{def}\label{}
-    \begin{equation}\label{}
-        =
-        \frac{1}
-        {
-            (2\pi)^{\frac{n+1}{2}}
-            \sqrt{ \delta_0^2 \sigma^{2n}}
-        }
-        \exp{
-            \left \{
-            \frac{- \mu^2 + 2 \mu \lambda_0 - \lambda_0^2}{2\delta_0^2}
-            -
-            \sum_{Y}
-            \frac{y_t^2 - 2 \mu y + \mu^2}{2\sigma^2}
-            \right \}
-        }
-    \end{equation}
-\end{def}Dropping the constant terms
-\begin{def}\label{}
-    \begin{equation}\label{}
-        \propto
-        \exp{
-            \left \{
-            \frac{
-                -\mu^2 (\sigma^2 + n\delta_0^2)
-                + 2 \mu (\lambda_0 \sigma^2 + \delta_0^2 y_1 + \ldots + \delta_0^2 y_t)
-                - (\lambda_0^2 \sigma^2 + \delta_0^2 y_1^2 + \ldots + \delta_0^2 y_t^2)
-            }
-            {2\delta_0^2 \sigma^2}
-            \right \}
-        }
-    \end{equation}
-    \begin{equation}\label{}
-        \propto
-        \exp{
-            \left \{
-            \frac{
-                - \mu^2
-                + 2 \mu \frac{\mu_0 \sigma^2 + \sum_{Y} \delta_0^2 y}
-                {\sigma^2 + n \delta_0^2}
-                - \left(
-                \frac{
-                    \lambda_0 \sigma^2 + \sum_{Y} \delta_0^2 y
-                }
-                {\sigma^2 + n \delta_0^2}
-                \right)^2
-            }
-            {
-                2 \frac{\delta_0^2 \sigma^2}{\sigma^2 + n\delta_0^2}
-            }
-            \right \}
-        }
-        \times
-        \exp{
-            \left \{
-            -\frac{
-                \lambda_0 \sigma^2 + \sum_{Y} \delta_0^2 y
-            }
-            {
-                2 \delta_0^2 \sigma^2
-            }
-            \right \}
-        }
-    \end{equation}
-    \begin{equation}
-        \propto
-        \exp{
-            \left \{
-            -
-            \frac{
-                \left(
-                \mu
-                -
-                \frac{
-                    \lambda_0 \sigma^2 + \sum_{Y} \delta_0^2 y
-                }
-                {
-                    \sigma^2 + n \delta_0^2
-                }
-                \right)^2
-            }
-            {
-                2 \frac{
-                    \delta_0^2 \sigma^2
-                }
-                {\sigma^2 + n \delta_0^2}
-            }
-            \right \}
-        }
-    \end{equation}
-    \begin{equation}
-        =
-        \exp{
-            \left \{
-            -
-            \frac{
-                \left(
-                \mu
-                -
-                \frac{
-                    \lambda_0 \delta_0^{-2} + \sum_{Y} y \sigma^2
-                }
-                {
-                    \delta_0^{-2} + n \sigma_0^{-2}
-                }
-                \right)^2
-            }
-            {
-                2 \frac{1}
-                {
-                    \sigma^{-2} + n \delta_0^{-2}
-                }
-            }
-            \right \}
-        }
-    \end{equation}
-\end{def}Defining
-\begin{def}\label{}
-    \begin{equation}\label{}
-        \delta_1^2
-        =
-        \frac{1}{\delta_0^{-2}+n\delta^{-2}}
-    \end{equation}
-    \begin{equation}\label{}
-        \lambda_1
-        =
+\begin{align}\label{}
+    P(\mu|Y) & \propto P(Y|\mu, \sigma)P(\mu) \\
+             & =
+    \prod_{t=1}^{n}
+    \frac{1}
+    {{\sqrt {2\pi \sigma^2} }}
+    \exp{
+        \left \{
+        \frac{-(y_t - \mu)^2}
+        {2\sigma^2}
+        \right \}
+    }
+    \frac{1}
+    {{\sqrt {2\pi \delta_0^2} }}
+    \exp{
+        \left \{
         \frac{
-            \lambda_0 \delta_0^{-2} + \sum_{Y} y \sigma^2
+            -(\mu - \lambda_0)^2
+        }
+        {2\delta_0^2}
+        \right \}
+    } \nonumber                               \\
+             & =
+    \frac{1}
+    {
+        (2\pi)^{\frac{n+1}{2}}
+        \sqrt{ \delta_0^2 \sigma^{2n}}
+    }
+    \exp{
+        \left \{
+        \frac{- \mu^2 + 2 \mu \lambda_0 - \lambda_0^2}{2\delta_0^2}
+        -
+        \sum_{t=1}^{n}
+        \frac{y_t^2 - 2 \mu y_t + \mu^2}{2\sigma^2}
+        \right \}
+    } \nonumber                               \\
+    %  & \text{Dropping the constant terms} \nonumber \\
+             & \propto
+    \exp{
+        \left \{
+        \frac{
+            -\mu^2 (\sigma^2 + t\delta_0^2)
+            + 2 \mu (\lambda_0 \sigma^2 + \delta_0^2 y_1 + \cdots + \delta_0^2 y_n)
+            - (\lambda_0^2 \sigma^2 + \delta_0^2 y_1^2 + \cdots + \delta_0^2 y_n^2)
+        }
+        {2\delta_0^2 \sigma^2}
+        \right \}
+    } \nonumber                               \\
+             & \propto
+    \exp{
+        \left \{
+        \frac{
+            - \mu^2
+            + 2 \mu \frac{\mu_0 \sigma^2 + \sum_{t=1}^{n} \delta_0^2 y_t}
+            {\sigma^2 + n \delta_0^2}
+            - \left(
+            \frac{
+                \lambda_0 \sigma^2 + \sum_{t=1}^{n} \delta_0^2 y_t
+            }
+            {\sigma^2 + n \delta_0^2}
+            \right)^2
         }
         {
-            \delta_0^{-2} + n \sigma_0^{-2}
+            2 \frac{\delta_0^2 \sigma^2}{\sigma^2 + n\delta_0^2}
         }
-        =
-        \delta_1^2
-        \left(
-        \lambda_0 \delta_0^{-2} + \sum_{Y} y \sigma^{-2}
-        \right)
-    \end{equation}
-\end{def}
+        \right \}
+    }
+    \times
+    \exp{
+        \left \{
+        -\frac{
+            \lambda_0 \sigma^2 + \sum_{t=1}^{n} \delta_0^2 y_t
+        }
+        {
+            2 \delta_0^2 \sigma^2
+        }
+        \right \}
+    } \nonumber                               \\
+             & \propto
+    \exp{
+        \left \{
+        -
+        \frac{
+            \left(
+            \mu
+            -
+            \frac{
+                \lambda_0 \sigma^2 + \sum_{t=1}^{n} \delta_0^2 y_t
+            }
+            {
+                \sigma^2 + n \delta_0^2
+            }
+            \right)^2
+        }
+        {
+            2 \frac{
+                \delta_0^2 \sigma^2
+            }
+            {\sigma^2 + n \delta_0^2}
+        }
+        \right \}
+    } \nonumber                               \\
+             & =
+    \exp{
+        \left \{
+        -
+        \frac{
+            \left(
+            \mu
+            -
+            \frac{
+                \lambda_0 \delta_0^{-2} + \sum_{t=1}^{n} y_t \sigma^2
+            }
+            {
+                \delta_0^{-2} + n \sigma_0^{-2}
+            }
+            \right)^2
+        }
+        {
+            2 \frac{1}
+            {
+                \sigma^{-2} + n \delta_0^{-2}
+            }
+        }
+        \right \}
+    } \nonumber                               \\
+             & =
+    \exp{
+        \left \{
+        -
+        \frac{
+            \left( \mu - \lambda_1 \right)^2
+        }
+        {
+            2 \delta_1
+        }
+        \right \}
+    }, \text{ where } \nonumber               \\
+             & \delta_1^2
+    =
+    \frac{1}{\delta_0^{-2}+n\delta^{-2}}
+    \quad\text{and}\quad
+    \lambda_1
+    =
+    \frac{
+        \lambda_0 \delta_0^{-2} + \sum_{t=1}^{n} y \sigma^2
+    }
+    {
+        \delta_0^{-2} + n \sigma_0^{-2}
+    }
+    =
+    \delta_1^2
+    \left(
+    \lambda_0 \delta_0^{-2} + \sum_{t=1}^{n} y \sigma^{-2}
+    \right) \nonumber
+\end{align}
+
+% TODO check how to explain the normal distribution insight properly
 
 \subsection{Challenges of Bayesian Inference}\label{bayesproblems}
 
