@@ -1,11 +1,43 @@
 # %%
 
-import pandas as pd
 import os
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scipy
 import seaborn as sns
+from dotenv import load_dotenv
+
+load_dotenv()
 
 plt.style.use("seaborn-white")
+
+# %%
+
+patients_n = int(os.getenv("PATIENTS_N"))
+blocks_n = int(os.getenv("BLOCKS_N"))
+treatment_measurements_n = int(os.getenv("TREATMENT_MEASUREMENTS_N"))
+
+# treatment and no treatment only. No multiple treatments
+total_measurements_n = blocks_n * treatment_measurements_n * 2
+
+population_treatment1_mean = float(os.getenv("POPULATION_TREATMENT1_MEAN"))
+population_treatment1_sd = float(os.getenv("POPULATION_TREATMENT1_SD"))
+population_treatment2_mean = float(os.getenv("POPULATION_TREATMENT2_MEAN"))
+population_treatment2_sd = float(os.getenv("POPULATION_TREATMENT2_SD"))
+population_trend_mean = float(os.getenv("POPULATION_TREND_MEAN"))
+population_trend_sd = float(os.getenv("POPULATION_TREND_SD"))
+
+population_measurement_error_shape = float(
+    os.getenv("POPULATION_MEASUREMENT_ERROR_SHAPE")
+)
+population_measurement_error_scale = float(
+    os.getenv("POPULATION_MEASUREMENT_ERROR_SCALE")
+)
+
+population_autocorrelation_alpha = float(os.getenv("POPULATION_AUTOCORRELATION_ALPHA"))
+population_autocorrelation_beta = float(os.getenv("POPULATION_AUTOCORRELATION_BETA"))
 
 # %%
 
@@ -18,19 +50,110 @@ visualization_folder = os.path.join("figures")
 
 # %%
 
-# PARAMETER DISTRIBUTIONS
+# POPULATION PARAMETER DISTRIBUTIONS
+
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(nrows=1, ncols=4, figsize=(8, 2))
+
+# treatment1
+x = np.linspace(
+    scipy.stats.norm.ppf(
+        0.01, loc=population_treatment1_mean, scale=population_treatment1_sd
+    ),
+    scipy.stats.norm.ppf(
+        0.99, loc=population_treatment1_mean, scale=population_treatment1_sd
+    ),
+)
+y = scipy.stats.norm.pdf(
+    x, loc=population_treatment1_mean, scale=population_treatment1_sd
+)
+
+ax1.plot(x, y, "r-", lw=2)
+ax1.spines["top"].set_visible(False)
+ax1.spines["right"].set_visible(False)
+ax1.set_xlabel("treatment1")
+ax1.set_ylabel("Probability Density")
+
+# TREATMENT EFFECT
+x = np.linspace(
+    scipy.stats.norm.ppf(
+        0.01, loc=population_treatment2_mean, scale=population_treatment2_sd
+    ),
+    scipy.stats.norm.ppf(
+        0.99, loc=population_treatment2_mean, scale=population_treatment2_sd,
+    ),
+)
+y = scipy.stats.norm.pdf(
+    x, loc=population_treatment2_mean, scale=population_treatment2_sd,
+)
+
+ax2.plot(x, y, "r-", lw=2)
+ax2.spines["top"].set_visible(False)
+ax2.spines["right"].set_visible(False)
+ax2.set_xlabel("Treatment Effect")
+
+# MEASUREMENT ERROR
+x = np.linspace(
+    scipy.stats.invgamma.ppf(
+        0.01,
+        a=population_measurement_error_shape,
+        scale=population_measurement_error_scale,
+    ),
+    scipy.stats.invgamma.ppf(
+        0.99,
+        a=population_measurement_error_shape,
+        scale=population_measurement_error_scale,
+    ),
+)
+y = scipy.stats.invgamma.pdf(
+    x, a=population_measurement_error_shape, scale=population_measurement_error_scale,
+)
+
+ax3.plot(
+    x, y, "r-", lw=2,
+)
+ax3.spines["top"].set_visible(False)
+ax3.spines["right"].set_visible(False)
+ax3.set_xlabel("Measurement Error\nStandard Deviation")
+
+# AUTOCORRELATION
+x = np.linspace(
+    scipy.stats.beta.ppf(
+        0.01, a=population_autocorrelation_alpha, b=population_autocorrelation_beta
+    ),
+    scipy.stats.beta.ppf(
+        0.99, a=population_autocorrelation_alpha, b=population_autocorrelation_beta,
+    ),
+)
+y = scipy.stats.beta.pdf(
+    x, a=population_autocorrelation_alpha, b=population_autocorrelation_beta
+)
+
+ax4.plot(x, y, "r-", lw=2)
+ax4.spines["top"].set_visible(False)
+ax4.spines["right"].set_visible(False)
+ax4.set_xlabel("Autocorrelation")
+
+plt.savefig(
+    os.path.join(visualization_folder, "population_parameter_distributions.pdf"),
+    bbox_inches="tight",
+)
+
+
+# %%
+
+# PATIENT PARAMETER DISTRIBUTIONS
 
 fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(
     nrows=2, ncols=3, figsize=(8, 5.5)
 )
 
-ax1.hist(parameters_df["baselevel"])
+ax1.hist(parameters_df["treatment1"])
 ax1.spines["top"].set_visible(False)
 ax1.spines["right"].set_visible(False)
 ax1.set_xlabel("Baselevel")
 ax1.set_ylabel("Number of Patients")
 
-ax2.hist(parameters_df["treatment_effect"])
+ax2.hist(parameters_df["treatment2"])
 ax2.spines["top"].set_visible(False)
 ax2.spines["right"].set_visible(False)
 ax2.set_xlabel("Treatment Effect")
@@ -63,17 +186,12 @@ plt.savefig(
 # PARAMETER CORRELATIONS
 
 parameters_nice_names_df = parameters_df[
-    [
-        "baselevel",
-        "treatment_effect",
-        "trend",
-        "measurement_error_sd",
-        "autocorrelation",
-    ]
+    ["treatment1", "treatment2", "trend", "measurement_error_sd", "autocorrelation"]
 ]
+
 parameters_nice_names_df.columns = [
-    "Baselevel",
-    "Treatment Effect",
+    "Treatment 1",
+    "Treatment 2",
     "Trend",
     "Measurement Error\nStandard Deviation",
     "Autocorrelation",
@@ -126,6 +244,5 @@ plt.savefig(
     os.path.join(visualization_folder, "measurements_timeline.pdf"),
     bbox_inches="tight",
 )
-
 
 # %%
