@@ -6,13 +6,50 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pymc3 as pm
-import seaborn as sns
-import theano
+from dotenv import load_dotenv
+
+from src.draw_posterior_checks import draw_posterior_checks
+from src.likelihood import (
+    single_patient_no_trend_likelihood,
+    single_patient_with_trend_likelihood,
+    all_patients_no_trend_likelihood,
+    all_patients_with_trend_likelihood,
+)
+from src.create_patient_measurements import create_patient_measurements
+
+load_dotenv()
+
+plt.style.use("seaborn-white")
 
 # %%
 
-# Seed used for posterior sampling
-np.random.seed(123)
+seed = int(os.getenv("SEED"))
+
+np.random.seed(seed)
+
+patients_n = int(os.getenv("PATIENTS_N"))
+blocks_n = int(os.getenv("BLOCKS_N"))
+treatment_measurements_n = int(os.getenv("TREATMENT_MEASUREMENTS_N"))
+
+# treatment and no treatment only. No multiple treatments
+total_measurements_n = blocks_n * treatment_measurements_n * 2
+
+population_treatment1_mean = float(os.getenv("POPULATION_TREATMENT1_MEAN"))
+population_treatment1_sd = float(os.getenv("POPULATION_TREATMENT1_SD"))
+population_treatment2_mean = float(os.getenv("POPULATION_TREATMENT2_MEAN"))
+population_treatment2_sd = float(os.getenv("POPULATION_TREATMENT2_SD"))
+population_trend_mean = float(os.getenv("POPULATION_TREND_MEAN"))
+population_trend_sd = float(os.getenv("POPULATION_TREND_SD"))
+
+population_measurement_error_shape = float(
+    os.getenv("POPULATION_MEASUREMENT_ERROR_SHAPE")
+)
+population_measurement_error_scale = float(
+    os.getenv("POPULATION_MEASUREMENT_ERROR_SCALE")
+)
+
+population_autocorrelation_alpha = float(os.getenv("POPULATION_AUTOCORRELATION_ALPHA"))
+population_autocorrelation_beta = float(os.getenv("POPULATION_AUTOCORRELATION_BETA"))
 
 # %%
 
@@ -23,6 +60,8 @@ all_measurements_df = pd.read_csv(measurements_path)
 all_parameters_df = pd.read_csv(parameters_path)
 # convert treatment order from string to list
 all_parameters_df["treatment_order"] = pd.eval(all_parameters_df["treatment_order"])
+# used for subsetting parameters
+patient_index = all_measurements_df["patient_index"]
 
 # %%
 
@@ -32,94 +71,6 @@ parameters_df = all_parameters_df[all_parameters_df["patient_index"] == 0]
 
 # %%
 
-# ANALYZING SINGLE PATIENT
-
-# SINGLE PATIENT MODEL WITHOUT TREND
-
-
-def draw_posterior_checks(
-    predictions, treatment_order, observations_per_treatment, trend=False
-):
-
-    for patient, patient_treatment_order in zip(
-        range(predictions.shape[1]), treatment_order
-    ):
-
-        treatment2_indexer = np.repeat(
-            patient_treatment_order, observations_per_treatment
-        )
-        treatment1_indexer = np.abs(treatment2_indexer - 1)
-        # convert to boolean indexer
-        treatment2_indexer = np.array(treatment2_indexer, dtype=bool)
-        treatment1_indexer = np.array(treatment1_indexer, dtype=bool)
-
-        _, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(14, 6))
-
-        # Treatment 1
-        sns.distplot(
-            predictions[:, patient][:, treatment1_indexer].mean(axis=1),
-            label="Posterior Predictive Means",
-            ax=ax1,
-        )
-        ax1.axvline(
-            all_measurements_df[
-                (all_measurements_df["treatment"] == 0)
-                & (all_measurements_df["patient_index"] == patient)
-            ]["measurement"].mean(),
-            ls="--",
-            color="red",
-            label="Mean in Data",
-        )
-        ax1.set_title("Treatment 1")
-
-        # Treatment 2
-        sns.distplot(
-            predictions[:, patient][:, treatment2_indexer].mean(axis=1),
-            label="Posterior Predictive Means",
-            ax=ax2,
-        )
-        ax2.axvline(
-            all_measurements_df[
-                (all_measurements_df["treatment"] == 1)
-                & (all_measurements_df["patient_index"] == patient)
-            ]["measurement"].mean(),
-            ls="--",
-            color="red",
-            label="Mean in Data",
-        )
-        ax2.set_title("Treatment 2")
-
-        # Treatment difference
-        sns.distplot(
-            predictions[:, patient][:, treatment1_indexer].mean(axis=1)
-            - predictions[:, patient][:, treatment2_indexer].mean(axis=1),
-            label="Posterior Predictive Means",
-            ax=ax3,
-        )
-        ax3.axvline(
-            all_measurements_df[
-                (all_measurements_df["treatment"] == 0)
-                & (all_measurements_df["patient_index"] == patient)
-            ]["measurement"].mean()
-            - all_measurements_df[
-                (all_measurements_df["treatment"] == 1)
-                & (all_measurements_df["patient_index"] == patient)
-            ]["measurement"].mean(),
-            ls="--",
-            color="red",
-            label="Mean in Data",
-        )
-        ax3.axvline(
-            all_parameters_df["treatment1"][patient]
-            - all_parameters_df["treatment2"][patient],
-            ls="-",
-            color="green",
-            label="Real Parameter Value",
-        )
-        ax3.set_title("Treatment 1 - Treatment 2")
-        ax3.legend()
-        plt.show()
-
 
 def create_simulations(treatment1, treatment2, sigma, trend, size):
 
@@ -128,51 +79,6 @@ def create_simulations(treatment1, treatment2, sigma, trend, size):
     #
     # treatment_order
     # observations_per_treatment
-
-    def create_simulated_experiment(
-        treatment1_, treatment2_, sigma_, trend_, treatment_order_
-    ):
-
-        treatment1_array = np.array(
-            list(
-                pd.core.common.flatten(
-                    [
-                        [treatment1_ * abs(indicator - 1)] * observations_per_treatment
-                        for indicator in treatment_order_
-                    ]
-                )
-            )
-        )
-
-        treatment2_array = np.array(
-            list(
-                pd.core.common.flatten(
-                    [
-                        [treatment2_ * indicator] * observations_per_treatment
-                        for indicator in treatment_order_
-                    ]
-                )
-            )
-        )
-
-        trend_array = np.array(
-            [
-                trend_ * measurement_index
-                for measurement_index in range(
-                    observations_per_treatment * len(treatment_order_)
-                )
-            ]
-        )
-
-        measurement_error_array = np.random.normal(
-            loc=0, scale=sigma_, size=observations_per_treatment * len(treatment_order_)
-        )
-
-        measurements = (
-            treatment1_array + treatment2_array + trend_array + measurement_error_array
-        )
-
-        return measurements
 
     if type(treatment1) is np.ndarray:
 
@@ -185,8 +91,13 @@ def create_simulations(treatment1, treatment2, sigma, trend, size):
             patient_treatment_order = treatment_order[patient]
 
             results_list.append(
-                create_simulated_experiment(
-                    treatment1_, treatment2_, sigma_, trend_, patient_treatment_order
+                create_patient_measurements(
+                    treatment_measurements_n=treatment_measurements_n,
+                    treatment_indicator_list=patient_treatment_order,
+                    treatment1=treatment1_,
+                    treatment2=treatment2_,
+                    measurement_error_sd=sigma_,
+                    trend=trend_,
                 )
             )
 
@@ -200,8 +111,13 @@ def create_simulations(treatment1, treatment2, sigma, trend, size):
         # if there is one or multiple patients
         return np.vstack(
             [
-                create_simulated_experiment(
-                    treatment1, treatment2, sigma, trend, patient_treatment_order
+                create_patient_measurements(
+                    treatment_measurements_n=treatment_measurements_n,
+                    treatment_indicator_list=patient_treatment_order,
+                    treatment1=treatment1,
+                    treatment2=treatment2,
+                    measurement_error_sd=sigma,
+                    trend=trend,
                 )
             ]
         )
@@ -243,6 +159,9 @@ def random(point=None, size=None):
 
 # %%
 
+# ANALYZING SINGLE PATIENT
+
+# SINGLE PATIENT MODEL WITHOUT TREND
 
 with pm.Model() as single_patient_no_trend_model:
 
@@ -250,31 +169,9 @@ with pm.Model() as single_patient_no_trend_model:
     treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
     sigma_prior = pm.HalfCauchy("sigma", beta=10)
 
-    # likelihood is not a well defined distribution
-    # so using prebuilt parts does not work. Writing
-    # custom function calculating the log likelihood
-
-    def likelihood(treatment1, treatment2, sigma):
-        def logp_(value):
-
-            return (-1 / 2.0) * (
-                value[0].shape[0] * theano.tensor.log(2 * np.pi)
-                + value[0].shape[0] * theano.tensor.log(sigma ** 2)
-                + (1 / sigma ** 2)
-                * (
-                    (
-                        value[0]
-                        - (treatment1 * abs(value[1] - 1) + treatment2 * value[1])
-                    )
-                    ** 2
-                ).sum(axis=0)
-            )
-
-        return logp_
-
     like = pm.DensityDist(
         "y",
-        likelihood(
+        single_patient_no_trend_likelihood(
             treatment1=treatment1_prior, treatment2=treatment2_prior, sigma=sigma_prior,
         ),
         observed=[measurements_df["measurement"], measurements_df["treatment"]],
@@ -286,43 +183,9 @@ with pm.Model() as single_patient_no_trend_model:
     pm.traceplot(trace, ["treatment1", "treatment2", "sigma"])
 
     # posteriors should look reasonable
-    # pm.plot_posterior(trace)
-    # plt.show()
-
-    # check if your variables have reasonable credible intervals,
-    # and Gelman–Rubin scores close to 1
-    # pm.forestplot(trace)
-    # plt.show()
-
-    # check if your chains are impaired by high autocorrelation.
-    # Also remember that thinning your chains is a waste of time
-    # at best, and deluding yourself at worst
-    # pm.autocorrplot(trace)
-    # plt.show()
-
-    # ideally the energy and marginal energy distributions should
-    # look very similar. Long tails in the distribution of energy levels
-    # indicates deteriorated sampler efficiency.
-    # pm.energyplot(trace)
+    pm.plot_posterior(trace)
     plt.show()
 
-    # %%
-
-    # summary statistics
-    # Look out for:
-    #
-    # the ^R values (a.k.a. the Gelman–Rubin statistic,
-    # a.k.a. the potential scale reduction factor, a.k.a. the PSRF):
-    # are they all close to 1? If not, something is horribly wrong.
-    # Consider respecifying or reparameterizing your model.
-    # You can also inspect these in the forest plot.
-    #
-    # the sign and magnitude of the inferred values: do they
-    # make sense, or are they unexpected and unreasonable?
-    # This could indicate a poorly specified model.
-    # (E.g. parameters of the unexpected sign that have low
-    # uncertainties might indicate that your model needs
-    # interaction terms.)
     pm.summary(trace)
 
 # %%
@@ -331,13 +194,18 @@ with pm.Model() as single_patient_no_trend_model:
 # posterior sampling
 
 treatment_order = parameters_df["treatment_order"]
-observations_per_treatment = 4
 
 with single_patient_no_trend_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)
     predictions = post_pred["y"]
 
-draw_posterior_checks(predictions, treatment_order, observations_per_treatment)
+draw_posterior_checks(
+    predictions=predictions,
+    measurements_df=all_measurements_df,
+    parameters_df=all_parameters_df,
+    treatment_order=treatment_order,
+    treatment_measurements_n=treatment_measurements_n,
+)
 
 # %%
 
@@ -350,35 +218,9 @@ with pm.Model() as single_patient_with_trend_model:
     trend_prior = pm.Normal("trend", mu=0, sigma=1)
     sigma_prior = pm.HalfCauchy("sigma", beta=10)
 
-    # likelihood is not a well defined distribution
-    # so using prebuilt parts does not work. Writing
-    # custom function calculating the log likelihood
-
-    def likelihood(treatment1, treatment2, trend, sigma):
-        def logp_(value):
-
-            return (-1 / 2.0) * (
-                value[0].shape[0] * theano.tensor.log(2 * np.pi)
-                + value[0].shape[0] * theano.tensor.log(sigma ** 2)
-                + (1 / sigma ** 2)
-                * (
-                    (
-                        value[0]
-                        - (
-                            treatment1 * abs(value[1] - 1)
-                            + treatment2 * value[1]
-                            + trend * value[2]
-                        )
-                    )
-                    ** 2
-                ).sum(axis=0)
-            )
-
-        return logp_
-
     like = pm.DensityDist(
         "y",
-        likelihood(
+        single_patient_with_trend_likelihood(
             treatment1=treatment1_prior,
             treatment2=treatment2_prior,
             trend=trend_prior,
@@ -397,67 +239,30 @@ with pm.Model() as single_patient_with_trend_model:
     pm.traceplot(trace, ["treatment1", "treatment2", "trend", "sigma"])
     plt.show()
 
-    # posteriors should look reasonable
-    # pm.plot_posterior(trace)
-    # plt.show()
-
-    # check if your variables have reasonable credible intervals,
-    # and Gelman–Rubin scores close to 1
-    # pm.forestplot(trace)
-    # plt.show()
-
-    # check if your chains are impaired by high autocorrelation.
-    # Also remember that thinning your chains is a waste of time
-    # at best, and deluding yourself at worst
-    # pm.autocorrplot(trace)
-    # plt.show()
-
-    # ideally the energy and marginal energy distributions should
-    # look very similar. Long tails in the distribution of energy levels
-    # indicates deteriorated sampler efficiency.
-    # pm.energyplot(trace)
+    pm.plot_posterior(trace)
     plt.show()
 
-    # %%
-
-    # summary statistics
-    # Look out for:
-    #
-    # the ^R values (a.k.a. the Gelman–Rubin statistic,
-    # a.k.a. the potential scale reduction factor, a.k.a. the PSRF):
-    # are they all close to 1? If not, something is horribly wrong.
-    # Consider respecifying or reparameterizing your model.
-    # You can also inspect these in the forest plot.
-    #
-    # the sign and magnitude of the inferred values: do they
-    # make sense, or are they unexpected and unreasonable?
-    # This could indicate a poorly specified model.
-    # (E.g. parameters of the unexpected sign that have low
-    # uncertainties might indicate that your model needs
-    # interaction terms.)
     pm.summary(trace)
 
 # %%
 
 treatment_order = parameters_df["treatment_order"]
-observations_per_treatment = 4
 
 with single_patient_with_trend_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)
     predictions = post_pred["y"]
 
-draw_posterior_checks(predictions, treatment_order, observations_per_treatment)
+draw_posterior_checks(
+    predictions=predictions,
+    measurements_df=all_measurements_df,
+    parameters_df=all_parameters_df,
+    treatment_order=treatment_order,
+    treatment_measurements_n=treatment_measurements_n,
+)
 
 # %%
 
 # ANALYZING ALL PATIENTS AT ONCE
-
-# one row of parameters per patient
-patients_n = len(all_parameters_df)
-# used for subsetting parameters
-patient_index = all_measurements_df["patient_index"]
-
-# %%
 
 # UNPOOLED MODEL WITHOUT TREND
 
@@ -468,35 +273,13 @@ with pm.Model() as all_patients_no_trend_model:
     treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10, shape=patients_n)
     sigma_prior = pm.HalfCauchy("sigma", beta=10, shape=patients_n)
 
-    # likelihood is not a well defined distribution
-    # so using prebuilt parts does not work. Writing
-    # custom function calculating the log likelihood
-
-    def likelihood(treatment1, treatment2, sigma):
-        def logp_(value):
-
-            return (-1 / 2.0) * (
-                value[0].shape[0] * theano.tensor.log(2 * np.pi)
-                + value[0].shape[0] * theano.tensor.log(sigma[patient_index] ** 2)
-                + (1 / sigma[patient_index] ** 2)
-                * (
-                    (
-                        value[0]
-                        - (
-                            treatment1[patient_index] * abs(value[1] - 1)
-                            + treatment2[patient_index] * value[1]
-                        )
-                    )
-                    ** 2
-                ).sum(axis=0)
-            ).sum(axis=0)
-
-        return logp_
-
     like = pm.DensityDist(
         "y",
-        likelihood(
-            treatment1=treatment1_prior, treatment2=treatment2_prior, sigma=sigma_prior,
+        all_patients_no_trend_likelihood(
+            treatment1=treatment1_prior,
+            treatment2=treatment2_prior,
+            sigma=sigma_prior,
+            patient_index=patient_index,
         ),
         observed=[all_measurements_df["measurement"], all_measurements_df["treatment"]],
         random=random,
@@ -507,16 +290,27 @@ with pm.Model() as all_patients_no_trend_model:
     pm.traceplot(trace, ["treatment1", "treatment2", "sigma"])
     plt.show()
 
+    pm.plot_posterior(trace)
+    plt.show()
+
+    pm.summary(trace)
+
 # %%
 
 treatment_order = all_parameters_df["treatment_order"]
-observations_per_treatment = 4
 
 with all_patients_no_trend_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)
     predictions = post_pred["y"]
 
-draw_posterior_checks(predictions, treatment_order, observations_per_treatment)
+draw_posterior_checks(
+    predictions=predictions,
+    measurements_df=all_measurements_df,
+    parameters_df=all_parameters_df,
+    treatment_order=treatment_order,
+    treatment_measurements_n=treatment_measurements_n,
+)
+
 
 # %%
 
@@ -530,39 +324,14 @@ with pm.Model() as all_patients_with_trend_model:
     trend_prior = pm.Normal("trend", mu=0, sigma=1, shape=patients_n)
     sigma_prior = pm.HalfCauchy("sigma", beta=10, shape=patients_n)
 
-    # likelihood is not a well defined distribution
-    # so using prebuilt parts does not work. Writing
-    # custom function calculating the log likelihood
-
-    def likelihood(treatment1, treatment2, trend, sigma):
-        def logp_(value):
-
-            return (-1 / 2.0) * (
-                value[0].shape[0] * theano.tensor.log(2 * np.pi)
-                + value[0].shape[0] * theano.tensor.log(sigma[patient_index] ** 2)
-                + (1 / sigma[patient_index] ** 2)
-                * (
-                    (
-                        value[0]
-                        - (
-                            treatment1[patient_index] * abs(value[1] - 1)
-                            + treatment2[patient_index] * value[1]
-                            + trend[patient_index] * value[2]
-                        )
-                    )
-                    ** 2
-                ).sum(axis=0)
-            ).sum(axis=0)
-
-        return logp_
-
     like = pm.DensityDist(
         "y",
-        likelihood(
+        all_patients_with_trend_likelihood(
             treatment1=treatment1_prior,
             treatment2=treatment2_prior,
             trend=trend_prior,
             sigma=sigma_prior,
+            patient_index=patient_index,
         ),
         observed=[
             all_measurements_df["measurement"],
@@ -577,54 +346,26 @@ with pm.Model() as all_patients_with_trend_model:
     pm.traceplot(trace, ["treatment1", "treatment2", "sigma"])
     plt.show()
 
-    # posteriors should look reasonable
-    # pm.plot_posterior(trace)
-    # plt.show()
+    pm.plot_posterior(trace)
+    plt.show()
 
-    # check if your variables have reasonable credible intervals,
-    # and Gelman–Rubin scores close to 1
-    # pm.forestplot(trace)
-    # plt.show()
-
-    # check if your chains are impaired by high autocorrelation.
-    # Also remember that thinning your chains is a waste of time
-    # at best, and deluding yourself at worst
-    # pm.autocorrplot(trace)
-    # plt.show()
-
-    # ideally the energy and marginal energy distributions should
-    # look very similar. Long tails in the distribution of energy levels
-    # indicates deteriorated sampler efficiency.
-    # pm.energyplot(trace)
-    # plt.show()
-
-    # summary statistics
-    # Look out for:
-    #
-    # the ^R values (a.k.a. the Gelman–Rubin statistic,
-    # a.k.a. the potential scale reduction factor, a.k.a. the PSRF):
-    # are they all close to 1? If not, something is horribly wrong.
-    # Consider respecifying or reparameterizing your model.
-    # You can also inspect these in the forest plot.
-    #
-    # the sign and magnitude of the inferred values: do they
-    # make sense, or are they unexpected and unreasonable?
-    # This could indicate a poorly specified model.
-    # (E.g. parameters of the unexpected sign that have low
-    # uncertainties might indicate that your model needs
-    # interaction terms.)
     pm.summary(trace)
 
 # %%
 
 treatment_order = all_parameters_df["treatment_order"]
-observations_per_treatment = 4
 
 with all_patients_with_trend_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)
     predictions = post_pred["y"]
 
-draw_posterior_checks(predictions, treatment_order, observations_per_treatment)
+draw_posterior_checks(
+    predictions=predictions,
+    measurements_df=all_measurements_df,
+    parameters_df=all_parameters_df,
+    treatment_order=treatment_order,
+    treatment_measurements_n=treatment_measurements_n,
+)
 
 # %%
 
@@ -667,35 +408,13 @@ with pm.Model() as hierarchical_no_trend_model:
         "sigma", beta=population_measurement_error_beta_prior, shape=patients_n,
     )
 
-    # likelihood is not a well defined distribution
-    # so using prebuilt parts does not work. Writing
-    # custom function calculating the log likelihood
-
-    def likelihood(treatment1, treatment2, sigma):
-        def logp_(value):
-
-            return (-1 / 2.0) * (
-                value[0].shape[0] * theano.tensor.log(2 * np.pi)
-                + value[0].shape[0] * theano.tensor.log(sigma[patient_index] ** 2)
-                + (1 / sigma[patient_index] ** 2)
-                * (
-                    (
-                        value[0]
-                        - (
-                            treatment1[patient_index] * abs(value[1] - 1)
-                            + treatment2[patient_index] * value[1]
-                        )
-                    )
-                    ** 2
-                ).sum(axis=0)
-            ).sum(axis=0)
-
-        return logp_
-
     like = pm.DensityDist(
         "y",
-        likelihood(
-            treatment1=treatment1_prior, treatment2=treatment2_prior, sigma=sigma_prior,
+        all_patients_no_trend_likelihood(
+            treatment1=treatment1_prior,
+            treatment2=treatment2_prior,
+            sigma=sigma_prior,
+            patient_index=patient_index,
         ),
         observed=[all_measurements_df["measurement"], all_measurements_df["treatment"]],
         random=random,
@@ -718,44 +437,9 @@ with pm.Model() as hierarchical_no_trend_model:
     )
     plt.show()
 
-    # posteriors should look reasonable
     pm.plot_posterior(trace)
     plt.show()
 
-    # check if your variables have reasonable credible intervals,
-    # and Gelman–Rubin scores close to 1
-    # pm.forestplot(trace)
-    # plt.show()
-
-    # check if your chains are impaired by high autocorrelation.
-    # Also remember that thinning your chains is a waste of time
-    # at best, and deluding yourself at worst
-    # pm.autocorrplot(trace)
-    # plt.show()
-
-    # ideally the energy and marginal energy distributions should
-    # look very similar. Long tails in the distribution of energy levels
-    # indicates deteriorated sampler efficiency.
-    # pm.energyplot(trace)
-    # plt.show()
-
-    # %%
-
-    # summary statistics
-    # Look out for:
-    #
-    # the ^R values (a.k.a. the Gelman–Rubin statistic,
-    # a.k.a. the potential scale reduction factor, a.k.a. the PSRF):
-    # are they all close to 1? If not, something is horribly wrong.
-    # Consider respecifying or reparameterizing your model.
-    # You can also inspect these in the forest plot.
-    #
-    # the sign and magnitude of the inferred values: do they
-    # make sense, or are they unexpected and unreasonable?
-    # This could indicate a poorly specified model.
-    # (E.g. parameters of the unexpected sign that have low
-    # uncertainties might indicate that your model needs
-    # interaction terms.)
     pm.summary(trace)
 
 # %%
@@ -763,13 +447,18 @@ with pm.Model() as hierarchical_no_trend_model:
 # posterior sampling
 
 treatment_order = all_parameters_df["treatment_order"]
-observations_per_treatment = 4
 
 with hierarchical_no_trend_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)
     predictions = post_pred["y"]
 
-draw_posterior_checks(predictions, treatment_order, observations_per_treatment)
+draw_posterior_checks(
+    predictions=predictions,
+    measurements_df=all_measurements_df,
+    parameters_df=all_parameters_df,
+    treatment_order=treatment_order,
+    treatment_measurements_n=treatment_measurements_n,
+)
 
 # %%
 
@@ -818,39 +507,14 @@ with pm.Model() as hierarchical_with_trend_model:
         shape=patients_n,
     )
 
-    # likelihood is not a well defined distribution
-    # so using prebuilt parts does not work. Writing
-    # custom function calculating the log likelihood
-
-    def likelihood(treatment1, treatment2, trend, sigma):
-        def logp_(value):
-
-            return (-1 / 2.0) * (
-                value[0].shape[0] * theano.tensor.log(2 * np.pi)
-                + value[0].shape[0] * theano.tensor.log(sigma[patient_index] ** 2)
-                + (1 / sigma[patient_index] ** 2)
-                * (
-                    (
-                        value[0]
-                        - (
-                            treatment1[patient_index] * abs(value[1] - 1)
-                            + treatment2[patient_index] * value[1]
-                            + trend[patient_index] * value[2]
-                        )
-                    )
-                    ** 2
-                ).sum(axis=0)
-            ).sum(axis=0)
-
-        return logp_
-
     like = pm.DensityDist(
         "y",
-        likelihood(
+        all_patients_with_trend_likelihood(
             treatment1=treatment1_prior,
             treatment2=treatment2_prior,
             trend=trend_prior,
             sigma=sigma_prior,
+            patient_index=patient_index,
         ),
         observed=[
             all_measurements_df["measurement"],
@@ -860,7 +524,7 @@ with pm.Model() as hierarchical_with_trend_model:
         random=random,
     )
 
-    trace = pm.sample(800, tune=800, cores=3)
+    trace = pm.sample(800, tune=1000, cores=3)
 
     pm.traceplot(
         trace,
@@ -878,57 +542,27 @@ with pm.Model() as hierarchical_with_trend_model:
         ],
     )
 
-    # posteriors should look reasonable
     pm.plot_posterior(trace)
     plt.show()
 
-    # check if your variables have reasonable credible intervals,
-    # and Gelman–Rubin scores close to 1
-    # pm.forestplot(trace)
-    # plt.show()
-
-    # check if your chains are impaired by high autocorrelation.
-    # Also remember that thinning your chains is a waste of time
-    # at best, and deluding yourself at worst
-    # pm.autocorrplot(trace)
-    # plt.show()
-
-    # ideally the energy and marginal energy distributions should
-    # look very similar. Long tails in the distribution of energy levels
-    # indicates deteriorated sampler efficiency.
-    # pm.energyplot(trace)
-    # plt.show()
-
-    # summary statistics
-    # Look out for:
-    #
-    # the ^R values (a.k.a. the Gelman–Rubin statistic,
-    # a.k.a. the potential scale reduction factor, a.k.a. the PSRF):
-    # are they all close to 1? If not, something is horribly wrong.
-    # Consider respecifying or reparameterizing your model.
-    # You can also inspect these in the forest plot.
-    #
-    # the sign and magnitude of the inferred values: do they
-    # make sense, or are they unexpected and unreasonable?
-    # This could indicate a poorly specified model.
-    # (E.g. parameters of the unexpected sign that have low
-    # uncertainties might indicate that your model needs
-    # interaction terms.)
-    # pm.summary(trace)
-
+    pm.summary(trace)
 
 # %%
 
 # posterior sampling
 
-# treatment_order = all_parameters_df["treatment_order"]
-# observations_per_treatment = 4
+treatment_order = all_parameters_df["treatment_order"]
 
-# with hierarchical_with_trend_model as model:
-#     post_pred = pm.sample_posterior_predictive(trace, samples=500)
-#     predictions = post_pred["y"]
+with hierarchical_with_trend_model as model:
+    post_pred = pm.sample_posterior_predictive(trace, samples=500)
+    predictions = post_pred["y"]
 
-draw_posterior_checks(predictions, treatment_order, observations_per_treatment)
-
+draw_posterior_checks(
+    predictions=predictions,
+    measurements_df=all_measurements_df,
+    parameters_df=all_parameters_df,
+    treatment_order=treatment_order,
+    treatment_measurements_n=treatment_measurements_n,
+)
 
 # %%

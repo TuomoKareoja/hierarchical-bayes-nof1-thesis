@@ -123,7 +123,6 @@ patient_measurements_df_list = []
 for index, patient in patient_params_df.iterrows():
 
     measurements = create_patient_measurements(
-        total_measurements_n=total_measurements_n,
         treatment_measurements_n=treatment_measurements_n,
         treatment_indicator_list=patient["treatment_order"],
         treatment1=patient["treatment1"],

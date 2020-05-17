@@ -12,14 +12,13 @@ np.random.seed(seed)
 
 
 def create_patient_measurements(
-    total_measurements_n,
     treatment_measurements_n,
     treatment_indicator_list,
     treatment1,
     treatment2,
     measurement_error_sd,
     autocorrelation=0,
-    trend=None,
+    trend=0,
 ):
 
     # TREATMENT1
@@ -51,21 +50,22 @@ def create_patient_measurements(
     # lag 1 moving average component
     ma = np.array([1, autocorrelation])
     arma_process = sm.tsa.ArmaProcess(ar, ma)
+    # if autocorrelation is zero this just normally distributed error
     error_array = arma_process.generate_sample(
-        nsample=total_measurements_n, scale=measurement_error_sd,
+        nsample=len(treatment_indicator_list) * treatment_measurements_n,
+        scale=measurement_error_sd,
     )
 
-    measurements = treatment1_array + treatment2_array + error_array
+    # TREND
+    trend_array = np.array(
+        [
+            trend * measurement_index
+            for measurement_index in range(
+                len(treatment_indicator_list) * treatment_measurements_n
+            )
+        ]
+    )
 
-    if trend:
-
-        trend_array = np.array(
-            [
-                trend * measurement_index
-                for measurement_index in range(total_measurements_n)
-            ]
-        )
-
-        measurements = measurements + trend_array
+    measurements = treatment1_array + treatment2_array + trend_array + error_array
 
     return measurements
