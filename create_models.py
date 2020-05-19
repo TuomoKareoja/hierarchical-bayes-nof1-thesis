@@ -8,18 +8,19 @@ import pandas as pd
 import pymc3 as pm
 from dotenv import load_dotenv
 
+from src.create_patient_measurements import create_patient_measurements
 from src.draw_posterior_checks import draw_posterior_checks
 from src.likelihood import (
-    single_patient_no_trend_likelihood,
-    single_patient_with_trend_likelihood,
     all_patients_no_trend_likelihood,
     all_patients_with_trend_likelihood,
+    single_patient_no_trend_likelihood,
+    single_patient_with_trend_likelihood,
 )
-from src.create_patient_measurements import create_patient_measurements
 
 load_dotenv()
 
 plt.style.use("seaborn-white")
+
 
 # %%
 
@@ -52,6 +53,8 @@ population_autocorrelation_alpha = float(os.getenv("POPULATION_AUTOCORRELATION_A
 population_autocorrelation_beta = float(os.getenv("POPULATION_AUTOCORRELATION_BETA"))
 
 # %%
+
+visualization_path = os.path.join("figures")
 
 measurements_path = os.path.join("data", "patient_measurements.csv")
 parameters_path = os.path.join("data", "patient_parameters.csv")
@@ -181,9 +184,18 @@ with pm.Model() as single_patient_no_trend_model:
     trace = pm.sample(600, tune=400, cores=3)
 
     pm.traceplot(trace, ["treatment1", "treatment2", "sigma"])
+    plt.savefig(
+        os.path.join(visualization_path, "single_patient_no_trend_traceplot.pdf"),
+        bbox_inches="tight",
+    )
+    plt.show()
 
     # posteriors should look reasonable
     pm.plot_posterior(trace)
+    plt.savefig(
+        os.path.join(visualization_path, "single_patient_no_trend_posteriors.pdf"),
+        bbox_inches="tight",
+    )
     plt.show()
 
     pm.summary(trace)
@@ -205,6 +217,7 @@ draw_posterior_checks(
     parameters_df=all_parameters_df,
     treatment_order=treatment_order,
     treatment_measurements_n=treatment_measurements_n,
+    plot_name="single_patient_no_trend_posterior_sampling",
 )
 
 # %%
@@ -237,9 +250,17 @@ with pm.Model() as single_patient_with_trend_model:
     trace = pm.sample(700, tune=600, cores=3)
 
     pm.traceplot(trace, ["treatment1", "treatment2", "trend", "sigma"])
+    plt.savefig(
+        os.path.join(visualization_path, "single_patient_with_trend_traceplot.pdf"),
+        bbox_inches="tight",
+    )
     plt.show()
 
     pm.plot_posterior(trace)
+    plt.savefig(
+        os.path.join(visualization_path, "single_patient_with_trend_posteriors.pdf"),
+        bbox_inches="tight",
+    )
     plt.show()
 
     pm.summary(trace)
@@ -258,6 +279,7 @@ draw_posterior_checks(
     parameters_df=all_parameters_df,
     treatment_order=treatment_order,
     treatment_measurements_n=treatment_measurements_n,
+    plot_name="single_patient_with_trend_posterior_sampling",
 )
 
 # %%
@@ -288,9 +310,17 @@ with pm.Model() as all_patients_no_trend_model:
     trace = pm.sample(800, tune=600, cores=3)
 
     pm.traceplot(trace, ["treatment1", "treatment2", "sigma"])
+    plt.savefig(
+        os.path.join(visualization_path, "all_patients_no_trend_traceplot.pdf"),
+        bbox_inches="tight",
+    )
     plt.show()
 
     pm.plot_posterior(trace)
+    plt.savefig(
+        os.path.join(visualization_path, "all_patients_no_trend_posteriors.pdf"),
+        bbox_inches="tight",
+    )
     plt.show()
 
     pm.summary(trace)
@@ -309,6 +339,7 @@ draw_posterior_checks(
     parameters_df=all_parameters_df,
     treatment_order=treatment_order,
     treatment_measurements_n=treatment_measurements_n,
+    plot_name="all_patients_no_trend_posterior_sampling",
 )
 
 
@@ -344,9 +375,17 @@ with pm.Model() as all_patients_with_trend_model:
     trace = pm.sample(800, tune=600, cores=3)
 
     pm.traceplot(trace, ["treatment1", "treatment2", "sigma"])
+    plt.savefig(
+        os.path.join(visualization_path, "all_patients_no_trend_traceplot.pdf"),
+        bbox_inches="tight",
+    )
     plt.show()
 
     pm.plot_posterior(trace)
+    plt.savefig(
+        os.path.join(visualization_path, "all_patients_no_trend_posteriors.pdf"),
+        bbox_inches="tight",
+    )
     plt.show()
 
     pm.summary(trace)
@@ -365,6 +404,7 @@ draw_posterior_checks(
     parameters_df=all_parameters_df,
     treatment_order=treatment_order,
     treatment_measurements_n=treatment_measurements_n,
+    plot_name="all_patients_with_trend_posterior_sampling",
 )
 
 # %%
@@ -435,9 +475,17 @@ with pm.Model() as hierarchical_no_trend_model:
             "population_measurement_error_beta",
         ],
     )
+    plt.savefig(
+        os.path.join(visualization_path, "hierarchical_no_trend_traceplot.pdf"),
+        bbox_inches="tight",
+    )
     plt.show()
 
     pm.plot_posterior(trace)
+    plt.savefig(
+        os.path.join(visualization_path, "all_patients_no_trend_posteriors.pdf"),
+        bbox_inches="tight",
+    )
     plt.show()
 
     pm.summary(trace)
@@ -458,6 +506,7 @@ draw_posterior_checks(
     parameters_df=all_parameters_df,
     treatment_order=treatment_order,
     treatment_measurements_n=treatment_measurements_n,
+    plot_name="hierarchical_no_trend_posterior_sampling",
 )
 
 # %%
@@ -541,8 +590,17 @@ with pm.Model() as hierarchical_with_trend_model:
             "population_trend_sd",
         ],
     )
+    plt.savefig(
+        os.path.join(visualization_path, "hierarchical_with_trend_traceplot.pdf"),
+        bbox_inches="tight",
+    )
+    plt.show()
 
     pm.plot_posterior(trace)
+    plt.savefig(
+        os.path.join(visualization_path, "hierarchical_with_trend_posteriors.pdf"),
+        bbox_inches="tight",
+    )
     plt.show()
 
     pm.summary(trace)
@@ -563,6 +621,7 @@ draw_posterior_checks(
     parameters_df=all_parameters_df,
     treatment_order=treatment_order,
     treatment_measurements_n=treatment_measurements_n,
+    plot_name="hierarchical_with_trend_posterior_sampling",
 )
 
 # %%
