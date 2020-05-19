@@ -1,6 +1,10 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+
+visualization_path = os.path.join("figures")
 
 
 def draw_posterior_checks(
@@ -9,6 +13,7 @@ def draw_posterior_checks(
     parameters_df,
     treatment_order,
     treatment_measurements_n,
+    plot_name,
 ):
 
     for patient, patient_treatment_order in zip(
@@ -87,4 +92,8 @@ def draw_posterior_checks(
         )
         ax3.set_title("Treatment 1 - Treatment 2")
         ax3.legend()
+        plt.savefig(
+            os.path.join(visualization_path, plot_name + str(".pdf")),
+            bbox_inches="tight",
+        )
         plt.show()
