@@ -101,11 +101,10 @@ for patient in range(patients_n):
     treatment_order_list = []
 
     for i in range(blocks_n // 2):
-        block = [0, 0]
-        # randomizing the treatment to first or second slot in the block
-        # 1 marks the effective treatment and 0 is the default
+        block = [1, 1]
+        # randomizing the second treatment to first or second slot in the block
         effective_treatment_index = np.random.binomial(1, 0.5)
-        block[effective_treatment_index] = 1
+        block[effective_treatment_index] = 2
 
         treatment_order_list.extend(block)
         # add the balancing block
@@ -113,18 +112,18 @@ for patient in range(patients_n):
 
     patient_treatment_orders_list.append(treatment_order_list)
 
-
+# creating indexers that take value 1 when treatment is given and 0 otherwise
 patient_params_df["treatment_order"] = patient_treatment_orders_list
 
 # %%
 
 patient_measurements_df_list = []
 
-for index, patient in patient_params_df.iterrows():
+for _, patient in patient_params_df.iterrows():
 
     measurements = create_patient_measurements(
         treatment_measurements_n=treatment_measurements_n,
-        treatment_indicator_list=patient["treatment_order"],
+        treatment_order=patient["treatment_order"],
         treatment1=patient["treatment1"],
         treatment2=patient["treatment2"],
         trend=patient["trend"],
@@ -154,10 +153,18 @@ for index, patient in patient_params_df.iterrows():
                     ]
                 )
             ),
-            "treatment": list(
+            "treatment1_indicator": list(
                 pd.core.common.flatten(
                     [
-                        [indicator] * treatment_measurements_n
+                        [abs(indicator - 2)] * treatment_measurements_n
+                        for indicator in patient["treatment_order"]
+                    ]
+                )
+            ),
+            "treatment2_indicator": list(
+                pd.core.common.flatten(
+                    [
+                        [indicator - 1] * treatment_measurements_n
                         for indicator in patient["treatment_order"]
                     ]
                 )

@@ -1,44 +1,44 @@
 import os
 
 import matplotlib.pyplot as plt
-import numpy as np
 import seaborn as sns
 
 visualization_path = os.path.join("figures")
 
 
 def draw_posterior_checks(
-    predictions,
-    measurements_df,
-    parameters_df,
-    treatment_order,
-    treatment_measurements_n,
-    plot_name,
+    predictions, measurements_df, parameters_df, plot_name,
 ):
 
-    for patient, patient_treatment_order in zip(
-        range(predictions.shape[1]), treatment_order
-    ):
+    for patient in parameters_df["patient_index"]:
 
-        treatment2_indexer = np.repeat(
-            patient_treatment_order, treatment_measurements_n
-        )
-        treatment1_indexer = np.abs(treatment2_indexer - 1)
-        # convert to boolean indexer
-        treatment2_indexer = np.array(treatment2_indexer, dtype=bool)
-        treatment1_indexer = np.array(treatment1_indexer, dtype=bool)
+        patient_preds = predictions[:, measurements_df["patient_index"] == patient]
+        patient_treatment1_preds = patient_preds[
+            :,
+            measurements_df[measurements_df["patient_index"] == patient][
+                "treatment1_indicator"
+            ]
+            == 1,
+        ]
+        patient_treatment2_preds = patient_preds[
+            :,
+            measurements_df[measurements_df["patient_index"] == patient][
+                "treatment2_indicator"
+            ]
+            == 1,
+        ]
 
         _, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(14, 6))
 
         # Treatment 1
         sns.distplot(
-            predictions[:, patient][:, treatment1_indexer].mean(axis=1),
+            patient_treatment1_preds.mean(axis=1),
             label="Posterior Predictive Means",
             ax=ax1,
         )
         ax1.axvline(
             measurements_df[
-                (measurements_df["treatment"] == 0)
+                (measurements_df["treatment1_indicator"] == 1)
                 & (measurements_df["patient_index"] == patient)
             ]["measurement"].mean(),
             ls="--",
@@ -49,13 +49,13 @@ def draw_posterior_checks(
 
         # Treatment 2
         sns.distplot(
-            predictions[:, patient][:, treatment2_indexer].mean(axis=1),
+            patient_treatment2_preds.mean(axis=1),
             label="Posterior Predictive Means",
             ax=ax2,
         )
         ax2.axvline(
             measurements_df[
-                (measurements_df["treatment"] == 1)
+                (measurements_df["treatment2_indicator"] == 1)
                 & (measurements_df["patient_index"] == patient)
             ]["measurement"].mean(),
             ls="--",
@@ -66,18 +66,18 @@ def draw_posterior_checks(
 
         # Treatment difference
         sns.distplot(
-            predictions[:, patient][:, treatment1_indexer].mean(axis=1)
-            - predictions[:, patient][:, treatment2_indexer].mean(axis=1),
+            patient_treatment1_preds.mean(axis=1)
+            - patient_treatment2_preds.mean(axis=1),
             label="Posterior Predictive Means",
             ax=ax3,
         )
         ax3.axvline(
             measurements_df[
-                (measurements_df["treatment"] == 0)
+                (measurements_df["treatment1_indicator"] == 1)
                 & (measurements_df["patient_index"] == patient)
             ]["measurement"].mean()
             - measurements_df[
-                (measurements_df["treatment"] == 1)
+                (measurements_df["treatment2_indicator"] == 1)
                 & (measurements_df["patient_index"] == patient)
             ]["measurement"].mean(),
             ls="--",

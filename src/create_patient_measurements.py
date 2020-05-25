@@ -13,7 +13,7 @@ np.random.seed(seed)
 
 def create_patient_measurements(
     treatment_measurements_n,
-    treatment_indicator_list,
+    treatment_order,
     treatment1,
     treatment2,
     measurement_error_sd,
@@ -26,19 +26,20 @@ def create_patient_measurements(
         list(
             pd.core.common.flatten(
                 [
-                    [treatment1 * abs(indicator - 1)] * treatment_measurements_n
-                    for indicator in treatment_indicator_list
+                    [treatment1 * abs(indicator - 2)] * treatment_measurements_n
+                    for indicator in treatment_order
                 ]
             )
         )
     )
+
     # TREATMENT2
     treatment2_array = np.array(
         list(
             pd.core.common.flatten(
                 [
-                    [treatment2 * indicator] * treatment_measurements_n
-                    for indicator in treatment_indicator_list
+                    [treatment2 * (indicator - 1)] * treatment_measurements_n
+                    for indicator in treatment_order
                 ]
             )
         )
@@ -52,17 +53,14 @@ def create_patient_measurements(
     arma_process = sm.tsa.ArmaProcess(ar, ma)
     # if autocorrelation is zero this just normally distributed error
     error_array = arma_process.generate_sample(
-        nsample=len(treatment_indicator_list) * treatment_measurements_n,
-        scale=measurement_error_sd,
+        nsample=len(treatment1_array), scale=measurement_error_sd,
     )
 
     # TREND
     trend_array = np.array(
         [
             trend * measurement_index
-            for measurement_index in range(
-                len(treatment_indicator_list) * treatment_measurements_n
-            )
+            for measurement_index in range(len(treatment1_array))
         ]
     )
 
