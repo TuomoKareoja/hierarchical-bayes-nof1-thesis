@@ -45,8 +45,6 @@ population_measurement_error_scale = float(
 population_autocorrelation_alpha = float(os.getenv("POPULATION_AUTOCORRELATION_ALPHA"))
 population_autocorrelation_beta = float(os.getenv("POPULATION_AUTOCORRELATION_BETA"))
 
-# %%
-
 visualization_path = os.path.join("figures")
 
 measurements_path = os.path.join("data", "patient_measurements.csv")

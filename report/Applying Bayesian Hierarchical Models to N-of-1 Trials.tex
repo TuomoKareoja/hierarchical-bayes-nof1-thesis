@@ -53,17 +53,16 @@
 \addcontentsline{toc}{chapter}{Introduction}
 
 N-of-1 trials in clinical practice are multiple crossover trials conducted on
-a single patient, where periods with different treatments are formed
+a single patient, where treatment periods are formed
 into multiple blocks each containing at least one period of each treatment
 under consideration\cite{nofone}. By comparing the measurements taken during
 different treatment regimes over multiple blocks the most suitable treatment
 option can be chosen for the particular patient in question.
 
-In the following pages I give a concise explanation of the experimental design
-of N-of-1 trials and how we can statistically model these kinds of experiments
-given the kinds of challenges their design poses.
-I then follow up with a how we can apply Bayesian methods in estimating the
-effectiveness of different treatments, highlighting how these methods can gives us
+In the following pages we will go trough a concise explanation of the experimental design
+of N-of-1 trials and how we can statistically model them given the kinds of challenges their design poses.
+I then follow up with how we can apply Bayesian methods in estimating the
+effectiveness of different treatments, highlighting how these methods can give us
 needed flexibility when running N-of-1 trials by not relying on hypothesis testing
 tied to a prespecified study design. I then consider the case when there are
 multiple similar N-of-1 trials and show how it is possible to pool the
@@ -71,7 +70,7 @@ information from these with hierarchical Bayesian methods, without loosing
 sight of the goal of N-of-1 trials: to find the best
 treatment most suitable for each individual patient.
 Finally I end by with a complete example of analyzing multiple N-of-1
-trials with hierarchical Bayesian methods using PyStan-package with simulated
+trials with hierarchical Bayesian methods with Python using PYMC3-package with simulated
 data.
 
 \chapter{What Are N-of-1 Trials?}\label{nof1}
@@ -81,7 +80,7 @@ controlled trial (RCT), where subjects are randomized to two or more groups
 that are given different treatments or no treatment at all. The measurement
 from theses groups are then compared and a result derived about which treatment
 is most effective on average. This design takes into account unknown factors
-that might make some patients more suspectable to one treatment by forming the
+that might make some patients more suspectable to certain treatments by forming the
 groups randomly and thus, on average, distributing these patients evenly
 between groups. By comparing the groups against each other and not just to the
 same patients at the beginning and end of the study, it also takes into account
@@ -93,10 +92,10 @@ Knowing the best treatment in average might not help much in finding right
 treatment for a particular patient if the variability in treatment
 effectiveness between patients is high. Although we can use covariates like
 age, gender, or certain gene variant to explain the variance between patients
-in RCT:s, there usually is still much unexplained variance (TODO source). Some of this
+in RCT:s, there usually is still much unexplained variance left after this (TODO source). Some of this
 variance is of course caused by random factors like measurement error, but a
 significant part might be caused by real differences between the
-patients. In other words, there might be significant factors that explain the
+patients. In other words, there might be individual factors that explain the
 variability of the efficacy of different treatments between patients that
 might either be too specific to be considered in a RCT study or unknown and
 thus impossible to analyze in this kind of experimental design.
@@ -123,7 +122,7 @@ treatments are measured in comparable ways. Depending on the ease of measuring t
 of interest, the measurements could be done just once per treatment period,
 or even multiple times per day. Each block includes a period of each treatment under
 consideration in random or balanced order to take into account time related
-effects. A simple example would be a ABBA design that includes two blocks within
+effects. A simple example would be an ABBA design that includes two blocks within
 which the two treatments A and B are assigned in a balanced order.
 
 Depending on
@@ -155,7 +154,7 @@ general, the N-of-1 trial tries to only generalize to the patient in question.
 This means that where as comorbidity and other factors that cause
 systematic variation between the patients in treatment outcomes are a problem
 in RCT:s, these are not an issue in N-of-1 trials because there is no need to
-generalize beyond the one patient. There is also no actual need to know
+generalize beyond the one patient. There is also often no actual need to know
 what is causing a certain treatment to work better or worse, as long
 as it is not because of measurement errors or time related effect.
 
@@ -169,10 +168,10 @@ multiple factor restricting their use\cite{nofone}.
 
 Firstly, N-of-1 trials can only be used to study illnesses that are chronic, progress
 slowly and are at least somewhat stable. Also the treatments options available
-must have a noticeable treatment responses within a short timeframe. This is because
-running the trial needs time to complete and fast changing illness or slowly effecting
+must have a noticeable treatment responses within a short timeframe.
+Running the trials needs time to complete and fast changing illness or slowly effecting
 treatment make it either impossible to distinguish true effects from the natural progression
-of the disease or make the trials impracticably lengthy. N-of-1 trials are also unsuitable for
+of the disease or make the length of the trials impractically long. N-of-1 trials are also unsuitable for
 testing of preventative treatments because the effects of these
 treatments are often also impossible to assess without comparisons to other
 patients who are not receiving the treatment.
@@ -275,7 +274,7 @@ treatment period.
 
 As the symptoms of the patient might not be completely stable (e.g.\ because symptoms get
 worse with the progression of the disease) fitting some kind of time-trend to the model
-might be advisable. We can modify the model\ \ref{oneerror} from previous chapter to include a linear
+is usually advisable. We can modify the model\ \ref{oneerror} from previous chapter to include a linear
 time-trend by adding an intercept and slope of the time-trend. In this case
 the model can expressed more concisely just in terms of the measurement \(y_t\) taken at time \(t\),
 where time is indexed from the start of the study:
@@ -292,7 +291,7 @@ More complex time-trends can be introduced by modifying the slope, for example b
 \(\beta_2 t^2\) to introduce a quadratic trend.
 
 Another effect dependent on time to take into consideration are period effects.
-There might be some part of the trial that is within a period that we presume to
+There might be some part of the trial that falls within a period that we presume to
 have its own effect. An example of this kind of effect is if we study asthma
 medications and part of the trial falls within the pollen season. A simple way to model this
 is to use a dummy variable that takes the value 1 within the period and 0 outside it.
@@ -308,7 +307,7 @@ when \(t \in (t_{period\,start} \ldots t_{period\,end}) \) and \(0\) otherwise.
 Lastly, to take into account that treatment effects themselves can vary with time, for example because
 treatment works better during periods of greater disease severity, we can add a time-by-treatment
 interaction effect into the model. For example in the case where we expect that the
-illness gets steadily (e.g.\ linearly) worse with time, but the treatments compensate this
+illness gets steadily (linearly) worse with time, but the treatments compensate this
 by being similarly more effective, we can extend the model \ref{simpletimetrend} that
 includes a simple linear time-trend by adding an interaction term \(\mu_t\beta_1 t\):
 
@@ -340,27 +339,25 @@ effects that manifest slowly can often give the opposite effect of carryover eff
 the treatments look less effective than they really are during the first measurements of
 each treatment period.\cite{stat}
 
-To deal with these more devious sources of autocorrelation in our model we can take two routes.
-To make expressing the following models easier I assume here that the time between measurements
-is roughly constant and so we can index the time so that each measurement is separated by one
-time unit. First possible solution to autocorrelation is to use an autoregressive model where
-we express the measurement error at time \(t\) as function of one or more previous measurement errors:
+To deal with these more devious sources of autocorrelation in our model we can take two routes:
+moving average models and autoregressive models.
+In moving average models the error is represented as dependent on previous error(s),
+by express the measurement at time \(t\) as function of one or more previous errors:
 
 \begin{def}\label{}
     \begin{equation}\label{}
-        y_t = \mu_t + \epsilon_t,
+        y_t = \mu_t + \epsilon_t + \rho\epsilon_{(t - 1)},
     \end{equation}
-\end{def}where \(\epsilon_t = \rho\epsilon_{(t - 1)} + \mu_t\) in which
-\(\mu_t\) is the effect of the treatment given at time t,
-\(\rho \) is the correlation between consecutive errors and
-\(\epsilon_{t-1} \sim N(0,\sigma^2) \) is the error term at \(t-1\).
+\end{def}where \(\mu_t\) is the effect of the treatment given at time t,
+\(\rho \) is the correlation between consecutive errors and all errors
+\(\epsilon \sim N(0,\sigma^2) \).
 
-Instead of making the error dependent on just the previous error the model can be adjusted
-to include more complex lag by defining \(\epsilon_t = \rho_1\epsilon_{t-1} +
-\rho_2\epsilon_{t-2} + \ldots + \rho_x\epsilon_{t-x} + \mu_t\), where \(\rho_x\) is the correlation
-between the errors separated by \(x\) time units (e.g.\ measurements).
+Instead of making the measurement dependent on just the previous error the model can be adjusted
+to include more complex lag by adding more error terms with larger lag and including more
+\(\rho \) terms to denote the correlations between them
+(\(\rho_1\epsilon_{t-1} + \ldots + \rho_x\epsilon_{t-x}\)).
 
-Second approach is to use a dynamic model where we express the autocorrelation in the measurements
+In autoregressive models approach we express the autocorrelation in the measurements
 themselves so that the measurement at time \(t\) is a function of the measurement at \(t-1\):
 
 \begin{def}\label{}
@@ -374,6 +371,11 @@ Although it can make more intuitive sense to the make whole observation dependen
 the previous observation, it is important to recognize that in this case the treatment effects
 \(\mu_t\) must be interpreted differently as they are in this case conditioned on
 previous measurements.
+
+Moving average models and autoregressive models are often combined by using both methods
+of taking the autocorrelation in to account simultaneously, but as amount of data produced in
+N-of-1 studies if often so small, taking this approach might not be advisable as it might
+make the model unnecessarily complex.
 
 Although we can try to solve problems created by carryover effect and slow manifestation
 of treatment effect with modelling, a better way could be to take
