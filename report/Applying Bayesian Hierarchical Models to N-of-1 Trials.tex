@@ -366,6 +366,8 @@ themselves so that the measurement at time \(t\) is a function of the measuremen
     \end{equation}
 \end{def}where \(\mu_t\) is the effect of the treatment given at time \(t\), \(\rho \) is the correlation
 between consecutive measurements and \(\epsilon_t \sim N(0,\sigma^2)\) is the error term.
+Like with moving average model we could also include more than just one lag by adding more lagged
+terms and correlation terms.
 
 Although it can make more intuitive sense to the make whole observation dependent on
 the previous observation, it is important to recognize that in this case the treatment effects
@@ -407,7 +409,7 @@ of individual observations \(y_t\), we express it as the expected value of these
 on the data \(E(Y|D)\) that we feed to the link function.
 The link function allows us to model measurements with arbitrary distributions, as now the link function can linearly depend on the parameters of the model,
 rather than needing the measurements themselves to do so. We need to do this to prevent the models from giving impossible predictions,
-e.g.\ negative counts or probabilities of under 0 or over 1.
+e.g.\ negative counts or probabilities.
 
 Lets work with an example of a binary outcome measurements. In this case the measurements \(y\) at time \(t\) follow the Bernoulli distribution \(y_t \sim Bernoulli(p)\)
 where the the expected value of the distribution is the probability \(p\) of observing the event in measurement \(y_t\). In this case the suitable link function is the logit
@@ -598,7 +600,7 @@ that the observations are independent:
 \end{def}where \(Y\) represents all the observations.
 
 To avoid the complexity of dealing with multiple unknown variables we assume
-that \(\sigma \) is known. We will later come back later to the case of multiple unknown variables.
+that \(\sigma \) is known. We will later come back to the case of multiple unknown variables.
 Now we have to define only one prior distribution as there is just one unknown parameter.
 We choose a normal distribution for the prior of \(\mu\) that is defined by mean \(\lambda_0 \)
 and variance \(\delta_0^2 \), whose values we define ourself based on
@@ -640,7 +642,7 @@ and standard deviation \(\delta_1^2 = \frac{1}{\delta_0^{-2}+n\delta^{-2}} \):
 % TODO check terms and make them clearer
 
 \begin{align}\label{}
-    P(\mu|Y) & \propto P(Y|\mu, \sigma)P(\mu) \\
+    P(\mu|Y) & \propto P(Y|\mu, \sigma)P(\mu)                                                                 \\
              & =
     \prod_{t=1}^{n}
     \frac{1}
@@ -660,7 +662,7 @@ and standard deviation \(\delta_1^2 = \frac{1}{\delta_0^{-2}+n\delta^{-2}} \):
         }
         {2\delta_0^2}
         \right \}
-    } \nonumber                               \\
+    } \nonumber                                                                                               \\
              & =
     \frac{1}
     {
@@ -674,8 +676,8 @@ and standard deviation \(\delta_1^2 = \frac{1}{\delta_0^{-2}+n\delta^{-2}} \):
         \sum_{t=1}^{n}
         \frac{y_t^2 - 2 \mu y_t + \mu^2}{2\sigma^2}
         \right \}
-    } \nonumber                               \\
-    %  & \text{Dropping the constant terms} \nonumber \\
+    } \nonumber                                                                                               \\
+             & \text{Dropping the constant terms} \nonumber                                                   \\
              & \propto
     \exp{
         \left \{
@@ -686,7 +688,7 @@ and standard deviation \(\delta_1^2 = \frac{1}{\delta_0^{-2}+n\delta^{-2}} \):
         }
         {2\delta_0^2 \sigma^2}
         \right \}
-    } \nonumber                               \\
+    } \nonumber                                                                                               \\
              & \propto
     \exp{
         \left \{
@@ -716,7 +718,7 @@ and standard deviation \(\delta_1^2 = \frac{1}{\delta_0^{-2}+n\delta^{-2}} \):
             2 \delta_0^2 \sigma^2
         }
         \right \}
-    } \nonumber                               \\
+    } \nonumber                                                                                               \\
              & \propto
     \exp{
         \left \{
@@ -740,7 +742,7 @@ and standard deviation \(\delta_1^2 = \frac{1}{\delta_0^{-2}+n\delta^{-2}} \):
             {\sigma^2 + n \delta_0^2}
         }
         \right \}
-    } \nonumber                               \\
+    } \nonumber                                                                                               \\
              & =
     \exp{
         \left \{
@@ -764,8 +766,12 @@ and standard deviation \(\delta_1^2 = \frac{1}{\delta_0^{-2}+n\delta^{-2}} \):
             }
         }
         \right \}
-    } \nonumber                               \\
-             & =
+    } \nonumber                                                                                               \\
+             & \text{Recognizing that we have the ''right'' part of normal distribution and adding} \nonumber \\
+             & \text{the constant part back in} \nonumber                                                     \\
+             & \propto
+    \frac{1}
+    {{\sqrt {2\pi \sigma^2} }}
     \exp{
         \left \{
         -
@@ -776,7 +782,7 @@ and standard deviation \(\delta_1^2 = \frac{1}{\delta_0^{-2}+n\delta^{-2}} \):
             2 \delta_1
         }
         \right \}
-    }, \text{ where } \nonumber               \\
+    }, \text{ where } \nonumber                                                                               \\
              & \delta_1^2
     =
     \frac{1}{\delta_0^{-2}+n\delta^{-2}}
@@ -784,7 +790,7 @@ and standard deviation \(\delta_1^2 = \frac{1}{\delta_0^{-2}+n\delta^{-2}} \):
     \lambda_1
     =
     \frac{
-        \lambda_0 \delta_0^{-2} + \sum_{t=1}^{n} y \sigma^2
+        \lambda_0 \delta_0^{-2} + \sum_{t=1}^{n} y_t \sigma^2
     }
     {
         \delta_0^{-2} + n \sigma_0^{-2}
@@ -792,28 +798,26 @@ and standard deviation \(\delta_1^2 = \frac{1}{\delta_0^{-2}+n\delta^{-2}} \):
     =
     \delta_1^2
     \left(
-    \lambda_0 \delta_0^{-2} + \sum_{t=1}^{n} y \sigma^{-2}
+    \lambda_0 \delta_0^{-2} + \sum_{t=1}^{n} y_t \sigma^{-2}
     \right) \nonumber
 \end{align}
 
-% TODO check how to explain the normal distribution insight properly
+So we end up with posterior distribution that has the shape of a normal distribution.
+The trick where ignored the marginal likelihood can be used anywhere, but the fact that
+we could arithmetically solve that the posterior follows well defined distribution
+is not general occurrence. Usually we need to go beyond arithmetic methods and solve
+the problem algorithmically.
 
 \subsection{Challenges of Bayesian Inference}\label{bayesproblems}
 
-Although the Bayes formula is conceptually simple, but when actually utilizing it we run into two
-big problems. The first problem is the marginal likelihood. In the example above we cleverly
-dodged the need to solve it by using prior distribution that solved our need to
-
-% TODO definition of conjugate prior
-
-First is that in the cases when parameter values are continuous
-and the probability distributions of the prior and/or the likelihood or their
-product are not well defined distributions with known properties. This can make
-the integral in the marginal likelihood impossible to solve analytically.
+Although the Bayes formula is conceptually simple, but when actually utilizing it we run
+into two big difficulties. First is the common case when the probability distributions of the prior
+and/or the likelihood or their product are not well defined distributions with known properties.
+This can make the integral in the marginal likelihood impossible to solve analytically like we did above.
 Even with discrete distributions similar problems emerge if the number of
 possible parameter values is very large (this can happen easily when there are multiple
-parameters) as this makes just calculating the posterior probability for each value
-individually unfeasible. The second problem is how we should define our priors.
+parameters) as this makes just calculating the posterior probability for each individual value
+unfeasible. The second problem is how we should define our priors.
 If we have prior knowledge, we need to be able to formulate our beliefs in mathematic form that does not cause
 problems with the computation (e.g.\ making the integral in the marginal likelihood
 undefined in some part of the distribution). When we do not have prior knowledge
@@ -826,24 +830,25 @@ again does not cause computational issues.
 As mentioned before the marginal likelihood can often be impossible or unfeasible to
 calculate analytically even in the case parameters with discrete values where we don't
 need to solve a complex integral.
-Common solution to this, that has been historically the only option, is to use so called conjugate functions as priors. These are
-functions that when multiplied by function of the likelihood come out
-with same functional form. A good example of this is using a normal distribution
-for the prior when the likelihood is also normally distributed (like it is the case in most
-of the models I previously presented, with their normally distributed error terms).
-To utilize this method the likelihood has to follow a well defined distribution
-with known properties that has an existing conjugate function. For all distributions in
-the exponential family exist a suitable conjugate function.
+Common solution to this, that has been historically the only option,
+is to rely on so called ''conjugate priors''.
+These are are priors that follow distribution which multiplied by suitable likelihood function produce
+posterior distribution that has the same form as the prior distribution.
+A good example of this is using a normal distribution
+for the prior when the likelihood is also normally distributed.
+If the likelihood function belongs to exponential family of distributions, there exists at
+least one corresponding conjugate prior distribution. This is also often the case when
+likelihood function belongs to the exponential family.
 
 The conjugate function method makes the denominator analytically solvable, but is in practice very limiting.
 First, we need to restrict ourselves when modelling to only use models that create a suitable likelihood function with an existing conjugate prior.
-Second, it restricts our options in defining our prior beliefs as we have to be able to express them with the conjugate function.
+Second, it limits our options in defining our prior beliefs as we have to be able to express them with the conjugate function.
 To have a more general solution we need to abandon the search for an analytical
 solution and tackle the problem algorithmically. We start this by noticing that as marginal likelihood
 is calculated over all possible parameter values
 is is not dependent on particular values of the parameter and is thus
 constant across them. Therefore we can drop it from the formula 4.2 and state that the posterior
-distribution follows the shape of the distribution of the likelihood times the prior:
+distribution follows the shape of the distribution of likelihood times prior:
 
 \begin{def}\label{bayespropto}
     \begin{equation}
@@ -862,7 +867,7 @@ The general method to get this kind of sample is the following:
           location has to be a plausible set of values. We can check this As we can know
           that \(P(D|\Theta)P(\Theta)\) has the same shape as our posterior and so if the value of the this function is zero when
           we pluck our set of parameter values in it, these values are impossible and should not be use as a starting point
-    \item Pick a another set values for our parameters
+    \item Pick a second set values for our parameters with some random method
     \item Calculate the probability of moving from our current position in the parameter space to the second set of parameter
           values with the following formula:
 
@@ -911,7 +916,7 @@ has been pushed forward by the need to have the sampling be as efficient as poss
 with the computational power of modern computer, more complex models can run into unfeasible
 long computational times. On top of choosing the right algorithm, there are lots other things related
 to the computation to consider when implementing bayesian inference, but we will return to these later with
-the example of practical implementation of this kind of calculation with R and RStan package.
+the example of practical implementation of this kind of calculation with Python and PYMC3 package.
 
 \subsubsection{Defining the Prior}\label{bayesproblems}
 
