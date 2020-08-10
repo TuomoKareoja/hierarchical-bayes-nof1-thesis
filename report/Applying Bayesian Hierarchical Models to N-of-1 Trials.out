@@ -1,0 +1,22 @@
+\BOOKMARK [0][-]{chapter*.2}{Introduction}{}% 1
+\BOOKMARK [0][-]{chapter.1}{What Are N-of-1 Trials?}{}% 2
+\BOOKMARK [0][-]{chapter.2}{Statistical Modeling of N-of-1 Trials}{}% 3
+\BOOKMARK [1][-]{section.2.1}{Basic Models}{chapter.2}% 4
+\BOOKMARK [1][-]{section.2.2}{Incorporating time-trends into the model}{chapter.2}% 5
+\BOOKMARK [1][-]{section.2.3}{The Problem of Autocorrelation}{chapter.2}% 6
+\BOOKMARK [1][-]{section.2.4}{Non-continuous Measurements}{chapter.2}% 7
+\BOOKMARK [0][-]{chapter.3}{Bayesian Estimation}{}% 8
+\BOOKMARK [1][-]{section.3.1}{Principles of Bayesian Inference}{chapter.3}% 9
+\BOOKMARK [2][-]{subsection.3.1.1}{Challenges of Bayesian Inference}{section.3.1}% 10
+\BOOKMARK [1][-]{section.3.2}{Why Bayesian Inference Fits N-of-1 Studies}{chapter.3}% 11
+\BOOKMARK [2][-]{subsection.3.2.1}{Flexibility of Experimental Design}{section.3.2}% 12
+\BOOKMARK [2][-]{subsection.3.2.2}{Richness and Communicability of the Estimates}{section.3.2}% 13
+\BOOKMARK [0][-]{chapter.4}{Combining Information From Several N-of-1 Trials With Hierarchical Models}{}% 14
+\BOOKMARK [0][-]{chapter.5}{Example of a Hierarchical Bayesian Analysis Using Simulated Data}{}% 15
+\BOOKMARK [1][-]{subsection.5.0.1}{Simulating the Data}{chapter.5}% 16
+\BOOKMARK [1][-]{section.5.1}{Analyzing a Single Trial}{chapter.5}% 17
+\BOOKMARK [2][-]{subsection.5.1.1}{Defining the Model}{section.5.1}% 18
+\BOOKMARK [2][-]{subsection.5.1.2}{Results}{section.5.1}% 19
+\BOOKMARK [1][-]{section.5.2}{Analyzing Multiple Trials With Hierarchical Models}{chapter.5}% 20
+\BOOKMARK [2][-]{subsection.5.2.1}{Defining the Model}{section.5.2}% 21
+\BOOKMARK [2][-]{subsection.5.2.2}{Results}{section.5.2}% 22
