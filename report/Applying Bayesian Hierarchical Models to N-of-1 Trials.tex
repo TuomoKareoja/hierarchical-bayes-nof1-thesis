@@ -8,6 +8,9 @@
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{hyperref}
+\usepackage{tikz}
+
+\usetikzlibrary{matrix}
 
 \newcommand{\R}{\mathbb{R}} \newcommand{\C}{\mathbb{C}}
 \newcommand{\Q}{\mathbb{Q}} \newcommand{\N}{\mathbb{N}}
@@ -50,7 +53,7 @@
 \chapter*{Introduction}\label{intro}
 \addcontentsline{toc}{chapter}{Introduction}
 
-N-of-1 trials in clinical practice are multiple crossover trials conducted on a
+In clinical practice, N-of-1 trials are multiple crossover trials conducted on a
 single patient, where treatment periods are formed into multiple blocks each
 containing at least one period of each treatment under
 consideration\ \cite{nofone}. By comparing the measurements taken during different
@@ -58,25 +61,25 @@ treatment regimes over multiple blocks, the most suitable treatment option can
 be chosen for the particular patient studied.
 
 In the following pages, we will walk trough a concise explanation of the
-experimental design of N-of-1 trials and how we can statistically model them
+experimental design of N-of-1 trials and how we can statistically model them,
 given the kinds of challenges their design poses. We then follow up with how to
-apply Bayesian methods in estimating the effectiveness of different
-treatments, highlighting how these methods can give needed flexibility when
+apply Bayesian inference with these models and estimate the effectiveness of different
+treatments, highlighting how Bayesian methods can give needed flexibility when
 running N-of-1 trials by not relying on hypothesis testing tied to a
 prespecified study design. We then consider the case when there are multiple
 similar N-of-1 trials and show how it is possible to pool the information from
 these with hierarchical Bayesian methods, without loosing sight of the goal of
 N-of-1 trials: to find the best treatment for each individual
 patient. Finally, we end by with a complete example of analyzing multiple N-of-1
-trials with hierarchical Bayesian methods with Python using PYMC3-package with
+trials with hierarchical Bayesian methods with Python and PYMC3-package using
 simulated data.
 
 \chapter{What Are N-of-1 Trials?}\label{nof1}
 
 In the assessment of any medical treatment the ``gold standard'' is a randomized
 controlled trial (RCT), where subjects are randomized to two or more groups that
-are given different treatments or no treatment at all. The measurement from
-theses groups are then compared and a result derived about which treatment is
+are given different treatments or no treatment at all. The measurements from
+these groups are then compared and a result derived about which treatment is
 most effective on average. This design takes into account unknown factors that
 might make some patients more suspectable to certain treatments by forming the
 groups randomly and thus, on average, distributing these patients evenly between
@@ -84,32 +87,31 @@ groups. By comparing the groups against each other and not just to the same
 patients at the beginning and end of the study, it also takes into account time-related
 effects like the natural progression of a disease. Despite its unquestionable value
 in finding general effects, this method can run into problems when we
-actually try to apply its results to individual patients in clinical practice.
+try to apply its results to individual patients in clinical practice.
 
-Knowing the best treatment in average might not help much in finding the right
+Knowing the best treatment on average might not help much in finding the right
 treatment for a particular patient if the variability in treatment effectiveness
 between patients is high. Although we can use covariates like age, gender, or
 a certain gene variant to explain the variance between patients in RCT:s, there
-usually is still lots of unexplained variance left after this (TODO source). Some
+can still be lots of unexplained between-patient variance left. Some
 of this variance is of course caused by random factors like measurement error,
-but a significant part might be caused by real differences between the patients.
+but a significant part might be caused by real differences between the patients\ \cite{HTE1, HTE2, HTE3, HTE4}.
 In other words, there might be individual factors that explain the variability
 of the efficacy of different treatments between patients that might either be
-too specific to be considered in a RCT study or unknown and thus impossible to
+too specific to be considered in an RCT study or unknown and thus impossible to
 analyze in this kind of experimental design.
 
-Another problem with RCT:s is the peculiarity of their participants. It is
-a common practice to accept patients to RCT:s only if they don't suffer from any
+Another problem with RCTs is the peculiarity of their participants. It is
+a common practice to accept patients to RCTs only if they don't suffer from any
 medical issue besides the one that is being studied. This lack of comorbidity
 makes it easier to get clear results by removing confounding factors, but at the
 same time this lowers the external validity of the results, because in the real
-world patients often suffer from multiple medical issues simultaneously (TODO
-source?). Because of this, it might be possible that even when the scientific
+world patients often suffer from multiple medical issues simultaneously. Because of this, it might be possible that even when the scientific
 literature provides clear results about the relative effectiveness of different
-treatments, these results don't actually generalize that well to the kinds of
-patients the clinical practitioner sees daily in her office.
+treatments, these results don't generalize that well to the kinds of
+patients the clinical practitioner sees daily in her office.\ \cite{HTE1}
 
-N-of-1 trials can be used to patch the holes in the knowledge that RCT:s cannot
+N-of-1 trials can be used to patch the holes in the knowledge that RCTs cannot
 fill by changing the focus of the study from group averages to the individual
 patients. In N-of-1 studies, instead of comparing groups with different treatments,
 the comparisons are made across time with a single patient using different
@@ -124,12 +126,12 @@ into account time-related effects. A simple example would be an ABBA design that
 includes two blocks within which the two treatments A and B are assigned in a
 balanced order.
 
-Depending on the treatments considered, there might be also be a so-called
+Depending on the treatments considered, there might also be a so-called
 ``washout'' period between treatments, where the patient does not receive any
-treatment and her state is allowed to return to baseline. This method is used to
+treatment, and her state is allowed to return to baseline. This method is used to
 prevent treatment interactions that could make it difficult to analyze the
-results or could be dangerous to the patient. If the treatments under study
-allow, N-of-1 trial can also use the double-blind method, where both the patient
+results or could be dangerous to the patient. If the treatments being studied
+allow it, N-of-1 trial can also use the double-blind method, where both the patient
 and the person administering the treatment don't know which treatment is currently used, and placebo
 treatment, where one of the treatments only resembles treatment, but does not
 contain any active ingredient (pharmacological or otherwise).
@@ -165,7 +167,7 @@ would seem to make n-of-1 trials applicable to many situations, but there are
 also multiple factors restricting their use\ \cite{nofone}.
 
 Firstly, N-of-1 trials can only be used to study illnesses that are chronic,
-progress slowly and are at least somewhat stable. Also the treatment options
+progress slowly, and are at least somewhat stable. Also the treatment options
 available must have noticeable treatment responses within a short timeframe.
 Running the trials needs time to complete and fast-changing illness or slowly
 effecting treatment make it either impossible to distinguish true effects from
@@ -977,23 +979,24 @@ the more difficult this problem gets.
 
 \section{Why Bayesian Inference Fits N-of-1 Studies}\label{whybayes}
 
-As mentioned at beginning the previous chapter, both the more traditional frequentist inference and
-Bayesian inference can be used to estimate the parameter values of models
-described in. This choice is not just a technical one as both methods come
+As mentioned at the beginning of the previous chapter, both frequentist and
+Bayesian inference can be used to estimate the parameter values of the models
+described. The choice between these two methods is not just a technical one as both come
 with different conceptions about the nature of probability and assumptions
-related to this conception. Unfortunately for frequentist inference, its
-assumptions fit the reality the N-of-1 trials poorly and its estimates, and
-especially their uncertainty, can be hard to communicate to a lay audience.
-Because of these issues Bayesian inference can usually be recommended over
+related to this conception and these have serious implications on how we should
+interpret the results and run the studies. Unfortunately for frequentist inference, its
+assumptions fit the reality the N-of-1 trials poorly, and its estimates, and
+especially their uncertainty, can be hard to communicate to a lay audience (doctors and patients).
+Because of these issues, Bayesian inference can usually be recommended over
 frequentist inference when analyzing and communicating the results of N-of-1
-studies even though it comes it with its' own complexities that we previously went over.
+studies, even though it comes it with its' own complexities that we previously went over.
 
 \subsection{Flexibility of Experimental Design}\label{whybayes}
 
 The central tenet of frequentist inference is the assumption that same the
 experiment could be in theory repeated with statistically independent results. Probability
 is defined in relation to these hypothetical repetitions as a proportion of them
-that have some event of interest. To repeat the same experiment its design
+that would have some event of interest (e.g. over 5 tails with 10 coin tosses). To repeat the same experiment its design
 needs to be defined precisely and this definition needs to be made before the
 study has begun because the changes made to the design during the experiment
 might be influenced by its results.
@@ -1001,15 +1004,15 @@ might be influenced by its results.
 Lets take for example an experiment where we are trying to find out if a coin
 is fair. For this purpose, we decide to flip the coin 20 times and count the number
 of heads. Then we can model how ``typical'' the result we got would be for a fair coin. We do
-this by calculating the distribution of heads for multiple 20 coin toss trials
-assuming that the coin is fair. Then we can measure our actual result against this
-distribution. If the result seems to fall ``nicely'' within this distribution, then we
-can say that the null hypothesis stand and the coin is fair. The problem comes if we did
+this by calculating the distribution of heads from multiple 20 coin toss trials
+assuming that the coin is fair. Then we can compare our actual result against this
+distribution. If the result would be typical within this distribution, then we
+can say that the null hypothesis stands and the coin is fair. The problem comes if we did
 not actually decide to throw the coin 20 times beforehand, but first threw it 10 times, looked at
-the results, though that we should get some more data and then threw the rest 10. Now what
+the results, though that we should get some more data, and then threw the rest 10. Now what
 kind of distribution should we compare our results against? The length of the trials
 seems to now hinge in some undefined way from the results of the first 10 coin tosses
-that made us decide to do more coin tosses.
+that made us decide to keep tossing the coin some more.
 
 This demand for predefined experiment designs can be especially problematic in N-of-1 studies
 used in a clinical setting. There might be cases when some treatment seems
@@ -1017,7 +1020,7 @@ clearly better in the middle of an experiment and the patient (or the clinician)
 wants to stop the experiment. As the subjects are real people, it would be
 unethical to force them to continue the study just for the sake of statistical
 rigor. There might also be a situation where a couple of treatments seem
-promising, but the rest seem completely useless and we would want to change the
+promising, but the rest seem completely useless, and we would want to change the
 design of the experiment on the fly to focus just on the promising treatments.
 These changes to the predefined experimental design will brake frequentist
 assumptions and make the inferences made with this method very difficult.
@@ -1026,7 +1029,7 @@ The possibility to stop the study or change the experimental design can be
 incorporated to frequentist inference if we predefine the rules of when to
 stop the experiment and under what circumstances the design should be altered
 and how. Then we need to take these rules into account when performing the estimation
-calculations and this complicates the analysis. But is questionable if we can actually
+calculations which adds complexity is but is still possible. The problem is that it is questionable if we can actually
 define and stick to these rules because of the human element: we would need to convince the patient that she should stop the experiment only in these predefined circumstances. This seems quite
 unrealistic, as if there are any unforeseen problems with the treatments, it is
 more than likely that the patient will want to stop whatever rules she sign to follow
@@ -1041,25 +1044,25 @@ we get out of it, but don't brake any assumptions of Bayesian inference. This
 adaptability is a big benefit when applying N-of-1 designs in a clinical setting, as
 the unpredictable nature of the patients and treatment effects and all the other
 practical considerations that could force changes to our experiment design don't
-break the assumptions of our inference method.
+break the assumptions of the inference method.
 
 \subsection{Richness and Communicability of the Estimates}\label{whybayes}
 
-In N-of-1 studies much consideration has to be given to the communication of the
+In N-of-1 studies, much consideration has to be given to the communication of the
 results, both to the patient and the clinician administering the experiment. We
 would like to portray not just the estimates of the effects of the treatments,
 but also the uncertainty associated with these estimates. In frequentist
 inference there are two options to communicate these facts. The first one is
 maximum likelihood estimates combined with confidence intervals. Maximum
-likelihood estimates are just point estimates of the parameters and don't
-communicate any uncertainty. Confidence intervals communicate uncertainty, but
+likelihood estimates are just point estimates of the most likely parameter values and don't
+communicate any uncertainty. Confidence intervals of these parameter values communicate uncertainty, but
 don't actually mark the most likely values of the estimate. A 95 \%
 confidence interval, is often interpreted wrongly as including the true value of
 the parameter with 95 \% change, but the real meaning is that if we repeated the
 experiment indefinitely 95 \% of the 95 \% confidence intervals would include
 the true parameter value. This is because in frequentist interpretation of
 probability, true parameter values are not random but fixed, so a single
-confidence interval either does or does not include this value. This
+confidence interval either does or does not include the true value. This
 confusing definition makes confidence intervals a poor choice of presenting the
 uncertainty of the estimates to a lay audience as they might create lots of misinterpretations and
 even when interpreted correctly are hard to grasp.
@@ -1076,15 +1079,14 @@ would also like to how big the differences in the treatments' effectiveness
 could realistically be.
 
 A Bayesian approach to inference gives us richer and more easily communicable
-information about the estimates because it actually gives us a distribution as a
+information about the estimates because it gives us a distribution as a
 result in the form of the posterior distribution. With this is we can easily point out the plausible values
 with the tops of this distribution and the uncertainty with how flat the
 distribution is. The usual misinterpretation of the confidence intervals as
 containing the true value of the parameter with a certain probability is actually
 the right interpretation for Bayesian credible intervals, that contain certain
 percentage of the probability mass of the posterior distribution and so have a
-defined chance of containing the true value of the parameter. Bayesian method it
-self also seems to fit really well with the ways that clinicians conceptualize
+defined chance of containing the true value of the parameter. Bayesian method itself also seems to fit really well with the ways that clinicians conceptualize
 their practice of arriving to  diagnosis for a patient as updating their beliefs
 (i.e.\ priors) with the new information gained from new observation such as test
 results\ \cite{clinbayes}.
@@ -1104,14 +1106,51 @@ each \emph{individual patient}.
 In the Bayesian framework we can do this by using hierarchical
 models where each model parameter is imagined to come from ``higher'' distributions
 that is controlled by its own parameters. Where individual parameters represent the
-individual patient the distribution where they come from represents the population and
-its parameters represent the tendency of the population where the patient is drawn from. For example we could assume that the
+individual patients the distribution where they come from represents the tendencies of
+the population where the patients are drawn from. For example we could assume that the
 effectiveness of a certain treatment to be normally distributed within a
 population and the effectiveness of this treatment for a single patient
-comes from this distribution and the shape of this distribution makes certain values for
-patient-level parameters more or less probable.
+comes from this distribution and its shape tells that certain values for
+patient-level parameters are more or less probable.
 
-picture
+% TODO check where you have to put the exponent in the variance parameters
+
+\bigskip
+
+\begin{tikzpicture}
+
+    \matrix[matrix of math nodes, column sep=10pt, row sep=40pt] (mat)
+    {
+        \ & \theta_{\mu}, \tau_{\mu}, \alpha_{\theta}, \alpha_{\beta} & \ \\
+        \ & \mu, \sigma, \beta & \ \\
+        \theta_1, \tau_1 & \ldots & \theta_p, \tau_p \\
+        y_{1,1}, \ldots, y_{n, 1} & \ldots & y_{1, p}, \ldots, y_{n, p} \\
+    };
+
+    \draw[->,>=latex] (mat-1-2) -- (mat-2-2);
+
+    \draw[->,>=latex] (mat-2-2) -- (mat-3-1);
+    \draw[->,>=latex] (mat-2-2) -- (mat-3-3);
+
+    \draw[->,>=latex] (mat-3-1) -- (mat-4-1);
+    \draw[->,>=latex] (mat-3-3) -- (mat-4-3);
+
+    \node[anchor=east] at ([xshift = -35pt]mat-1-1)
+    {};
+
+    \node[anchor=east] at ([xshift = -35pt]mat-2-2)
+    {$\mu \sim \text{N}(\theta_{\mu}, \tau_{\mu}^2), \sigma \sim
+    \text{HalfCauchy}(\alpha_{\sigma}), \beta \sim \text{HalfCauchy}(\alpha_{\beta})$};
+   
+    \node[anchor=east] at ([xshift = -35pt]mat-3-1)
+    {$\theta_p \sim \text{N}(\mu, \sigma^2), \tau_p \sim \text{HalfCauchy}(\beta)$};
+
+    \node[anchor=east] at ([xshift = -35pt]mat-4-1)
+    {$y_{n,p} \sim \text{N}(\theta_p, \tau_p^2)$};
+
+\end{tikzpicture}
+
+\bigskip
 
 The elegance of this method comes from the fact that, even though we now have a group
 level parameter (the distribution of effectiveness of the drug in the population) we
@@ -1383,7 +1422,23 @@ Visualization of the shrinkage
 
     \bibitem{gelman}
     Andrew Gelman, John B. Carlin, Hal Stern, David Dunson, Aki Vehtari, Donald B.
-    Rubin: Bayesian Data Analysis, CRC press, 2013
+    Rubin: Bayesian Data Analysis, CRC Press, 2013
+
+    \bibitem{HTE1}
+    Peter Rothwell: External Validity of Randomised Controlled Trials: “To Whom Do the
+    Results of This Trial Apply?”, Lancet, Jan 1-7 2005;365(9453):82-93.15
+
+    \bibitem{HTE2}
+    Peter Rothwell: Treating individuals 2. Subgroup Analysis in Randomised Controlled
+    Trials: Importance, Indications, and Interpretation, Lancet, Jan 8-14
+    2005;365(9454):176-186.16
+
+    \bibitem{HTE3}
+    Diane Warden, John Rush, Madhukar Trivedi, et al.: The STAR*D Project Results: A Comprehensive Review of Findings, Current Psychiatry Reports, Dec 2007;9(6):449-459
+
+    \bibitem{HTE4}
+    David Kent, Peter Rothwell, John Ioannidis, et al.: Assessing and Reporting Heterogeneity in
+    Treatment Effects in Clinical Trials: A Proposal, Trials, 2010;11:85
 
 \end{thebibliography}
 \end{document}
