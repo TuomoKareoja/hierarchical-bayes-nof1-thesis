@@ -1105,13 +1105,58 @@ each \emph{individual patient}.
 
 In the Bayesian framework we can do this by using hierarchical
 models where each model parameter is imagined to come from ``higher'' distributions
-that is controlled by its own parameters. Where individual parameters represent the
-individual patients the distribution where they come from represents the tendencies of
-the population where the patients are drawn from. For example we could assume that the
-effectiveness of a certain treatment to be normally distributed within a
-population and the effectiveness of this treatment for a single patient
-comes from this distribution and its shape tells that certain values for
-patient-level parameters are more or less probable.
+that is controlled by its own parameters. Individual parameters lower-level parameters represent the
+individual patients, the distribution where these parameters come from represents
+the population which the patients are drawn from and for this higher-level distribution
+we give our priors to. Lets take a simple example where we have $p$ patients with $n$
+measurements and, to make things simple just one treatment option. We can model this by
+a simple two-parameter model:
+
+\begin{def}\label{}
+    \begin{equation}\label{simplehierachical}
+        y_{ij} = \theta_j + \epsilon_{ij}, i\in(1 \dots n), j\in(1 \dots p)
+    \end{equation}
+\end{def}where $\theta_j$ represents the effect of the treatment for patient $j$ and
+\(\epsilon_{ij} \sim N(0,\tau_p^2)\) is the error term. As a Bayesian model we could
+represent the model conceptually like this:
+
+\bigskip
+
+\begin{tikzpicture}
+
+    \matrix[matrix of math nodes, column sep=0pt, row sep=30pt] (mat)
+    {
+        \ & \mu, \sigma, \beta & \ \\
+        \theta_1, \tau_1 & \ldots & \theta_p, \tau_p \\
+        y_{1,1}, \ldots, y_{n, 1} & \ldots & y_{1, p}, \ldots, y_{n, p} \\
+    };
+
+    \draw[->,>=latex] (mat-1-2) -- (mat-2-1);
+    \draw[->,>=latex] (mat-1-2) -- (mat-2-3);
+
+    \draw[->,>=latex] (mat-2-1) -- (mat-3-1);
+    \draw[->,>=latex] (mat-2-3) -- (mat-3-3);
+
+    \node[anchor=east] at ([xshift = -35pt]mat-1-1)
+    {};
+
+    \node[anchor=east] at ([xshift = -35pt]mat-2-1)
+    {$\theta_j \sim \text{N}(\mu, \sigma^2), \tau_j \sim \text{HalfCauchy}(\beta)$};
+
+    \node[anchor=east] at ([xshift = -35pt]mat-3-1)
+    {$y_{i,j} \sim \text{N}(\theta_j, \tau_j^2)$};
+
+\end{tikzpicture}
+
+\bigskip
+
+On top are the prior parameter values given to each patient, next the individual patient
+parameters are drawn from distributions defined by the prior parameters and at the
+bottom individual observations are drawn from a normal distribution defined by
+parameters drawn from the patient-specific prior distributions.
+
+To broaden this model from just being a bunch of patient-specific models we can combine
+them by adding a population level that links are patients together:
 
 % TODO check where you have to put the exponent in the variance parameters
 
@@ -1119,7 +1164,7 @@ patient-level parameters are more or less probable.
 
 \begin{tikzpicture}
 
-    \matrix[matrix of math nodes, column sep=10pt, row sep=40pt] (mat)
+    \matrix[matrix of math nodes, column sep=0pt, row sep=30pt] (mat)
     {
         \ & \theta_{\mu}, \tau_{\mu}, \alpha_{\theta}, \alpha_{\beta} & \ \\
         \ & \mu, \sigma, \beta & \ \\
@@ -1143,18 +1188,21 @@ patient-level parameters are more or less probable.
     \text{HalfCauchy}(\alpha_{\sigma}), \beta \sim \text{HalfCauchy}(\alpha_{\beta})$};
    
     \node[anchor=east] at ([xshift = -35pt]mat-3-1)
-    {$\theta_p \sim \text{N}(\mu, \sigma^2), \tau_p \sim \text{HalfCauchy}(\beta)$};
+    {$\theta_j \sim \text{N}(\mu, \sigma^2), \tau_j \sim \text{HalfCauchy}(\beta)$};
 
     \node[anchor=east] at ([xshift = -35pt]mat-4-1)
-    {$y_{n,p} \sim \text{N}(\theta_p, \tau_p^2)$};
+    {$y_{ij} \sim \text{N}(\theta_j, \tau_j^2)$};
 
 \end{tikzpicture}
 
 \bigskip
 
+Now the previous level where we had the parameters defining the patient level priors we
+have a population level distribution where the patient level parameters are drawn from
+and we only define priors for the population level.
+
 The elegance of this method comes from the fact that, even though we now have a group
-level parameter (the distribution of effectiveness of the drug in the population) we
-still keep the individual patient level parameters and these can still be wary different
+level parameters we still keep the individual patient level parameters that can vary
 between the patients. The patient-level data is used to inform us about the population
 level parameters and this in turn affects the patient level parameters. In principle we
 are pooling the information from multiple patients and using this data adjust our
@@ -1163,31 +1211,47 @@ patients seem very different there is very little effect, but if the parameters 
 but one of the patients is clustered very close to each other, we adjust the parameter
 estimates of this one patient closer to the other patients.
 
-The question now becomes, how we apply the Bayesian formula in this case?
+The question now becomes, how we apply the Bayesian formula in this case? Luckily this
+happens to be very simple as we just have to remember the probability chain rule that
+tells us that the probability of $A$ and $B$ is the probability of $B$ on condition $A$
+times the probability of $A$:
 
-To start exploring this lets first look in more detail the case when we have
-more than one parameter in our model. We alluded to this already previously
-when we talked about multiple parameters, but we did not go into details
-there about how this affects the formulas practically. Lets take an example where
-we have two parameters instead of one, slot them into the familiar Bayes’ rule
-and see how it applies to the joint parameter space:
-
-TODO: explain the steps in more details
-
-\begin{def}\label{conjugatebayesrule}
-    \begin{equation}
-        p(\theta, \sigma|D) \propto p(D|\theta, \sigma) p(\theta, \sigma) = p(D|\theta) p(\theta|\sigma) p(\sigma)
+\begin{def}\label{}
+    \begin{equation}\label{chainrule}
+        P(A \cap B) = P(B|A)P(A)
     \end{equation}
 \end{def}
 
-We start from the basic definition of the posterior and the apply the Bayes rule, but ignore
-the denominator as we learned previously that if we just want to know the shape of the
-posterior these has no effect on it can be dropped. Next we applied
+Now just take the basic Bayes formula and instead with three parameters and apply this rule
+
+
+\begin{align}\label{conjugatebayesrule}
+    P(A,B|C) & = \frac{P(C|A,B)P(A \cap B)}{P(A \cap B)} \\
+    & = \frac{P(C|A,B)P(B|A)P(A)}{P(A \cap B)} \nonumber \\
+    & \propto {P(C|A,B)P(B|A)P(A)} \nonumber \\
+\end{align}
 
 We can see that the data \(D\) depends only on the value of parameter \(\theta \), so that
 if the value of \(\theta \) is set, then the data are independent of all other
 parameter values. Similarly, the value of \(\theta \) depends conditionally only
-the value of \(\sigma \) and \(\sigma \) is an independent variable.
+the value of \(\sigma \) and \(\sigma \) is an independent variable. We also notice that
+we could just keep on adding new parameters as could just apply the chain rule again.
+
+Lets now use this knowledge to the example model we defined
+above:
+
+\begin{align}\label{conjugatebayesrule}
+    P(\theta_{i \dots p},\tau_{i \dots p},\mu,\sigma,\beta| Y) & \propto P(Y|\theta_{i \dots p},\tau_{i \dots p},\mu,\sigma,\beta)P(\theta_{i \dots p} \cap \tau_{i \dots p} \cap \mu \cap \sigma \cap \beta) \\
+    & = P(Y|\theta_{i \dots p},\tau_{i \dots p},\mu,\sigma,\beta) P(\theta_i | \theta_{i+1 \dots p} \cap \tau_{i \dots p} \cap \mu \cap \sigma \cap \beta) \nonumber \\
+    & P(\theta_{i+1 \dots p} \cap \tau_{i \dots p} \cap \mu \cap \sigma \cap \beta) \nonumber \\
+    & \ldots \nonumber \\
+    & = P(Y|\theta_{i \dots p},\tau_{i \dots p},\mu,\sigma,\beta) P(\theta_i | \theta_{i+1 \dots p} \cap \tau_{i \dots p} \cap \mu \cap \sigma \cap \beta) \nonumber \\
+    & P(\theta_i, \theta_{i+1} | \theta_{i+2 \dots p} \cap \tau_{i \dots p} \cap \mu \cap \sigma \cap \beta) \ldots P(\theta_{i \dots p} \cap \tau_{i \dots p} \cap \mu \cap \sigma \cap | \beta) P(\beta) \nonumber
+\end{align}
+
+TODO do we need subchapters?
+
+TODO what do the depencies mean in practice?
 
 These kinds of dependencies among parameters are useful in several respects.
 First, the dependencies are meaningful for the given application, e.g.\ we can
@@ -1196,6 +1260,8 @@ broader population distribution of this effectiveness. Second, because of the
 dependencies across parameters, all the data can now jointly inform all the
 parameter estimates. The reduction of variance in the estimators that this
 effect causes, is generally referred by the term ``shrinkage''.
+
+TODO what is shrinkage?
 
 In general, shrinkage in hierarchical models causes lower-level parameters to
 a shift toward the modes of the higher-level distribution. If the higher-level
