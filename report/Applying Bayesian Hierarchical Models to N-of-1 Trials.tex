@@ -7,6 +7,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
+\usepackage{epstopdf}
 \usepackage{hyperref}
 \usepackage{tikz}
 
@@ -16,6 +17,7 @@
 \newcommand{\Q}{\mathbb{Q}} \newcommand{\N}{\mathbb{N}}
 \newcommand{\No}{\mathbb{N}_0} \newcommand{\Z}{\mathbb{Z}}
 \newcommand{\diam}{\operatorname{diam}}
+\newcommand{\mathleft}{\@fleqntrue\@mathmargin0pt}
 
 \theoremstyle{plain}
 \newtheorem{equa}[equation]{Equation}
@@ -39,6 +41,7 @@
 \addtolength{\textheight}{-0.9cm}
 
 \graphicspath{{../figures/}}
+\epstopdfsetup{outdir=../figures/}
 
 \title{Applying Bayesian Hierarchical Models to N-of-1 Trials}
 \author{Tuomo Kareoja}
@@ -71,7 +74,7 @@ similar N-of-1 trials and show how it is possible to pool the information from
 these with hierarchical Bayesian methods, without loosing sight of the goal of
 N-of-1 trials: to find the best treatment for each individual
 patient. Finally, we end by with a complete example of analyzing multiple N-of-1
-trials with hierarchical Bayesian methods with Python and PYMC3-package using
+trials with hierarchical Bayesian methods with Python and PyMC3-package using
 simulated data.
 
 \chapter{What Are N-of-1 Trials?}\label{nof1}
@@ -143,7 +146,7 @@ treatment period and washout periods between treatments:
 \bigskip
 {
     \centering
-    \includegraphics{n-of-1_schema.eps}
+    \includegraphics{n-of-1_schema.pdf}
     \par
 }
 \bigskip
@@ -924,7 +927,7 @@ models can run into unfeasibly long computational times. On top of choosing the
 right algorithm, there are lots of other things related to the computation to
 consider when implementing Bayesian inference, but we will return to these later
 with the example of practical implementation of this kind of calculation with
-Python and PYMC3 package.
+Python and PyMC3 package.
 
 \subsubsection{How to Define the Priors?}\label{bayesproblems}
 
@@ -1150,13 +1153,13 @@ represent the model conceptually like this:
 
 \bigskip
 
-On top are the prior parameter values given to each patient, next the individual patient
-parameters are drawn from distributions defined by the prior parameters and at the
-bottom individual observations are drawn from a normal distribution defined by
-parameters drawn from the patient-specific prior distributions.
-
-To broaden this model from just being a bunch of patient-specific models we can combine
-them by adding a population level that links are patients together:
+On top are the prior parameters that represent our existing knowledge and are shared by
+all patients. Next are actual prior distributions defined by these parameters from which the individual patient
+level patient parameters are drawn. At the bottom we describe the actual data generating
+process where values of individual observations are drawn from normal distributions
+defined by the patient level parameters. To broaden this model from just being a bunch
+of patient-specific models (with shared priors) we can combine
+them by adding a population level that links patients together:
 
 % TODO check where you have to put the exponent in the variance parameters
 
@@ -1197,24 +1200,20 @@ them by adding a population level that links are patients together:
 
 \bigskip
 
-Now the previous level where we had the parameters defining the patient level priors we
-have a population level distribution where the patient level parameters are drawn from
-and we only define priors for the population level.
+Now instead of drawing the patient level parameters from priors, these are drawn from
+the population level distribution. The parameters defining the population level
+distribution are drawn from the prior distribution. So instead of letting the patient
+level parameters being depended straight from the prior parameters we have introduced an
+additional layer between these. This flexibility given by this additional layer is
+crucial as it links the patients together and adds flexibility.
 
-The elegance of this method comes from the fact that, even though we now have a group
-level parameters we still keep the individual patient level parameters that can vary
-between the patients. The patient-level data is used to inform us about the population
-level parameters and this in turn affects the patient level parameters. In principle we
-are pooling the information from multiple patients and using this data adjust our
-patient-level inference, but the pooling is done intelligently so that for example if
-patients seem very different there is very little effect, but if the parameters from all
-but one of the patients is clustered very close to each other, we adjust the parameter
-estimates of this one patient closer to the other patients.
 
-The question now becomes, how we apply the Bayesian formula in this case? Luckily this
-happens to be very simple as we just have to remember the probability chain rule that
+With all the parameters that our model now has,the question now becomes, how we apply
+the Bayesian formula in this case? Luckily this happens to be very simple as we just
+have to remember two rules of probability: the chain rule, that
 tells us that the probability of $A$ and $B$ is the probability of $B$ on condition $A$
-times the probability of $A$:
+times the probability of $A$, and the rule of independence that states that the
+probability of $A$ on condition $B$ is just the probability of $A$ if $A$ and $B$ are independent.
 
 \begin{def}\label{}
     \begin{equation}\label{chainrule}
@@ -1222,36 +1221,57 @@ times the probability of $A$:
     \end{equation}
 \end{def}
 
-Now just take the basic Bayes formula and instead with three parameters and apply this rule
+\begin{def}\label{}
+    \begin{equation}\label{chainrule}
+        P(A|B) = P(A), \text{ if } P(A \cap B) = P(A)P(B)
+    \end{equation}
+\end{def}
 
+Now lets see what happens when we apply write are our model in the Bayes formula\
+\ref{bayeswithparams} and apply these rules. For simplicity I assume that we only have
+two patients and leave out the prior parameters defining the shape of the population distribution.
 
-\begin{align}\label{conjugatebayesrule}
-    P(A,B|C) & = \frac{P(C|A,B)P(A \cap B)}{P(A \cap B)} \\
-    & = \frac{P(C|A,B)P(B|A)P(A)}{P(A \cap B)} \nonumber \\
-    & \propto {P(C|A,B)P(B|A)P(A)} \nonumber \\
-\end{align}
+% TODO how to make this look clean
 
-We can see that the data \(D\) depends only on the value of parameter \(\theta \), so that
-if the value of \(\theta \) is set, then the data are independent of all other
-parameter values. Similarly, the value of \(\theta \) depends conditionally only
-the value of \(\sigma \) and \(\sigma \) is an independent variable. We also notice that
-we could just keep on adding new parameters as could just apply the chain rule again.
+\begin{def}\label{}
+    \begin{equation}\label{conjugatebayesrule}
+        P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma,\beta| Y) \\
+        \propto P(Y|\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma,\beta)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma,\beta) \nonumber \\
+        % &\text{using rule of independence as data Y depends only on parameters $\theta$ and $\tau$} \nonumber \\
+        = P(Y|\theta_1,\tau_1, \theta_2, \tau_2)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma,\beta) \nonumber \\
+        % &\text{using rule of independence to separate the two patients} \nonumber \\
+        = P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1, \mu,\sigma,\beta)P(\theta_2,\tau_2,\mu,\sigma,\beta) \nonumber \\
+        % &\text{using the chain rule separate the patient and population parameters} \nonumber \\
+        = P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1|\mu,\sigma,\beta)P(\theta_2,\tau_2|\mu,\sigma,\beta)P(\mu,\sigma,\beta)^2 \nonumber \\
+        % &\text{population parameters are independent of each other} \nonumber \\
+        = P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1|\mu,\sigma,\beta)P(\theta_2,\tau_2|\mu,\sigma,\beta)P(\mu)^2P(\sigma)^2P(\beta)^2 \nonumber \\
+        % &\text{$\theta$ and $\tau$ are independent on each other and are dependent on different population level parameters} \nonumber \\
+        = P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1|\mu,\sigma)P(\tau_1|\beta)P(\theta_2|\mu,\sigma)P(\tau_2|\beta)P(\mu)^2P(\sigma)^2P(\beta)^2 \nonumber
+    \end{equation}
+\end{def}
 
-Lets now use this knowledge to the example model we defined
-above:
-
-\begin{align}\label{conjugatebayesrule}
-    P(\theta_{i \dots p},\tau_{i \dots p},\mu,\sigma,\beta| Y) & \propto P(Y|\theta_{i \dots p},\tau_{i \dots p},\mu,\sigma,\beta)P(\theta_{i \dots p} \cap \tau_{i \dots p} \cap \mu \cap \sigma \cap \beta) \\
-    & = P(Y|\theta_{i \dots p},\tau_{i \dots p},\mu,\sigma,\beta) P(\theta_i | \theta_{i+1 \dots p} \cap \tau_{i \dots p} \cap \mu \cap \sigma \cap \beta) \nonumber \\
-    & P(\theta_{i+1 \dots p} \cap \tau_{i \dots p} \cap \mu \cap \sigma \cap \beta) \nonumber \\
-    & \ldots \nonumber \\
-    & = P(Y|\theta_{i \dots p},\tau_{i \dots p},\mu,\sigma,\beta) P(\theta_i | \theta_{i+1 \dots p} \cap \tau_{i \dots p} \cap \mu \cap \sigma \cap \beta) \nonumber \\
-    & P(\theta_i, \theta_{i+1} | \theta_{i+2 \dots p} \cap \tau_{i \dots p} \cap \mu \cap \sigma \cap \beta) \ldots P(\theta_{i \dots p} \cap \tau_{i \dots p} \cap \mu \cap \sigma \cap | \beta) P(\beta) \nonumber
-\end{align}
-
-TODO do we need subchapters?
+We can see that the measurements of each patient \(Y_1, Y_2\) depend only on the patient
+level parameters \(\theta_{1,2}, \tau_{1,2}\), so that if these values are set then the
+measurements are independent of all other parameters. Similarly, the patient level parameters depends conditionally only
+on the population level parameters \(\mu, \sigma, \beta\). So we have now successfully
+expressed our hierarchical model in the Bayes formula. We could continue by writing the
+formula out by adding in the the prior terms and replacing the abstract probability
+markings with the actual probability density functions given by our chosen
+distributions, but this gets messy and this case no nice analytical solution can be
+found anyway.
 
 TODO what do the depencies mean in practice?
+
+The elegance of this method comes from the fact that, even though we now have a population
+level parameters we still keep the individual patient level parameters that can vary
+between the patients. As the population level parameters are not fixed, the patient-level data will inform us about the population
+level parameters and this in turn affects the patient level parameters. We
+are pooling the information from multiple patients and using this data adjust our
+patient-level inference, but the pooling is done intelligently so that, for example, if
+patients seem very different there is very little effect, but if the parameters from all
+but one of the patients is clustered very close to each other, this tightens the
+population level distribution estimates and this in turn brings the patient level
+parameters closer together.
 
 These kinds of dependencies among parameters are useful in several respects.
 First, the dependencies are meaningful for the given application, e.g.\ we can
@@ -1260,8 +1280,6 @@ broader population distribution of this effectiveness. Second, because of the
 dependencies across parameters, all the data can now jointly inform all the
 parameter estimates. The reduction of variance in the estimators that this
 effect causes, is generally referred by the term ``shrinkage''.
-
-TODO what is shrinkage?
 
 In general, shrinkage in hierarchical models causes lower-level parameters to
 a shift toward the modes of the higher-level distribution. If the higher-level
@@ -1274,10 +1292,52 @@ similar observed data points from lower-level distributions lead to ``tighter''
 estimates for the higher-level distributions and in this in turn leads to
 greater shrinkage.
 
+TODO do we need subchapters?
+
 \chapter{Example of a Hierarchical Bayesian Analysis Using Simulated
   Data}\label{example}
 
-Imagined experimental design
+To put everything we learned into practice, lets go over an example Bayesian
+analysis of multiple N-of-1 trials where first analyse the trials separately and then combine
+them using a hierarchical model. For the analysis we use Python and PyMC3 library\ \cite{pymc3} built
+for probabilistic programming. We will not go over each part of the code, but focus only
+on the critical parts where we see how the models and inference we went over in the
+previous chapters look like when implemented in practice. For those who want to see the
+full code it is available from a GitHub repository\ \cite{github} with instructions how to run it.
+
+\section{Simulating the Data}
+
+Lets first describe our experiment design, because this is critical for understanding
+everything that comes later. Imagine that we have 5 patients that all suffer from the
+same condition which there are two treatment options available (A and B). We know from the
+literature that there is clear patient level variation in which treatment works better
+so we decide to test this with N-of-1 trials. We know that both of the treatments act
+very fast and that there are no known problems with interaction effects between them.
+The the state of the condition can also be easily measured at home so no visits to
+hospital are needed to take the measurements. The condition is also usually steadily
+worsening with or without the treatment as the treatment is more for managing the
+disease and not curing it. Based on this information we come up with the following experiment design:
+
+\begin{itemize}
+    \item The trial will run for 4 weeks with 2 weeks on each treatment
+    \item Treatment periods will be one week long
+    \item The week long treatment periods will be organized in two block, each of which will run for
+    2 weeks and contain 1 week on each treatment
+    \item The sequence of the treatments in the first block will be randomized and then
+    the second block will have the treatments in reverse order creating a balanced
+    design (ABBA or BAAB)
+    \item Measurements will be taken by the patient at end of each day so we end up with
+    28 measurements per patient with 14 for each of the treatments
+    \item There will be no washout period when switching between the treatments
+\end{itemize}
+
+\bigskip
+{
+    \centering
+    \includegraphics{design_for_simulated_experiment.pdf}
+    \par
+}
+\bigskip
 
 \section{Simulating the Data}
 
@@ -1356,7 +1416,7 @@ picture of the hierarchical parameter structure used to create the data
 
 \section{Analyzing a Single Trial}\label{1trial}
 
-PYMC3 requires that we appropriate give it functional forms for likelihoods to
+PyMC3 requires that we appropriate give it functional forms for likelihoods to
 represent the information from the data. This can be bit tricky when it is clear
 that likelihood does not take form a well known distribution. For these cases we
 must define the log-likelihood function of the likelihood manually.
@@ -1505,6 +1565,13 @@ Visualization of the shrinkage
     \bibitem{HTE4}
     David Kent, Peter Rothwell, John Ioannidis, et al.: Assessing and Reporting Heterogeneity in
     Treatment Effects in Clinical Trials: A Proposal, Trials, 2010;11:85
+
+    \bibitem{pymc3}
+    John Salvatier, Thomas Wiecki, Christopher Fonnesbeck: Probabilistic Programming in Python Using PyMC3, PeerJ Computer
+    Science, 2016, 2:e55
+
+    \bibitem{github}
+    Tuomo Kareoja: https://github.com/TuomoKareoja/hierarchical-bayes-nof1-thesis, GitHub repository, 2020
 
 \end{thebibliography}
 \end{document}
