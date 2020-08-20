@@ -70,7 +70,7 @@ y = scipy.stats.norm.pdf(
 ax1.plot(x, y, "r-", lw=2)
 ax1.spines["top"].set_visible(False)
 ax1.spines["right"].set_visible(False)
-ax1.set_xlabel("treatment1")
+ax1.set_xlabel("Treatment A Effect")
 ax1.set_ylabel("Probability Density")
 
 # TREATMENT EFFECT
@@ -89,7 +89,7 @@ y = scipy.stats.norm.pdf(
 ax2.plot(x, y, "r-", lw=2)
 ax2.spines["top"].set_visible(False)
 ax2.spines["right"].set_visible(False)
-ax2.set_xlabel("Treatment Effect")
+ax2.set_xlabel("Treatment B Effect")
 
 # MEASUREMENT ERROR
 x = np.linspace(
@@ -113,7 +113,7 @@ ax3.plot(
 )
 ax3.spines["top"].set_visible(False)
 ax3.spines["right"].set_visible(False)
-ax3.set_xlabel("Measurement Error\nStandard Deviation")
+ax3.set_xlabel("Measurement Error")
 
 # AUTOCORRELATION
 x = np.linspace(
@@ -150,13 +150,13 @@ fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(
 ax1.hist(parameters_df["treatment1"])
 ax1.spines["top"].set_visible(False)
 ax1.spines["right"].set_visible(False)
-ax1.set_xlabel("Baselevel")
+ax1.set_xlabel("Treatment A Effect")
 ax1.set_ylabel("Number of Patients")
 
 ax2.hist(parameters_df["treatment2"])
 ax2.spines["top"].set_visible(False)
 ax2.spines["right"].set_visible(False)
-ax2.set_xlabel("Treatment Effect")
+ax2.set_xlabel("Treatment B Effect")
 
 ax3.hist(parameters_df["trend"])
 ax3.spines["top"].set_visible(False)
@@ -166,7 +166,7 @@ ax3.set_xlabel("Trend")
 ax4.hist(parameters_df["measurement_error_sd"])
 ax4.spines["top"].set_visible(False)
 ax4.spines["right"].set_visible(False)
-ax4.set_xlabel("Measurement Error\nStandard Deviation")
+ax4.set_xlabel("Measurement Error")
 
 ax5.hist(parameters_df["autocorrelation"])
 ax5.spines["top"].set_visible(False)
