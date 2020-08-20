@@ -1308,26 +1308,27 @@ full code it is available from a GitHub repository\ \cite{github} with instructi
 \section{Simulating the Data}
 
 Lets first describe our experiment design, because this is critical for understanding
-everything that comes later. Imagine that we have 5 patients that all suffer from the
+everything that comes later. Imagine that we have 6 patients that all suffer from the
 same condition which there are two treatment options available (A and B). We know from the
-literature that there is clear patient level variation in which treatment works better
+literature that there is clear patient-level variation in which treatment works better
 so we decide to test this with N-of-1 trials. We know that both of the treatments act
 very fast and that there are no known problems with interaction effects between them.
-The the state of the condition can also be easily measured at home so no visits to
-hospital are needed to take the measurements. The condition is also usually steadily
+The state of the condition can also be easily measured at home so no visits to
+a hospital are needed to take the measurements. The condition is also usually steadily
 worsening with or without the treatment as the treatment is more for managing the
 disease and not curing it. Based on this information we come up with the following experiment design:
 
 \begin{itemize}
     \item The trial will run for 4 weeks with 2 weeks on each treatment
     \item Treatment periods will be one week long
-    \item The week long treatment periods will be organized in two block, each of which will run for
+    \item The week-long treatment periods will be organized in to two block, each of which will run for
     2 weeks and contain 1 week on each treatment
     \item The sequence of the treatments in the first block will be randomized and then
     the second block will have the treatments in reverse order creating a balanced
     design (ABBA or BAAB)
-    \item Measurements will be taken by the patient at end of each day so we end up with
-    28 measurements per patient with 14 for each of the treatments
+    \item Measurements will be taken by the patient at the end of each day so we end up with
+    28 measurements per patient with 14 for each of the treatments that separate by
+    roughly equal time periods
     \item There will be no washout period when switching between the treatments
 \end{itemize}
 
@@ -1341,64 +1342,78 @@ disease and not curing it. Based on this information we come up with the followi
 
 \section{Simulating the Data}
 
+Next we simulate the data that we could get from our defined experiment with Python.
+We do this in a fairly simple way that makes it easier to see how the models we build are
+actually doing. For simulating each observation \(t\) for patient \(i\) we use the following model:
+
 \begin{def}\label{simulationmodel}
     \begin{equation}\label{}
-        y_t = \mu_i + t\beta_i + Z_t\theta_i + \epsilon_t + \rho_i\epsilon_{t-1}
+        y_{ti} = Z_t\theta_{i} + W_t\eta{i} + t\beta_i + \epsilon_t + \rho_i\epsilon_{t-1},
     \end{equation}
-\end{def}where \(\mu_i\) is the baseline of the patient \(i\), \(\beta_i\) is
-the trend, \(\theta_i\) is the treatment effect with \(Z_t\) being an indicator
-variable that is 1 when \(t\) is within a period where treatment was applied and
-0 otherwise. \(\epsilon_t \sim N(0,\sigma_i^2) \) is the error term at \(t\) and
+\end{def}where \(\theta_i\) and \(\mu_i\) are the treatment effects with \(Z_{ti}\) and \(W_{ti}\) being indicator
+variables that is 1 when observation \(t\) is within a period where treatment was applied and
+0 otherwise. \(\beta_i\) is the trend representing the natural progress of the
+condition. \(\epsilon_{ti} \sim N(0,\tau_i^2) \) is the error term at \(t\) and
 \(\rho_i\) is the is the correlation between consecutive errors.
 
-So we have a data generating model with both and trend and lag 1 autocorrelation
-making the generated model more complex. The trend and autocorrelation are parts
-of the generation process that likely cannot be modeled with the generated data
-because of limited observations. This way the example tries to be more realistic
-by having the data generation function to be such complexity that it cannot be
-fully modeled and some decisions have to be made of how to try to approximate
+% TODO mention why we don't care a about the baseline
+
+This data generating model has both a trend and a lag 1 autocorrelation. The trend we
+are going to be modeling later, but also modeling autocorrelation would make the model
+too complex for the limited amount observations we will be dealing with. This way the example tries to be more realistic
+by having the data generation function to be of such complexity that it cannot be
+fully modeled and some decisions have to be made on how to try to approximate
 the process with a simpler model.
 
-These patient-level terms are generated from the population level distributions
-
-\begin{def}\label{populationparameters}
-    \begin{equation}
-        \mu_i \sim \mathcal{N}(\mu,\sigma^2)
-    \end{equation}
-    \begin{equation}
-        \theta_i \sim \mathcal{N}(\theta,\sigma^2)
-    \end{equation}
-    \begin{equation}
-        \sigma_i \sim Beta(\alpha, \beta)
-    \end{equation}
-    \begin{equation}
-        \rho_i \sim InvGamma(\alpha, \beta)
-    \end{equation}
-\end{def}
+``Above'' the part creating the individual observations we have a population level parameters
+that define the distribution of the patient level parameters:
 
 \bigskip
-{
-    \centering
-    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{population_parameter_distributions.pdf}
-    \par
-}
-\bigskip
+
+\begin{tikzpicture}
+
+    \matrix[matrix of math nodes, column sep=0pt, row sep=30pt] (mat)
+    {
+    \mu_{\theta}, \sigma_{\theta}, \mu_{\eta},\sigma_{\eta}, \alpha_{\tau},
+    \beta_{\tau}, \alpha_{\rho}, \beta_{\rho} \\
+        \theta_1, \eta_1, \epsilon_1, \rho_1 \\
+        y_{1,i}, \ldots, y_{28, i} \\
+    };
+
+    \draw[->,>=latex] (mat-1-1) -- (mat-2-1);
+    \draw[->,>=latex] (mat-2-1) -- (mat-3-1);
+
+    \node[anchor=east] at ([xshift = -35pt]mat-2-1)
+    {$\theta_i \sim \mathcal{N}(\mu_{\theta},\sigma_{\theta}^2), \eta_i \sim \mathcal{N}(\mu_{\eta},\sigma_{\eta}^2), \tau_i \sim Beta(\alpha_{\tau}, \beta_{\tau}), \rho_i \sim InvGamma(\alpha_{\rho}, \beta_{\rho})$};
+
+\end{tikzpicture}
+
+We set the population-level parameters to the following values and then run the
+simulation:
+
+% TODO are we using shape and scale or some other definition? check python fuctions!
 
 \bigskip
-{
-    \centering
-    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{patient_parameter_distribution.pdf}
-    \par
-}
-\bigskip
 
-\bigskip
-{
-    \centering
-    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{patient_parameter_relationships.pdf}
-    \par
-}
-\bigskip
+\begin{align}\label{populationparameters}
+    \text{population treatment A mean: } & \mu_{\theta} = 10 \nonumber \\
+    \text{population treatment A standard deviation: } & \sigma_{\theta} = 0.2 \nonumber \\
+    \text{population treatment B mean: } & \mu_{\eta} = 9.7 \nonumber \\
+    \text{population treatment B standard deviation: } & \sigma_{\eta} = 0.3 \nonumber \\
+    \text{population trend mean: } & \mu_{\beta} = 0.02 \nonumber \\
+    \text{population trend standard deviation: } & \sigma_{\beta} = 0.01 \nonumber \\
+    \text{population measurement error shape: } & \alpha_{\tau} = 3 \nonumber \\
+    \text{population measurement error scale: } & \beta_{\tau} = 0.3 \nonumber \\
+    \text{population error autocorrelation alpha: } & \alpha_{\rho} = 100 \nonumber \\
+    \text{population error autocorrelation beta: } & \beta_{\rho} = 200 \nonumber
+\end{align}
+
+Lets first look at the actual measurements. We can clearly see the for the highlighted
+patient one treatment is working better than the other one as we can easily pickout the
+ABBA treatment assignment from the picture. We can also see that for this patient the t
+
+% TODO choose if up or down is better and make the models work that like this and the
+% model definition match this
 
 \bigskip
 {
@@ -1408,11 +1423,28 @@ These patient-level terms are generated from the population level distributions
 }
 \bigskip
 
+Let's next look at the patient level parameters
 
+% TODO show both treatment A and B in the same graph to make comparisons possible
 
-What makes the simulated data hierarchical?
+\bigskip
+{
+    \centering
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{patient_parameter_distribution.pdf}
+    \par
+}
+\bigskip
 
-picture of the hierarchical parameter structure used to create the data
+Lastly lets see our defined population distributions
+% TODO show both treatment A and B in the same graph to make comparisons possible
+
+\bigskip
+{
+    \centering
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{population_parameter_distributions.pdf}
+    \par
+}
+\bigskip
 
 \section{Analyzing a Single Trial}\label{1trial}
 
