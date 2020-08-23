@@ -29,9 +29,6 @@ population_treatment2_sd = float(os.getenv("POPULATION_TREATMENT2_SD"))
 population_trend_mean = float(os.getenv("POPULATION_TREND_MEAN"))
 population_trend_sd = float(os.getenv("POPULATION_TREND_SD"))
 
-population_measurement_error_shape = float(
-    os.getenv("POPULATION_MEASUREMENT_ERROR_SHAPE")
-)
 population_measurement_error_scale = float(
     os.getenv("POPULATION_MEASUREMENT_ERROR_SCALE")
 )
@@ -47,6 +44,10 @@ measurements_df = pd.read_csv(measurements_path)
 parameters_df = pd.read_csv(parameters_path)
 
 visualization_folder = os.path.join("figures")
+
+patient_colors = ["red", "green", "blue", "orange", "brown", "black"]
+population_color = "grey"
+population_alpha = 0.6
 
 # %%
 
@@ -67,11 +68,15 @@ y = scipy.stats.norm.pdf(
     x, loc=population_treatment1_mean, scale=population_treatment1_sd
 )
 
-ax1.plot(x, y, "r-", lw=2)
+ax1.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
 ax1.spines["top"].set_visible(False)
 ax1.spines["right"].set_visible(False)
 ax1.set_xlabel("Treatment A Effect")
 ax1.set_ylabel("Probability Density")
+
+# add patient parameter values
+for value, color in zip(parameters_df["treatment1"], patient_colors):
+    ax1.axvline(x=value, color=color)
 
 # TREATMENT EFFECT
 x = np.linspace(
@@ -86,34 +91,30 @@ y = scipy.stats.norm.pdf(
     x, loc=population_treatment2_mean, scale=population_treatment2_sd,
 )
 
-ax2.plot(x, y, "r-", lw=2)
+ax2.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
 ax2.spines["top"].set_visible(False)
 ax2.spines["right"].set_visible(False)
 ax2.set_xlabel("Treatment B Effect")
 
+# add patient parameter values
+for value, color in zip(parameters_df["treatment2"], patient_colors):
+    ax2.axvline(x=value, color=color)
+
 # MEASUREMENT ERROR
 x = np.linspace(
-    scipy.stats.invgamma.ppf(
-        0.01,
-        a=population_measurement_error_shape,
-        scale=population_measurement_error_scale,
-    ),
-    scipy.stats.invgamma.ppf(
-        0.99,
-        a=population_measurement_error_shape,
-        scale=population_measurement_error_scale,
-    ),
+    scipy.stats.halfcauchy.ppf(0.01, loc=0, scale=population_measurement_error_scale,),
+    scipy.stats.halfcauchy.ppf(0.90, loc=0, scale=population_measurement_error_scale,),
 )
-y = scipy.stats.invgamma.pdf(
-    x, a=population_measurement_error_shape, scale=population_measurement_error_scale,
-)
+y = scipy.stats.halfcauchy.pdf(x, loc=0, scale=population_measurement_error_scale,)
 
-ax3.plot(
-    x, y, "r-", lw=2,
-)
+ax3.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
 ax3.spines["top"].set_visible(False)
 ax3.spines["right"].set_visible(False)
 ax3.set_xlabel("Measurement Error")
+
+# add patient parameter values
+for value, color in zip(parameters_df["measurement_error_sd"], patient_colors):
+    ax3.axvline(x=value, color=color)
 
 # AUTOCORRELATION
 x = np.linspace(
@@ -128,10 +129,14 @@ y = scipy.stats.beta.pdf(
     x, a=population_autocorrelation_alpha, b=population_autocorrelation_beta
 )
 
-ax4.plot(x, y, "r-", lw=2)
+ax4.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
 ax4.spines["top"].set_visible(False)
 ax4.spines["right"].set_visible(False)
 ax4.set_xlabel("Autocorrelation")
+
+# add patient parameter values
+for value, color in zip(parameters_df["autocorrelation"], patient_colors):
+    ax4.axvline(x=value, color=color)
 
 plt.savefig(
     os.path.join(visualization_folder, "population_parameter_distributions.pdf"),
@@ -186,14 +191,14 @@ plt.savefig(
 # PARAMETER CORRELATIONS
 
 parameters_nice_names_df = parameters_df[
-    ["treatment1", "treatment2", "trend", "measurement_error_sd", "autocorrelation"]
+    ["treatment1", "treatment2", "trend", "measurement_error_sd", "autocorrelation",]
 ]
 
 parameters_nice_names_df.columns = [
     "Treatment 1",
     "Treatment 2",
     "Trend",
-    "Measurement Error\nStandard Deviation",
+    "Measurement Error",
     "Autocorrelation",
 ]
 
@@ -212,14 +217,13 @@ plt.savefig(
 # TIMELINE
 fig, ax = plt.subplots(figsize=(8, 4))
 
-for patient in measurements_df["patient_index"].unique():
+for patient, color in zip(measurements_df["patient_index"].unique(), patient_colors):
 
-    if patient == max(measurements_df["patient_index"]):
-        color = "red"
+    # highlight patient with index 0
+    if patient == 0:
         alpha = 1
 
     else:
-        color = "grey"
         alpha = 0.3
 
     ax.plot(
@@ -233,11 +237,31 @@ for patient in measurements_df["patient_index"].unique():
         linewidth=2,
     )
 
-
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
-plt.ylabel("Bad Thing")
-plt.xlabel("Measurement Index")
+plt.ylabel("Measurement Value")
+plt.xlabel("Time Index")
+
+plt.annotate(
+    "Patient 1",
+    xy=(
+        10,
+        measurements_df[
+            (measurements_df["patient_index"] == 0)
+            & (measurements_df["measurement_index"] == 10)
+        ]["measurement"],
+    ),
+    xytext=(
+        10 - 5,
+        measurements_df[
+            (measurements_df["patient_index"] == 0)
+            & (measurements_df["measurement_index"] == 10)
+        ]["measurement"]
+        + 1,
+    ),
+    color="red",
+    arrowprops={"arrowstyle": "->", "color": "black"},
+)
 
 plt.tight_layout()
 plt.savefig(

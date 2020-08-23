@@ -36,9 +36,6 @@ population_treatment2_sd = float(os.getenv("POPULATION_TREATMENT2_SD"))
 population_trend_mean = float(os.getenv("POPULATION_TREND_MEAN"))
 population_trend_sd = float(os.getenv("POPULATION_TREND_SD"))
 
-population_measurement_error_shape = float(
-    os.getenv("POPULATION_MEASUREMENT_ERROR_SHAPE")
-)
 population_measurement_error_scale = float(
     os.getenv("POPULATION_MEASUREMENT_ERROR_SCALE")
 )
@@ -67,8 +64,8 @@ patient_trend_array = np.random.normal(
     population_trend_mean, population_trend_sd, patients_n
 )
 # scipy shares the numpy random seed
-patient_measurement_error_sd_array = scipy.stats.invgamma.rvs(
-    a=population_measurement_error_shape,
+patient_measurement_error_sd_array = scipy.stats.halfcauchy.rvs(
+    loc=0,
     scale=population_measurement_error_scale,
     size=patients_n,
 )
