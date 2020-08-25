@@ -49,6 +49,7 @@ data_folder = os.path.join("data")
 visualization_folder = os.path.join("figures")
 params_file_name = "patient_parameters.csv"
 measurements_file_name = "patient_measurements.csv"
+measurements_latex_file_name = "patient_measurements.csv"
 params_path = os.path.join(data_folder, params_file_name)
 measurements_path = os.path.join(data_folder, measurements_file_name)
 

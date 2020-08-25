@@ -1,4 +1,8 @@
-=>PYTHONTEX#py#default#defaultverb#0#verbatim#####1515#
+=>PYTHONTEX#py#default#defaultverb#0#verbatim#####1531#
+import pymc3 as pm
+import pandas as pd
+
+measurements_df = pd.read_csv("patient_measurements.csv")
 
 with pm.Model() as single_patient_no_trend_model:
 
@@ -6,15 +10,15 @@ with pm.Model() as single_patient_no_trend_model:
     treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10)
     treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
     # common variance parameter defining the error
-    sigma_prior = pm.HalfCauchy("sigma", beta=10)
+    gamma_prior = pm.HalfCauchy("gamma", beta=10)
 
     # measurements are created from both priors, with a indicator setting the
     # values to 0 if the particular treatment is not applied at the observation
     measurement_est = (
         treatment1_prior
-        * measurements_df[patient_index == 0]["treatment1_indicator"]
+        * measurements_df[patient == 0]["treatment1"]
         + treatment2_prior
-        * measurements_df[patient_index == 0]["treatment2_indicator"]
+        * measurements_df[patient == 0]["treatment2"]
     )
 
     # likelihood is normal distribution with the same amount of dimensions
@@ -23,12 +27,95 @@ with pm.Model() as single_patient_no_trend_model:
     likelihood = pm.Normal(
         "y",
         measurement_est,
-        sigma=sigma_prior,
-        observed=measurements_df[patient_index == 0]["measurement"],
+        sigma=gamma_prior,
+        observed=measurements_df[patient == 0]["measurement"],
     )
 
     # running the model
     trace = pm.sample(800, tune=400, cores=3)
+
+    # Checking diagnostic describing how the MCMC method performed
+    pm.traceplot(trace, ["treatment1", "treatment2", "gamma"])
+    plt.show()
+    pm.summary(trace)
+
+    # checking the posterior distribution
+    pm.plot_posterior(trace)
+    plt.show()
+
+
+# posterior sampling
+with single_patient_no_trend_model as model:
+    post_pred = pm.sample_posterior_predictive(trace, samples=500)
+    predictions = post_pred["y"]
+
+draw_posterior_checks(
+    predictions=predictions,
+    measurements_df=measurements_df[patient == 0],
+    parameters_df=parameters_df[parameters_df["patient"] == 0],
+)
+=>PYTHONTEX#py#default#defaultverb#1#verbatim#####1592#
+import pymc3 as pm
+import pandas
+
+measurements_df = pd.read_csv("patient_measurements.csv")
+=>PYTHONTEX#py#default#default#0#code#####1604#
+import os
+import pandas as pd
+
+measurements_path = os.path.join("..", "data", "patient_measurements.csv")
+measurements_df = pd.read_csv(measurements_path)
+measurements_df.columns = ['patient', 'measurement', 'period', 'block',
+'treatement1', 'treatment2', 'measurement']
+print(measurements_df.head(10).to_latex(index=False))
+=>PYTHONTEX#py#default#defaultverb#2#verbatim#####1628#
+with pm.Model() as single_patient_no_trend_model:
+=>PYTHONTEX#py#default#defaultverb#3#verbatim#####1642#
+treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10)
+treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
+gamma_prior = pm.HalfCauchy("gamma", beta=10)
+=>PYTHONTEX#py#default#defaultverb#4#verbatim#####1671#
+measurement_est = (
+    treatment1_prior
+    * measurements_df[patient == 0]["treatment1"]
+    + treatment2_prior
+    * measurements_df[patient == 0]["treatment2"]
+)
+
+likelihood = pm.Normal(
+    "y",
+    measurement_est,
+    sigma=gamma_prior,
+    observed=measurements_df[patient == 0]["measurement"],
+)
+=>PYTHONTEX#py#default#defaultverb#5#verbatim#####1697#
+
+trace = pm.sample(800, tune=400, cores=3)
+
+=>PYTHONTEX#py#default#defaultverb#6#verbatim#####1705#
+
+# Checking diagnostic describing how the MCMC method performed
+pm.traceplot(trace, ["treatment1", "treatment2", "sigma"])
+plt.show()
+pm.summary(trace)
+
+# checking the posterior distribution
+pm.plot_posterior(trace)
+plt.show()
+
+=>PYTHONTEX#py#default#defaultverb#7#verbatim#####1719#
+
+# posterior sampling
+with single_patient_no_trend_model as model:
+    post_pred = pm.sample_posterior_predictive(trace, samples=500)
+    predictions = post_pred["y"]
+
+draw_posterior_checks(
+    predictions=predictions,
+    measurements_df=measurements_df[patient_index == 0],
+    parameters_df=parameters_df[parameters_df["patient_index"] == 0],
+    plot_name="single_patient_no_trend_posterior_sampling",
+)
 
 =>PYTHONTEX:SETTINGS#
 version=0.17

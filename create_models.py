@@ -67,7 +67,7 @@ with pm.Model() as single_patient_no_trend_model:
     treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10)
     treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
     # common variance parameter defining the error
-    sigma_prior = pm.HalfCauchy("sigma", beta=10)
+    gamma_prior = pm.HalfCauchy("gamma", beta=10)
 
     # measurements are created from both priors, with a indicator setting the
     # values to 0 if the treatment is not applied at the particular observation
@@ -84,14 +84,14 @@ with pm.Model() as single_patient_no_trend_model:
     likelihood = pm.Normal(
         "y",
         measurement_est,
-        sigma=sigma_prior,
+        sigma=gamma_prior,
         observed=measurements_df[patient_index == 0]["measurement"],
     )
 
     # running the model
     trace = pm.sample(800, tune=400, cores=3)
 
-    pm.traceplot(trace, ["treatment1", "treatment2"])
+    pm.traceplot(trace, ["treatment1", "treatment2", "gamma"])
     plt.savefig(
         os.path.join(visualization_path, "single_patient_no_trend_traceplot.pdf"),
         bbox_inches="tight",
