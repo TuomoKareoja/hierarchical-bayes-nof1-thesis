@@ -35,9 +35,6 @@ population_treatment2_sd = float(os.getenv("POPULATION_TREATMENT2_SD"))
 population_trend_mean = float(os.getenv("POPULATION_TREND_MEAN"))
 population_trend_sd = float(os.getenv("POPULATION_TREND_SD"))
 
-population_measurement_error_shape = float(
-    os.getenv("POPULATION_MEASUREMENT_ERROR_SHAPE")
-)
 population_measurement_error_scale = float(
     os.getenv("POPULATION_MEASUREMENT_ERROR_SCALE")
 )
@@ -89,7 +86,7 @@ with pm.Model() as single_patient_no_trend_model:
     )
 
     # running the model
-    trace = pm.sample(800, tune=400, cores=3)
+    trace = pm.sample(800, tune=500, cores=3)
 
     pm.traceplot(trace, ["treatment1", "treatment2", "gamma"])
     plt.savefig(
@@ -97,6 +94,7 @@ with pm.Model() as single_patient_no_trend_model:
         bbox_inches="tight",
     )
     plt.show()
+    print(pm.summary(trace))
 
     # posteriors should look reasonable
     pm.plot_posterior(trace)

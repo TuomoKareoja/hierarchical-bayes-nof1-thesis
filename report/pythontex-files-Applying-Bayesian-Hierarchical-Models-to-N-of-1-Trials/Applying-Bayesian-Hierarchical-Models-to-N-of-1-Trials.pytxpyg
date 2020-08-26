@@ -198,33 +198,21 @@
 \def\PYGdefaultZlb{[}
 \def\PYGdefaultZrb{]}
 \makeatother
-\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@5}
-\PYG{n}{trace} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{l+m+mi}{800}\PYG{p}{,} \PYG{n}{tune}\PYG{o}{=}\PYG{l+m+mi}{400}\PYG{p}{,} \PYG{n}{cores}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
+\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@1}
+\PYG{k+kn}{import} \PYG{n+nn}{pymc3} \PYG{k}{as} \PYG{n+nn}{pm}
+\PYG{k+kn}{import} \PYG{n+nn}{pandas}
+
+\PYG{n}{measurements\PYGZus{}df} \PYG{o}{=} \PYG{n}{pd}\PYG{o}{.}\PYG{n}{read\PYGZus{}csv}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient\PYGZus{}measurements.csv}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
 \end{pytx@SaveVerbatim}
 
-\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@6}
-\PYG{c+c1}{\PYGZsh{} Checking diagnostic describing how the MCMC method performed}
-\PYG{n}{pm}\PYG{o}{.}\PYG{n}{traceplot}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{,} \PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{sigma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{)}
-\PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
-\PYG{n}{pm}\PYG{o}{.}\PYG{n}{summary}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
-
-\PYG{c+c1}{\PYGZsh{} checking the posterior distribution}
-\PYG{n}{pm}\PYG{o}{.}\PYG{n}{plot\PYGZus{}posterior}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
-\PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
+\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@2}
+\PYG{k}{with} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Model}\PYG{p}{(}\PYG{p}{)} \PYG{k}{as} \PYG{n}{single\PYGZus{}patient\PYGZus{}no\PYGZus{}trend\PYGZus{}model}\PYG{p}{:}
 \end{pytx@SaveVerbatim}
 
-\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@7}
-\PYG{c+c1}{\PYGZsh{} posterior sampling}
-\PYG{k}{with} \PYG{n}{single\PYGZus{}patient\PYGZus{}no\PYGZus{}trend\PYGZus{}model} \PYG{k}{as} \PYG{n}{model}\PYG{p}{:}
-    \PYG{n}{post\PYGZus{}pred} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample\PYGZus{}posterior\PYGZus{}predictive}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{,} \PYG{n}{samples}\PYG{o}{=}\PYG{l+m+mi}{500}\PYG{p}{)}
-    \PYG{n}{predictions} \PYG{o}{=} \PYG{n}{post\PYGZus{}pred}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{y}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
-
-\PYG{n}{draw\PYGZus{}posterior\PYGZus{}checks}\PYG{p}{(}
-    \PYG{n}{predictions}\PYG{o}{=}\PYG{n}{predictions}\PYG{p}{,}
-    \PYG{n}{measurements\PYGZus{}df}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}index} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{,}
-    \PYG{n}{parameters\PYGZus{}df}\PYG{o}{=}\PYG{n}{parameters\PYGZus{}df}\PYG{p}{[}\PYG{n}{parameters\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient\PYGZus{}index}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{,}
-    \PYG{n}{plot\PYGZus{}name}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{single\PYGZus{}patient\PYGZus{}no\PYGZus{}trend\PYGZus{}posterior\PYGZus{}sampling}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-\PYG{p}{)}
+\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@3}
+\PYG{n}{treatment1\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
+\PYG{n}{treatment2\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
+\PYG{n}{gamma\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
 \end{pytx@SaveVerbatim}
 
 \begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@0}
@@ -261,7 +249,7 @@
     \PYG{p}{)}
 
     \PYG{c+c1}{\PYGZsh{} running the model}
-    \PYG{n}{trace} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{l+m+mi}{800}\PYG{p}{,} \PYG{n}{tune}\PYG{o}{=}\PYG{l+m+mi}{400}\PYG{p}{,} \PYG{n}{cores}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
+    \PYG{n}{trace} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{l+m+mi}{800}\PYG{p}{,} \PYG{n}{tune}\PYG{o}{=}\PYG{l+m+mi}{500}\PYG{p}{,} \PYG{n}{cores}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
 
     \PYG{c+c1}{\PYGZsh{} Checking diagnostic describing how the MCMC method performed}
     \PYG{n}{pm}\PYG{o}{.}\PYG{n}{traceplot}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{,} \PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{)}
@@ -285,25 +273,8 @@
 \PYG{p}{)}
 \end{pytx@SaveVerbatim}
 
-\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@1}
-\PYG{k+kn}{import} \PYG{n+nn}{pymc3} \PYG{k}{as} \PYG{n+nn}{pm}
-\PYG{k+kn}{import} \PYG{n+nn}{pandas}
-
-\PYG{n}{measurements\PYGZus{}df} \PYG{o}{=} \PYG{n}{pd}\PYG{o}{.}\PYG{n}{read\PYGZus{}csv}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient\PYGZus{}measurements.csv}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
-\end{pytx@SaveVerbatim}
-
-\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@2}
-\PYG{k}{with} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Model}\PYG{p}{(}\PYG{p}{)} \PYG{k}{as} \PYG{n}{single\PYGZus{}patient\PYGZus{}no\PYGZus{}trend\PYGZus{}model}\PYG{p}{:}
-\end{pytx@SaveVerbatim}
-
-\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@3}
-\PYG{n}{treatment1\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
-\PYG{n}{treatment2\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
-\PYG{n}{gamma\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
-\end{pytx@SaveVerbatim}
-
 \begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@4}
-\PYG{n}{measurement\PYGZus{}est} \PYG{o}{=} \PYG{p}{(}
+\PYG{n}{treatment\PYGZus{}means} \PYG{o}{=} \PYG{p}{(}
     \PYG{n}{treatment1\PYGZus{}prior}
     \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
     \PYG{o}{+} \PYG{n}{treatment2\PYGZus{}prior}
@@ -312,9 +283,38 @@
 
 \PYG{n}{likelihood} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
     \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{y}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-    \PYG{n}{measurement\PYGZus{}est}\PYG{p}{,}
+    \PYG{n}{measurement\PYGZus{}means}\PYG{p}{,}
     \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{gamma\PYGZus{}prior}\PYG{p}{,}
     \PYG{n}{observed}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{measurement}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{,}
+\PYG{p}{)}
+\end{pytx@SaveVerbatim}
+
+\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@5}
+\PYG{n}{trace} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{n}{draw}\PYG{o}{=}\PYG{l+m+mi}{800}\PYG{p}{,} \PYG{n}{tune}\PYG{o}{=}\PYG{l+m+mi}{500}\PYG{p}{,} \PYG{n}{cores}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
+\end{pytx@SaveVerbatim}
+
+\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@6}
+\PYG{c+c1}{\PYGZsh{} Checking diagnostic describing how the MCMC method performed}
+\PYG{n}{pm}\PYG{o}{.}\PYG{n}{traceplot}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{,} \PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{)}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
+\PYG{n}{pm}\PYG{o}{.}\PYG{n}{summary}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
+\end{pytx@SaveVerbatim}
+
+\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@7}
+\PYG{n}{pm}\PYG{o}{.}\PYG{n}{plot\PYGZus{}posterior}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
+\end{pytx@SaveVerbatim}
+
+\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@8}
+\PYG{c+c1}{\PYGZsh{} posterior sampling}
+\PYG{k}{with} \PYG{n}{single\PYGZus{}patient\PYGZus{}no\PYGZus{}trend\PYGZus{}model} \PYG{k}{as} \PYG{n}{model}\PYG{p}{:}
+    \PYG{n}{post\PYGZus{}pred} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample\PYGZus{}posterior\PYGZus{}predictive}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{,} \PYG{n}{samples}\PYG{o}{=}\PYG{l+m+mi}{500}\PYG{p}{)}
+    \PYG{n}{predictions} \PYG{o}{=} \PYG{n}{post\PYGZus{}pred}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{y}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+
+\PYG{n}{draw\PYGZus{}posterior\PYGZus{}checks}\PYG{p}{(}
+    \PYG{n}{predictions}\PYG{o}{=}\PYG{n}{predictions}\PYG{p}{,}
+    \PYG{n}{measurements\PYGZus{}df}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}index} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{,}
+    \PYG{n}{parameters\PYGZus{}df}\PYG{o}{=}\PYG{n}{parameters\PYGZus{}df}\PYG{p}{[}\PYG{n}{parameters\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient\PYGZus{}index}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{,}
+    \PYG{n}{plot\PYGZus{}name}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{single\PYGZus{}patient\PYGZus{}no\PYGZus{}trend\PYGZus{}posterior\PYGZus{}sampling}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
 \PYG{p}{)}
 \end{pytx@SaveVerbatim}
 

@@ -1562,7 +1562,7 @@ with pm.Model() as single_patient_no_trend_model:
     )
 
     # running the model
-    trace = pm.sample(800, tune=400, cores=3)
+    trace = pm.sample(800, tune=500, cores=3)
 
     # Checking diagnostic describing how the MCMC method performed
     pm.traceplot(trace, ["treatment1", "treatment2", "gamma"])
@@ -1620,7 +1620,7 @@ and sixth which treatment was applied during the particular measurement (0-1). L
 column is the actual measurement. PyMC3 does not require any particular format from the
 data and almost any format is possible as long as you can feed the right values into
 the right places in the model definition. Also using the Pandas package to handle the
-data as dataframe is not necessary, but is very convenient.
+data as a dataframe is not necessary, but is very convenient.
 
 \subsubsection{Initializing the Model}
 
@@ -1669,7 +1669,7 @@ worry about the math and there is no need to consider implementing any helper fu
 
 \bigskip
 \begin{pyverbatim}
-measurement_est = (
+treatment_means = (
     treatment1_prior
     * measurements_df[patient == 0]["treatment1"]
     + treatment2_prior
@@ -1678,7 +1678,7 @@ measurement_est = (
 
 likelihood = pm.Normal(
     "y",
-    measurement_est,
+    measurement_means,
     sigma=gamma_prior,
     observed=measurements_df[patient == 0]["measurement"],
 )
@@ -1687,37 +1687,144 @@ likelihood = pm.Normal(
 
 Defining the likelihood is the most complex part our model definition because of the
 complexity introduced by the varying treatments. Because of this, the likelihood cannot
-be implemented as simple normal distribution. We solve this problem by instead using a
+be implemented as a simple normal distribution. We solve this problem by instead using a
 multivariate normal distribution with as many dimensions as the patient has
 measurements. For each of the dimensions one of the two treatment effects priors is used for the mean
-and the gamma distribution is used for variance in all cases.
+and the gamma distribution is used for variance in all cases. We construct the vector of
+treatment means by multiplying the treatment priors by the treatment indices (1 when
+treatment given, 0 when not). So instead of considering
+the observations separately we thing of them as a single multidimensional sample from
+multivariate normal distribution. This is not the only possible way to solve the
+problem, but happens to be the most convenient one here. If we would have some
+dependencies between the measurements in our model (e.g. autocorrelation), this approach
+would not work. In this case we would have to implement the likelihood distribution
+ourselves.
 
 \subsubsection{Running the Model}
 
+\bigskip
 \begin{pyverbatim}
-
-trace = pm.sample(800, tune=400, cores=3)
-
+trace = pm.sample(draw=800, tune=500, cores=3)
 \end{pyverbatim}
+\bigskip
 
+Now that we have defined our priors and our likelihood we can move on to running the
+model. Notice that priors and the likelihood is all we need to have defined. We don't
+have to worry about the ``bottom part'' of the Bayes formula \ref{bayesrule}. PyMC3 will
+now estimate the posterior with an automatically chosen Markov Chain Monte Carlo (MCMC) method
+that moves trough the posterior from point to point. We could also manually choose what
+algorithm to use, but unless we see problems when we evaluate the estimation efficiency,
+we should go with the automatic selection. We also don't need to define the point in the
+posterior distribution where the chain starts as this is also automatically chosen. This
+we could also define manually, but unless we run into problems, we should not need to.
+
+The three parameters that we have to manually define are as follow:
+
+\begin{itemize}
+    \item draw = how many moves the MCMC chain should calculate
+    \item tune = how many moves the MCMC chain should take before it start to
+    take the observations into account
+    \item cores = how many chains we should calculate in parallel
+\end{itemize}
+
+The total steps taken by each chain is draw + tune. The reason for the tuning step is
+that the starting position of the chain is probably biased. We would want the starting
+position to be a sample from the posterior so that it probability of it being in a certain
+point would be defined by the posterior. We can do this by letting the chain first take
+a number of steps and as its moves trough the posterior its location will start to
+reflect the actual posterior. If we would not have the tuning steps it would be possible
+that the chain starts in a weird position and the first steps it takes don't reflect the
+posterior as it might have to make lots of moves in a certain direction to get to the
+representative parts of the distribution. The more draws and tuning steps we take the
+better the estimation will be, but the more time the calculation will take. Finding the
+right number of draw and tuning steps involves usually some trial and error. It is
+hard to know how many steps you need before you try to run the model. Luckily PyMC3 will
+automatically alert us if it thinks that we need more tuning steps or draws and we can
+also diagnose this from metrics and plots that we will look at after we have run the
+model.
+
+As modern CPUs have usually multiple cores, we can speed up the calculation by running
+multiple chains in parallel. Each chain will be independent of each other and each will
+take same amount of draws and tuning steps. As the chain can run in parallel, having
+multiple chains running at once does not make the other calculations any slower. This can
+dramatically lower the time that our estimation takes. The total number of steps that
+the posterior will be calculated with is the combined draws (but tuning steps) of the
+chains. So in our case we will use 3 cores and have 3 chains (running this on a 4 core
+CPU so we will leave 1 core free for other tasks), in total these chains will make (800 +
+500) * 3 = 3900 steps, of which 800 * 3 = 2400 steps will be used for the estimation.
+
+% TODO add the command line printout for running the model
 
 \subsubsection{Checking Algorithm Diagnostics}
-\begin{pyverbatim}
 
+\bigskip
+\begin{pyverbatim}
 # Checking diagnostic describing how the MCMC method performed
-pm.traceplot(trace, ["treatment1", "treatment2", "sigma"])
+pm.traceplot(trace, ["treatment1", "treatment2", "gamma"])
 plt.show()
 pm.summary(trace)
-
-# checking the posterior distribution
-pm.plot_posterior(trace)
-plt.show()
-
 \end{pyverbatim}
+\bigskip
 
-\subsubsection{Checking the Posteriors and Doing a Reality Check on Model Fit}
+Now that we have run the model we need to evaluate if the algorithm did good job with
+the estimation. We can evaluate this by looking at diagnostic plots and from diagnostic
+metrics. Lets first look at the traceplots:
+
+\begin{figure}
+    \caption{Single Patient Traceplots}
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_no_trend_traceplot.pdf}
+\end{figure}
+
+On the left we can see the steps taken for each chain in our three parameters. These are
+just the steps used for the posterior estimation and don't include the tuning steps. Each
+chain is portrayed with a different color. What we want to see here is that the timeseries
+looks like noise with no obvious patterns. If we would see these, it would mean that the
+chains had problems moving trough the posterior and ended up taking biased samples.
+These effects should be most pronounced at the beginning steps and if we would see
+these, we should increase the number of tuning steps.
+
+On the right we can see the distribution of the posterior values for each chain. Here we
+would want to see that the distributions from different chain more or less align with
+each other. If this is not the case it means that the chains got stuck in different
+parts of the posterior. This would also show on the left side plots with the different
+chains staying in different parts of the posterior and being distinguishable from each
+other. If we see this problem the solution is once again to increase the tuning steps.
+
+% TODO how to use the diagnostic metrics
+% TODO explain how PyMC3 automatically checks these metrics
+
+If increasing the tuning steps does not seem to help we have to consider two things: the
+MCMC algorithm chosen by PyMC3 is not a good match for our model or our model might not
+be properly defined. The first thing is try to manually choose a different algorithm than
+PyMC3 automatically chose (can be seen from the model computation printout) and seeing
+if we get better results. If this does not seem to work, we have to over our model and
+think if the model is in some way improperly defined.
+
+% TODO what does an improperly defined maen
+% TODO add an example of traceplots when no tuning is done
+
+\bigskip
+\subsubsection{Checking the Posterior}
 \begin{pyverbatim}
+pm.plot_posterior(trace)
+\end{pyverbatim}
+\bigskip
 
+If the estimation looks fine, we can move on to checking the actual results and look at
+the computated posterior distributions.
+
+\begin{figure}
+    \caption{Single Patient Posterior Distributions}
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_no_trend_posteriors.pdf}
+\end{figure}
+
+% TODO in this case just looking at individual posterior estimates is not enough as we
+% are interested in the difference (check Kruschke for the explaining the problem)
+
+\subsubsection{Checking Model Fit with Posterior Sampling}
+
+\bigskip
+\begin{pyverbatim}
 # posterior sampling
 with single_patient_no_trend_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)
@@ -1729,15 +1836,13 @@ draw_posterior_checks(
     parameters_df=parameters_df[parameters_df["patient_index"] == 0],
     plot_name="single_patient_no_trend_posterior_sampling",
 )
-
 \end{pyverbatim}
+\bigskip
 
-PyMC3 requires that we give it functional forms for likelihoods to
-represent the information from the data. This can be a bit tricky when it is clear
-that likelihood does not take form a well-known distribution. For these cases we
-must define the log-likelihood function of the likelihood manually.
-
-\subsection{Results}\label{1results}
+\begin{figure}
+    \caption{Single Patient Posterior Sample}
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_no_trend_posterior_sampling.pdf}
+\end{figure}
 
 \section{Analyzing Multiple Trials With Hierarchical Models}\label{pooling}
 
