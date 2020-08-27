@@ -69,10 +69,8 @@ with pm.Model() as single_patient_no_trend_model:
     # measurements are created from both priors, with a indicator setting the
     # values to 0 if the treatment is not applied at the particular observation
     measurement_est = (
-        treatment1_prior
-        * measurements_df[patient_index == 0]["treatment1_indicator"]
-        + treatment2_prior
-        * measurements_df[patient_index == 0]["treatment2_indicator"]
+        treatment1_prior * measurements_df[patient_index == 0]["treatment1_indicator"]
+        + treatment2_prior * measurements_df[patient_index == 0]["treatment2_indicator"]
     )
 
     # likelihood is normal distribution with the same amount of dimensions
@@ -94,7 +92,14 @@ with pm.Model() as single_patient_no_trend_model:
         bbox_inches="tight",
     )
     plt.show()
-    print(pm.summary(trace))
+    summary_metrics_df = pd.DataFrame(pm.summary(trace))
+    print(summary_metrics_df)
+    # TODO only keep the most important metrics to have the table with the page
+    with open(
+        os.path.join(visualization_path, "single_patient_no_trend_diag_metrics.tex"),
+        "w",
+    ) as file:
+        file.write(summary_metrics_df.drop(["mean", "sd", 'hpd_3%', 'hpd_97%'], axis=1).to_latex())
 
     # posteriors should look reasonable
     pm.plot_posterior(trace)
@@ -103,8 +108,6 @@ with pm.Model() as single_patient_no_trend_model:
         bbox_inches="tight",
     )
     plt.show()
-
-    pm.summary(trace)
 
 # %%
 

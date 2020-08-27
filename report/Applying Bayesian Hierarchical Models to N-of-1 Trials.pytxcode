@@ -1,4 +1,4 @@
-=>PYTHONTEX#py#default#defaultverb#0#verbatim#####1531#
+=>PYTHONTEX#py#default#defaultverb#0#verbatim#####1536#
 import pymc3 as pm
 import pandas as pd
 
@@ -54,12 +54,12 @@ draw_posterior_checks(
     measurements_df=measurements_df[patient == 0],
     parameters_df=parameters_df[parameters_df["patient"] == 0],
 )
-=>PYTHONTEX#py#default#defaultverb#1#verbatim#####1592#
+=>PYTHONTEX#py#default#defaultverb#1#verbatim#####1597#
 import pymc3 as pm
 import pandas
 
 measurements_df = pd.read_csv("patient_measurements.csv")
-=>PYTHONTEX#py#default#default#0#code#####1604#
+=>PYTHONTEX#py#default#default#0#code#####1609#
 import os
 import pandas as pd
 
@@ -68,13 +68,13 @@ measurements_df = pd.read_csv(measurements_path)
 measurements_df.columns = ['patient', 'measurement', 'period', 'block',
 'treatement1', 'treatment2', 'measurement']
 print(measurements_df.head(10).to_latex(index=False))
-=>PYTHONTEX#py#default#defaultverb#2#verbatim#####1628#
+=>PYTHONTEX#py#default#defaultverb#2#verbatim#####1633#
 with pm.Model() as single_patient_no_trend_model:
-=>PYTHONTEX#py#default#defaultverb#3#verbatim#####1642#
+=>PYTHONTEX#py#default#defaultverb#3#verbatim#####1647#
 treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10)
 treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
 gamma_prior = pm.HalfCauchy("gamma", beta=10)
-=>PYTHONTEX#py#default#defaultverb#4#verbatim#####1671#
+=>PYTHONTEX#py#default#defaultverb#4#verbatim#####1676#
 treatment_means = (
     treatment1_prior
     * measurements_df[patient == 0]["treatment1"]
@@ -88,16 +88,16 @@ likelihood = pm.Normal(
     sigma=gamma_prior,
     observed=measurements_df[patient == 0]["measurement"],
 )
-=>PYTHONTEX#py#default#defaultverb#5#verbatim#####1706#
+=>PYTHONTEX#py#default#defaultverb#5#verbatim#####1711#
 trace = pm.sample(draw=800, tune=500, cores=3)
-=>PYTHONTEX#py#default#defaultverb#6#verbatim#####1761#
+=>PYTHONTEX#py#default#defaultverb#6#verbatim#####1766#
 # Checking diagnostic describing how the MCMC method performed
 pm.traceplot(trace, ["treatment1", "treatment2", "gamma"])
 plt.show()
 pm.summary(trace)
-=>PYTHONTEX#py#default#defaultverb#7#verbatim#####1808#
+=>PYTHONTEX#py#default#defaultverb#7#verbatim#####1816#
 pm.plot_posterior(trace)
-=>PYTHONTEX#py#default#defaultverb#8#verbatim#####1827#
+=>PYTHONTEX#py#default#defaultverb#8#verbatim#####1838#
 # posterior sampling
 with single_patient_no_trend_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)

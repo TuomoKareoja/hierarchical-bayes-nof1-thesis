@@ -13,6 +13,7 @@
 \usepackage{etoolbox}
 \usepackage{pythontex}
 \usepackage{booktabs}
+\usepackage{bookmark}
 
 \usetikzlibrary{matrix}
 
@@ -1428,7 +1429,7 @@ Lets now simulate the data with these models and parameter values and see what w
 
 % TODO how to make sure that the picture stays just below the above text?
 
-\begin{figure}
+\begin{figure}[!h]
     \caption{Timeline of Measurements for Each Patient}
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{measurements_timeline.pdf}
 \end{figure}
@@ -1442,12 +1443,16 @@ ABBA treatment assignment from the picture. We can also see that for this patien
 
 Let's next look at the parameters themselves
 
-\begin{figure}
+\begin{figure}[!h]
     \caption{Population Parameter Distribution and the Individual Patient Parameters}
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{population_parameter_distributions.pdf}
 \end{figure}
 
 \section{Analyzing a Single Trial}\label{1trial}
+
+% TODO use a model with a trend as we don't have the space to create
+% another model where we add that in. Justify by the fact that we clearly
+% see a trend in the timeseries plots
 
 We start with the case of analyzing just a single patient.
 
@@ -1770,7 +1775,7 @@ Now that we have run the model we need to evaluate if the algorithm did good job
 the estimation. We can evaluate this by looking at diagnostic plots and from diagnostic
 metrics. Lets first look at the traceplots:
 
-\begin{figure}
+\begin{figure}[!h]
     \caption{Single Patient Traceplots}
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_no_trend_traceplot.pdf}
 \end{figure}
@@ -1789,6 +1794,9 @@ each other. If this is not the case it means that the chains got stuck in differ
 parts of the posterior. This would also show on the left side plots with the different
 chains staying in different parts of the posterior and being distinguishable from each
 other. If we see this problem the solution is once again to increase the tuning steps.
+
+
+\input{../figures/single_patient_no_trend_diag_metrics.tex}
 
 % TODO how to use the diagnostic metrics
 % TODO explain how PyMC3 automatically checks these metrics
@@ -1811,15 +1819,18 @@ pm.plot_posterior(trace)
 \bigskip
 
 If the estimation looks fine, we can move on to checking the actual results and look at
-the computated posterior distributions.
+the computed posterior distributions. In this case just looking at individual
+posterior parameter estimates is not enough, as we are interested in the distribution of
+the \emph{differences} between the two treatments.
 
-\begin{figure}
+% TODO check Kruschke for explaining the problem
+
+\begin{figure}[!h]
     \caption{Single Patient Posterior Distributions}
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_no_trend_posteriors.pdf}
 \end{figure}
 
-% TODO in this case just looking at individual posterior estimates is not enough as we
-% are interested in the difference (check Kruschke for the explaining the problem)
+% TODO understanding the plots
 
 \subsubsection{Checking Model Fit with Posterior Sampling}
 
@@ -1839,26 +1850,91 @@ draw_posterior_checks(
 \end{pyverbatim}
 \bigskip
 
-\begin{figure}
+After checking the trace diagnostics to see if the algorithm is doing a good estimating
+the posterior there is still one more important diagnostic to make: we need to see if
+the estimated model actually fits the data nicely. We do this by generating samples from
+the posterior distributions and for each of these samples create simulated dataset based
+on the chosen parameter values. For this purpose we have written a special function
+called ``draw posteriors''. We don't go over the code of this function, but what it does is to use the sampled
+posterior parameters with model we specified and generate a dataset that simulates data
+from a new experiment, where the data generating process works exactly like our
+specified model. It does this for every parameter sample we picked (in this case 500
+samples) and then calculates the mean treatment effectiveness for both of our two
+treatments (taking the measurements done under this treatment) for each simulated new
+experiment and then plots these means as distribution against the mean treatment
+effectiveness calculated from the original data. It also does for the difference of the
+treatment effectiviness and in this case also compares it to the actual difference in
+the treatment effectiveness that we picked for the patient. Normally we would not know
+this true value, but in this case we do as we generated the data ourselves. This
+makes it possible to see how accurate the model is and how uncertain are the predictions.
+
+\begin{figure}[!h]
     \caption{Single Patient Posterior Sample}
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_no_trend_posterior_sampling.pdf}
 \end{figure}
 
+We see that the distribution of mean treatment effectiveness calculated from the
+generated datasets matches nicely with the actual mean of the data. This means that our
+model is not biased. Also when we look at the difference in the treatment effectiveness,
+we see that our model captures the true value quite nicely.
+
+% TODO add timeseries plots of the values to show that simulated datasets actually look
+% like new experiments
+
+\subsection{Final Results}
+
+% TODO what can we infer and how should we communicate our results
+
 \section{Analyzing Multiple Trials With Hierarchical Models}\label{pooling}
 
-With the shape parameter we can initialise the parameters as vectors with the
-length of out number of patients. This way each patient get her own parameter.
+Lets next combine all the trials to understand general patterns and see if what kind of
+effect the population parameters have on the estimates we got from our single patient
+model.
 
 \subsection{Defining the Model}\label{hiermodel}
 
-\begin{def}\label{simulationmodel}
+For the single patients we use the same model as before, but no we index all our
+measurements not just by time \(t\), but also by patient \(i\):
+
+\begin{def}\label{simplesinglepatientmodel}
     \begin{equation}\label{}
-        y_t = \mu_i + Z_t\theta_i + \epsilon_i
+        y_{ti} = Z_{ti}\theta_{i} + W_{ti}\eta_{i} + t\beta_{i} + \epsilon_{ti}
     \end{equation}
-\end{def}where \(\mu_i\) is the baseline of the patient \(i\), \(\theta_i\) is
-the treatment effect with \(Z_t\) being an indicator variable that is 1 when
-\(t\) is within a period where treatment was applied and 0 otherwise and finally
-\(\epsilon_i \sim N(0,\sigma_i^2) \) is the error term.
+\end{def} where \(\theta_{i} \) and \(\eta_{i} \) are the treatment effects with \(Z_{ti}\) and \(W_{ti}\) being indicator
+variables that is 1 when observation \(t\) is within a period where treatment was applied and
+0 otherwise. \(\epsilon_{ti} \sim N(0,\tau_{i}^2) \) is the error term at \(t\).
+
+On top of the individual patient model we now add the population-level parameters, which the
+patient-level parameters are drawn from.
+
+\bigskip
+
+\begin{tikzpicture}
+
+    \matrix[matrix of math nodes, column sep=0pt, row sep=30pt] (mat)
+    {
+        \ & \mu_{\theta}, \sigma_{\theta}, \mu_{\eta},\sigma_{\eta}, \mu_{\beta}, \sigma_{\beta}, \gamma_{\tau} & \ \\
+        \ & \theta_i, \eta_i, \beta_i, \tau_i & \\\
+        \ \\
+        y_{1,1}, \ldots, y_{28, 1} & \ldots & y_{1,6}, \ldots, y_{28, 6} \\
+    };
+
+    \draw[->,>=latex] (mat-1-2) -- (mat-2-2);
+    \draw[->,>=latex] (mat-2-2) -- (mat-4-1);
+    \draw[->,>=latex] (mat-2-2) -- (mat-4-3);
+
+    \node[anchor=east] at ([xshift = 0pt]mat-2-1)
+    {$
+        \theta_{i} \sim \mathcal{N}(\mu_{\theta},\sigma_{\theta}^2),
+        \eta_{i} \sim \mathcal{N}(\mu_{\eta},\sigma_{\eta}^2),
+        \beta_{i} \sim \mathcal{N}(\mu_{\beta},\sigma_{\beta}^2),
+    $};
+    \node[anchor=east] at ([xshift = 0pt]mat-3-1)
+    {$
+        \tau_{i} \sim HalfCauchy(0, \gamma_{\tau}),
+    $};
+
+\end{tikzpicture}
 
 Individual parameters relation to population distribution:
 
@@ -1875,6 +1951,22 @@ Individual parameters relation to population distribution:
 \end{def}
 
 Defining priors for the population distribution:
+
+\begin{align}\label{}
+    \theta &\sim N(\mu_{\theta}, \sigma_{\theta}) \\
+    \eta &\sim N(\mu_{\eta}, \sigma_{\eta}) \nonumber \\
+    \tau &\sim HalfCauchy(0, \gamma_{\tau}) \nonumber
+\end{align}
+
+Lets define next what kind of parameters we should give to our prior distributions.
+
+\begin{align}\label{populationparameters}
+    \text{population treatment A mean: } & \mu_{\theta} = 10 \\
+    \text{population treatment A standard deviation: } & \sigma_{\theta} = 0.2 \nonumber \\
+    \text{population treatment B mean: } & \mu_{\eta} = 10 \nonumber \\
+    \text{population treatment B standard deviation: } & \sigma_{\eta} = 0.3 \nonumber \\
+    \text{population measurement error scale: } & \gamma_{\tau} = 0.1 \nonumber
+\end{align}
 
 \begin{def}\label{population_priors}
     \begin{equation}\label{}
@@ -1894,9 +1986,11 @@ Defining priors for the population distribution:
     \end{equation}
 \end{def}
 
-\subsection{Results}\label{hierresults}
+\subsection{Implementing the Model in PyMC3}
 
-Visualization of the shrinkage
+\subsection{Final Results}
+
+\chapter{Conclusion}
 
 % \addcontentsline{toc}{chapter}{Bibliography}
 
