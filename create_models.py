@@ -60,6 +60,7 @@ with pm.Model() as single_patient_no_trend_model:
     # separate priors for each treatment
     treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10)
     treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
+    trend_prior = pm.Normal("trend", mu=0.1, sigma=0.3)
     # common variance parameter defining the error
     gamma_prior = pm.HalfCauchy("gamma", beta=10)
 
@@ -68,6 +69,7 @@ with pm.Model() as single_patient_no_trend_model:
     measurement_est = (
         treatment1_prior * measurements_df[patient_index == 0]["treatment1_indicator"]
         + treatment2_prior * measurements_df[patient_index == 0]["treatment2_indicator"]
+        + trend_prior * measurements_df[patient_index == 0]["measurement_index"]
     )
 
     # likelihood is normal distribution with the same amount of dimensions
@@ -81,11 +83,11 @@ with pm.Model() as single_patient_no_trend_model:
     )
 
     # running the model
-    trace = pm.sample(800, tune=500, cores=3)
+    trace = pm.sample(800, tune=600, cores=3)
 
-    pm.traceplot(trace, ["treatment1", "treatment2", "gamma"])
+    pm.traceplot(trace, ["treatment1", "treatment2", "trend", "gamma"])
     plt.savefig(
-        os.path.join(visualization_path, "single_patient_no_trend_traceplot.pdf"),
+        os.path.join(visualization_path, "single_patient_traceplot.pdf"),
         bbox_inches="tight",
     )
     plt.show()
@@ -93,15 +95,19 @@ with pm.Model() as single_patient_no_trend_model:
     print(summary_metrics_df)
     # TODO only keep the most important metrics to have the table with the page
     with open(
-        os.path.join(visualization_path, "single_patient_no_trend_diag_metrics.tex"),
+        os.path.join(visualization_path, "single_patient_diag_metrics.tex"),
         "w",
     ) as file:
-        file.write(summary_metrics_df.drop(["mean", "sd", 'hpd_3%', 'hpd_97%'], axis=1).to_latex())
+        file.write(
+            summary_metrics_df.drop(
+                ["mean", "sd", "hpd_3%", "hpd_97%"], axis=1
+            ).to_latex()
+        )
 
     # posteriors should look reasonable
     pm.plot_posterior(trace)
     plt.savefig(
-        os.path.join(visualization_path, "single_patient_no_trend_posteriors.pdf"),
+        os.path.join(visualization_path, "single_patient_posteriors.pdf"),
         bbox_inches="tight",
     )
     plt.show()
@@ -117,7 +123,7 @@ draw_posterior_checks(
     predictions=predictions,
     measurements_df=measurements_df[patient_index == 0],
     parameters_df=parameters_df[parameters_df["patient_index"] == 0],
-    plot_name="single_patient_no_trend_posterior_sampling",
+    plot_name="single_patient_posterior_sampling",
 )
 
 # %%
@@ -127,89 +133,106 @@ draw_posterior_checks(
 with pm.Model() as hierarchical_with_trend_model:
 
     # population priors
-    population_treatment1_mean_prior = pm.Normal(
-        "population_treatment1_mean", mu=10, sigma=10
-    )
-    population_treatment1_sd_prior = pm.HalfCauchy("population_treatment1_sd", beta=10)
+    pop_treatment1_mean_prior = pm.Normal("pop_treatment1_mean", mu=10, sigma=10)
+    pop_treatment1_sd_prior = pm.HalfCauchy("pop_treatment1_sd", beta=10)
 
-    population_treatment2_mean_prior = pm.Normal(
-        "population_treatment2_mean", mu=10, sigma=10
-    )
-    population_treatment2_sd_prior = pm.HalfCauchy("population_treatment2_sd", beta=10)
+    pop_treatment2_mean_prior = pm.Normal("pop_treatment2_mean", mu=10, sigma=10)
+    pop_treatment2_sd_prior = pm.HalfCauchy("pop_treatment2_sd", beta=10)
 
     # TODO should the trend be capped so that nobody so get better?
-    population_trend_mean_prior = pm.Normal("population_trend_mean", mu=0.1, sigma=0.3)
-    population_trend_sd_prior = pm.HalfCauchy("population_trend_sd", beta=2)
+    pop_trend_mean_prior = pm.Normal("pop_trend_mean", mu=0.1, sigma=0.3)
+    pop_trend_sd_prior = pm.HalfCauchy("pop_trend_sd", beta=2)
 
-    population_measurement_error_beta_prior = pm.HalfCauchy(
-        "population_measurement_error_beta", beta=10
+    pop_measurement_error_beta_prior = pm.HalfCauchy(
+        "pop_measurement_error_beta", beta=10
     )
 
     # separate parameter for each patient
-    treatment1_prior = pm.Normal(
+    pat_treatment1 = pm.Normal(
         "treatment1",
-        mu=population_treatment1_mean_prior,
-        sigma=population_treatment1_sd_prior,
+        mu=pop_treatment1_mean_prior,
+        sigma=pop_treatment1_sd_prior,
         shape=patients_n,
     )
-    treatment2_prior = pm.Normal(
+    pat_treatment2 = pm.Normal(
         "treatment2",
-        mu=population_treatment2_mean_prior,
-        sigma=population_treatment2_sd_prior,
+        mu=pop_treatment2_mean_prior,
+        sigma=pop_treatment2_sd_prior,
         shape=patients_n,
     )
-    sigma_prior = pm.HalfCauchy(
-        "sigma", beta=population_measurement_error_beta_prior, shape=patients_n,
+    pat_sigma = pm.HalfCauchy(
+        "sigma", beta=pop_measurement_error_beta_prior, shape=patients_n,
     )
-    trend_prior = pm.Normal(
-        "trend",
-        mu=population_trend_mean_prior,
-        sigma=population_trend_sd_prior,
-        shape=patients_n,
+    pat_trend = pm.Normal(
+        "trend", mu=pop_trend_mean_prior, sigma=pop_trend_sd_prior, shape=patients_n,
     )
 
-    measurement_est = (
-        treatment1_prior[patient_index] * measurements_df["treatment1_indicator"]
-        + treatment2_prior[patient_index] * measurements_df["treatment2_indicator"]
-        + trend_prior[patient_index] * measurements_df["measurement_index"]
+    measurement_means = (
+        pat_treatment1[patient_index] * measurements_df["treatment1_indicator"]
+        + pat_treatment2[patient_index] * measurements_df["treatment2_indicator"]
+        + pat_trend[patient_index] * measurements_df["measurement_index"]
     )
 
     likelihood = pm.Normal(
         "y",
-        measurement_est,
-        sigma=sigma_prior[patient_index],
+        measurement_means,
+        sigma=pat_sigma[patient_index],
         observed=measurements_df["measurement"],
     )
 
-    trace = pm.sample(800, tune=300, cores=3)
+    trace = pm.sample(800, tune=500, cores=3)
+
+    pm.traceplot(
+        trace, ["treatment1", "treatment2", "sigma",],
+    )
+    plt.savefig(
+        os.path.join(
+            visualization_path, "hierarchical_model_patient_level_traceplot.pdf"
+        ),
+        bbox_inches="tight",
+    )
+    plt.show()
 
     pm.traceplot(
         trace,
         [
-            "treatment1",
-            "treatment2",
-            "sigma",
-            "population_treatment1_mean",
-            "population_treatment1_sd",
-            "population_treatment2_mean",
-            "population_treatment2_sd",
-            "population_measurement_error_beta",
-            "population_trend_mean",
-            "population_trend_sd",
+            "pop_treatment1_mean",
+            "pop_treatment1_sd",
+            "pop_treatment2_mean",
+            "pop_treatment2_sd",
+            "pop_measurement_error_beta",
+            "pop_trend_mean",
+            "pop_trend_sd",
         ],
     )
     plt.savefig(
-        os.path.join(visualization_path, "hierarchical_with_trend_traceplot.pdf"),
+        os.path.join(
+            visualization_path, "hierarchical_model_population_level_traceplot.pdf"
+        ),
         bbox_inches="tight",
     )
     plt.show()
 
-    pm.plot_posterior(trace)
-    plt.savefig(
-        os.path.join(visualization_path, "hierarchical_with_trend_posteriors.pdf"),
-        bbox_inches="tight",
-    )
-    plt.show()
+    summary_metrics_df = pd.DataFrame(pm.summary(trace))
+    print(summary_metrics_df)
+    # TODO only keep the most important metrics to have the table with the page
+    with open(
+        os.path.join(visualization_path, "hierarchical_model_diag_metrics.tex"),
+        "w",
+    ) as file:
+        file.write(
+            summary_metrics_df.drop(
+                ["mean", "sd", "hpd_3%", "hpd_97%"], axis=1
+            ).to_latex()
+        )
+
+    # TODO We need to separate this into multiple plots
+    # pm.plot_posterior(trace)
+    # plt.savefig(
+    #     os.path.join(visualization_path, "hierarchical_with_trend_posteriors.pdf"),
+    #     bbox_inches="tight",
+    # )
+    # plt.show()
 
     pm.summary(trace)
 
@@ -220,11 +243,12 @@ with hierarchical_with_trend_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)
     predictions = post_pred["y"]
 
+# TODO the picture has to be smaller to fit in one page
 draw_posterior_checks(
     predictions=predictions,
     measurements_df=measurements_df,
     parameters_df=parameters_df,
-    plot_name="hierarchical_with_trend_posterior_sampling",
+    plot_name="hierarchical_model_posterior_sampling",
 )
 
 # %%

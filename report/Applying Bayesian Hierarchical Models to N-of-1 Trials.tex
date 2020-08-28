@@ -1470,11 +1470,13 @@ We start with a very simple model with just the treatment parameters and an erro
 
 \begin{def}\label{simplesinglepatientmodel}
     \begin{equation}\label{}
-        y_t = Z_t\theta + W_t\eta + \epsilon_t
+        y_t = Z_t\theta + W_t\eta + t\beta + \epsilon_t
     \end{equation}
 \end{def} where \(\theta \) and \(\eta \) are the treatment effects with \(Z_t\) and \(W_t\) being indicator
 variables that is 1 when observation \(t\) is within a period where treatment was applied and
 0 otherwise. \(\epsilon_{t} \sim N(0,\tau^2) \) is the error term at \(t\).
+
+% TODO add explanation of the beta term
 
 Our model assumes that the measurement values are distributed normally with
 variance \(\tau^2\) and a mean of either \(\theta \) or \(\eta \) depending on which
@@ -1492,6 +1494,7 @@ a half-Cauchy distribution.
 \begin{align}\label{}
     \theta &\sim N(\mu_{\theta}, \sigma_{\theta}) \\
     \eta &\sim N(\mu_{\eta}, \sigma_{\eta}) \nonumber \\
+    \beta &\sim N(\mu_{\beta}, \sigma_{\beta}) \nonumber \\
     \tau &\sim HalfCauchy(0, \gamma_{\tau}) \nonumber
 \end{align}
 
@@ -1501,12 +1504,12 @@ Lets define next what kind of parameters we should give to our prior distributio
 % TODO minimally informed priors
 % TODO should the priors be defined so that they contain fictional information
 
-\begin{align}\label{populationparameters}
-    \text{population treatment A mean: } & \mu_{\theta} = 10 \\
-    \text{population treatment A standard deviation: } & \sigma_{\theta} = 0.2 \nonumber \\
-    \text{population treatment B mean: } & \mu_{\eta} = 10 \nonumber \\
-    \text{population treatment B standard deviation: } & \sigma_{\eta} = 0.3 \nonumber \\
-    \text{population measurement error scale: } & \gamma_{\tau} = 0.1 \nonumber
+\begin{align}\label{singlepatientpriorparameters}
+    \text{treatment A mean prior: } & \mu_{\theta} = 10 \\
+    \text{treatment A standard deviation prior: } & \sigma_{\theta} = 0.2 \nonumber \\
+    \text{treatment B mean prior: } & \mu_{\eta} = 10 \nonumber \\
+    \text{treatment B standard deviation prior: } & \sigma_{\eta} = 0.3 \nonumber \\
+    \text{measurement error scale prior: } & \gamma_{\tau} = 0.1 \nonumber
 \end{align}
 
 \subsection{Implementing the Model in PyMC3}
@@ -1520,7 +1523,7 @@ algorithmically approximate the posterior distribution. After it has solved to t
 model, it has multiple inbuilt model checking methods that the user can use to get a
 sense of how well the approximation is working. This is very nice, as this takes out a
 huge chunk of work from us, namely choosing and implementing the approximation method
-ourselves. But now that we have entered the territory of algorithmic solution, we have
+ourselves. But now that we have entered the territory of algorithmic solutions, we have
 introduced a new hurdle, namely checking that the algorithm is actually works for our
 defined model and gives us good approximations. On top of this we of course have all the
 usual stuff related to model accuracy and checking that our model itself is a good
@@ -1549,7 +1552,7 @@ with pm.Model() as single_patient_no_trend_model:
 
     # measurements are created from both priors, with a indicator setting the
     # values to 0 if the particular treatment is not applied at the observation
-    measurement_est = (
+    measurement_means = (
         treatment1_prior
         * measurements_df[patient == 0]["treatment1"]
         + treatment2_prior
@@ -1561,7 +1564,7 @@ with pm.Model() as single_patient_no_trend_model:
     # the treatment 1 prior or treatment 2 prior with the same sigma
     likelihood = pm.Normal(
         "y",
-        measurement_est,
+        measurement_means,
         sigma=gamma_prior,
         observed=measurements_df[patient == 0]["measurement"],
     )
@@ -1674,7 +1677,7 @@ worry about the math and there is no need to consider implementing any helper fu
 
 \bigskip
 \begin{pyverbatim}
-treatment_means = (
+measurement_means = (
     treatment1_prior
     * measurements_df[patient == 0]["treatment1"]
     + treatment2_prior
@@ -1712,6 +1715,8 @@ ourselves.
 trace = pm.sample(draw=800, tune=500, cores=3)
 \end{pyverbatim}
 \bigskip
+
+% TODO what is the actual number of steps as the amount of parameters affects this!
 
 Now that we have defined our priors and our likelihood we can move on to running the
 model. Notice that priors and the likelihood is all we need to have defined. We don't
@@ -1777,7 +1782,7 @@ metrics. Lets first look at the traceplots:
 
 \begin{figure}[!h]
     \caption{Single Patient Traceplots}
-    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_no_trend_traceplot.pdf}
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_traceplot.pdf}
 \end{figure}
 
 On the left we can see the steps taken for each chain in our three parameters. These are
@@ -1827,7 +1832,7 @@ the \emph{differences} between the two treatments.
 
 \begin{figure}[!h]
     \caption{Single Patient Posterior Distributions}
-    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_no_trend_posteriors.pdf}
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_posteriors.pdf}
 \end{figure}
 
 % TODO understanding the plots
@@ -1870,7 +1875,7 @@ makes it possible to see how accurate the model is and how uncertain are the pre
 
 \begin{figure}[!h]
     \caption{Single Patient Posterior Sample}
-    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_no_trend_posterior_sampling.pdf}
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_posterior_sampling.pdf}
 \end{figure}
 
 We see that the distribution of mean treatment effectiveness calculated from the
@@ -1888,12 +1893,12 @@ we see that our model captures the true value quite nicely.
 \section{Analyzing Multiple Trials With Hierarchical Models}\label{pooling}
 
 Lets next combine all the trials to understand general patterns and see if what kind of
-effect the population parameters have on the estimates we got from our single patient
+an effect the population parameters have on the estimates we got from our single patient
 model.
 
 \subsection{Defining the Model}\label{hiermodel}
 
-For the single patients we use the same model as before, but no we index all our
+For the single patients we use the same model as before, but now we index all our
 measurements not just by time \(t\), but also by patient \(i\):
 
 \begin{def}\label{simplesinglepatientmodel}
@@ -1911,7 +1916,7 @@ patient-level parameters are drawn from.
 
 \begin{tikzpicture}
 
-    \matrix[matrix of math nodes, column sep=0pt, row sep=30pt] (mat)
+    \matrix[matrix of math nodes, column sep=-35pt, row sep=30pt] (mat)
     {
         \ & \mu_{\theta}, \sigma_{\theta}, \mu_{\eta},\sigma_{\eta}, \mu_{\beta}, \sigma_{\beta}, \gamma_{\tau} & \ \\
         \ & \theta_i, \eta_i, \beta_i, \tau_i & \\\
@@ -1936,61 +1941,292 @@ patient-level parameters are drawn from.
 
 \end{tikzpicture}
 
-Individual parameters relation to population distribution:
-
-\begin{def}\label{simulationmodel}
-    \begin{equation}\label{}
-        \mu_i \sim N(\mu_{pop}, \sigma_{pop}^2)
-    \end{equation}
-    \begin{equation}\label{}
-        \theta_i \sim N(\theta_{pop}, \sigma_{pop}^2)
-    \end{equation}
-    \begin{equation}\label{}
-        \sigma_i \sim HalfCauchy(loc=0, scale=\sigma_{pop})
-    \end{equation}
-\end{def}
-
-Defining priors for the population distribution:
+Last we need to define prior distributions for the parameters defining the population distribution:
 
 \begin{align}\label{}
-    \theta &\sim N(\mu_{\theta}, \sigma_{\theta}) \\
-    \eta &\sim N(\mu_{\eta}, \sigma_{\eta}) \nonumber \\
-    \tau &\sim HalfCauchy(0, \gamma_{\tau}) \nonumber
+    \mu_{\theta} &\sim \mathcal{N}(10, 10) \nonumber \\
+    \sigma_{\theta} &\sim HalfCauchy(0, 10) \nonumber \\
+    \mu_{\eta} &\sim \mathcal{N}(10, 10) \nonumber \\
+    \sigma_{\eta} &\sim HalfCauchy(0, 10) \nonumber \\
+    \mu_{\beta} &\sim \mathcal{N}(0.01, 0.3) \nonumber \\
+    \sigma_{\beta} &\sim HalfCauchy(0, 2) \nonumber \\
+    \gamma_{\tau} &\sim HalfCauchy(0, 10) \nonumber
 \end{align}
-
-Lets define next what kind of parameters we should give to our prior distributions.
-
-\begin{align}\label{populationparameters}
-    \text{population treatment A mean: } & \mu_{\theta} = 10 \\
-    \text{population treatment A standard deviation: } & \sigma_{\theta} = 0.2 \nonumber \\
-    \text{population treatment B mean: } & \mu_{\eta} = 10 \nonumber \\
-    \text{population treatment B standard deviation: } & \sigma_{\eta} = 0.3 \nonumber \\
-    \text{population measurement error scale: } & \gamma_{\tau} = 0.1 \nonumber
-\end{align}
-
-\begin{def}\label{population_priors}
-    \begin{equation}\label{}
-        \mu_{pop} \sim N(10, 3^2)
-    \end{equation}
-    \begin{equation}\label{}
-        \sigma_{pop} \sim HalfCauchy(loc=0, scale=10)
-    \end{equation}
-    \begin{equation}\label{}
-        \theta_{pop} \sim N(0, 1^2)
-    \end{equation}
-    \begin{equation}\label{}
-        \sigma_{pop} \sim HalfCauchy(loc=0, scale=10)
-    \end{equation}
-    \begin{equation}\label{}
-        \sigma_{pop} \sim HalfCauchy(loc=0, scale=10)
-    \end{equation}
-\end{def}
 
 \subsection{Implementing the Model in PyMC3}
+
+As we are now already familiar with basics of PyMC3, we can now skip explaining some
+parts of the code.
+
+There is no need to load the packages and the data as they have already been loaded in.
+
+% TODO add code and explanation for patient numbers and patient indices
+
+\bigskip
+\begin{pyverbatim}
+with pm.Model() as hierarchical_model:
+
+    # population priors
+    pop_treatment1_mean_prior = pm.Normal(
+        "pop_treatment1_mean", mu=10, sigma=10
+    )
+    pop_treatment1_sd_prior = pm.HalfCauchy("pop_treatment1_sd", beta=10)
+
+    pop_treatment2_mean_prior = pm.Normal(
+        "pop_treatment2_mean", mu=10, sigma=10
+    )
+    pop_treatment2_sd_prior = pm.HalfCauchy("pop_treatment2_sd", beta=10)
+
+    pop_trend_mean_prior = pm.Normal("pop_trend_mean", mu=0.1, sigma=0.3)
+    pop_trend_sd_prior = pm.HalfCauchy("pop_trend_sd", beta=2)
+
+    pop_measurement_error_beta_prior = pm.HalfCauchy(
+        "pop_measurement_error_beta", beta=10
+    )
+
+    # separate parameter for each patient
+    pat_treatment1 = pm.Normal(
+        "treatment1",
+        mu=pop_treatment1_mean_prior,
+        sigma=pop_treatment1_sd_prior,
+        shape=patients_n,
+    )
+    pat_treatment2 = pm.Normal(
+        "treatment2",
+        mu=pop_treatment2_mean_prior,
+        sigma=pop_treatment2_sd_prior,
+        shape=patients_n,
+    )
+    pat_sigma = pm.HalfCauchy(
+        "sigma", beta=pop_measurement_error_beta_prior, shape=patients_n,
+    )
+    pat_trend = pm.Normal(
+        "trend",
+        mu=pop_trend_mean_prior,
+        sigma=pop_trend_sd_prior,
+        shape=patients_n,
+    )
+
+    measurement_means = (
+        pat_treatment1[patient_idx] * measurements_df["treatment1"]
+        + pat_treatment2[patient_idx] * measurements_df["treatment2"]
+        + pat_trend[patient_idx] * measurements_df["measurement_index"]
+    )
+
+    likelihood = pm.Normal(
+        "y",
+        measurement_means,
+        sigma=patients_sigma[patient_idx],
+        observed=measurements_df["measurement"],
+    )
+
+    trace = pm.sample(800, tune=300, cores=3)
+
+    pm.traceplot(
+        trace,
+        [
+            "treatment1",
+            "treatment2",
+            "sigma",
+            "trend",
+            "pop_treatment1_mean",
+            "pop_treatment1_sd",
+            "pop_treatment2_mean",
+            "pop_treatment2_sd",
+            "pop_measurement_error_beta",
+            "pop_trend_mean",
+            "pop_trend_sd",
+        ],
+    )
+    plt.show()
+    pm.summary(trace)
+
+    pm.plot_posterior(trace)
+    plt.show()
+
+
+# posterior sampling
+with hierarchical_model as model:
+    post_pred = pm.sample_posterior_predictive(trace, samples=500)
+    predictions = post_pred["y"]
+
+draw_posterior_checks(
+    predictions=predictions,
+    measurements_df=measurements_df,
+    parameters_df=parameters_df,
+    plot_name="hierarchical_model_posterior_sampling",
+)
+\end{pyverbatim}
+\bigskip
+
+\subsubsection{Defining the Population Level Priors}
+\bigskip
+\begin{pyverbatim}
+with pm.Model() as hierarchical_model:
+
+    # population priors
+    pop_treatment1_mean_prior = pm.Normal(
+        "pop_treatment1_mean", mu=10, sigma=10
+    )
+    pop_treatment1_sd_prior = pm.HalfCauchy("pop_treatment1_sd", beta=10)
+
+    pop_treatment2_mean_prior = pm.Normal(
+        "pop_treatment2_mean", mu=10, sigma=10
+    )
+    pop_treatment2_sd_prior = pm.HalfCauchy("pop_treatment2_sd", beta=10)
+
+    pop_trend_mean_prior = pm.Normal("pop_trend_mean", mu=0.1, sigma=0.3)
+    pop_trend_sd_prior = pm.HalfCauchy("pop_trend_sd", beta=2)
+
+    pop_measurement_error_beta_prior = pm.HalfCauchy(
+        "pop_measurement_error_beta", beta=10
+    )
+\end{pyverbatim}
+\bigskip
+
+
+\subsubsection{Defining the Patient Level Parameters}
+\bigskip
+\begin{pyverbatim}
+    pat_treatment1 = pm.Normal(
+        "treatment1",
+        mu=pop_treatment1_mean_prior,
+        sigma=pop_treatment1_sd_prior,
+        shape=patients_n,
+    )
+    pat_treatment2 = pm.Normal(
+        "treatment2",
+        mu=pop_treatment2_mean_prior,
+        sigma=pop_treatment2_sd_prior,
+        shape=patients_n,
+    )
+    pat_sigma = pm.HalfCauchy(
+        "sigma", beta=pop_measurement_error_beta_prior, shape=patients_n,
+    )
+    pat_trend = pm.Normal(
+        "trend",
+        mu=pop_trend_mean_prior,
+        sigma=pop_trend_sd_prior,
+        shape=patients_n,
+    )
+\end{pyverbatim}
+\bigskip
+
+\subsubsection{Defining the Likelihood}
+\bigskip
+\begin{pyverbatim}
+    measurement_means = (
+        treatment1_prior[patient_idx] * measurements_df["treatment1"]
+        + treatment2_prior[patient_idx] * measurements_df["treatment2"]
+        + trend_prior[patient_idx] * measurements_df["measurement_idx"]
+    )
+
+    likelihood = pm.Normal(
+        "y",
+        measurement_means,
+        sigma=patients_sigma[patient_idx],
+        observed=measurements_df["measurement"],
+    )
+\end{pyverbatim}
+\bigskip
+
+
+\subsubsection{Running the Model}
+
+As our model is now much more complex than with the with the single patient model with
+more parameters, we need to use more steps to get a reliable estimate.
+
+Also the number of tuning steps needs to increased.
+
+% TODO what is the actual number of steps as the amount of parameters affects this!
+
+\bigskip
+\begin{pyverbatim}
+    trace = pm.sample(800, tune=300, cores=3)
+\end{pyverbatim}
+\bigskip
+
+\subsubsection{Checking Algorithm Diagnostics}
+\bigskip
+\begin{pyverbatim}
+   pm.traceplot(
+        trace,
+        [
+            "treatment1",
+            "treatment2",
+            "sigma",
+            "trend",
+        ],
+   )
+   plt.show()
+
+   pm.traceplot(
+        trace,
+        [
+            "pop_treatment1_mean",
+            "pop_treatment1_sd",
+            "pop_treatment2_mean",
+            "pop_treatment2_sd",
+            "pop_measurement_error_beta",
+            "pop_trend_mean",
+            "pop_trend_sd",
+        ],
+    )
+    plt.show()
+
+    pm.summary(trace)
+\end{pyverbatim}
+\bigskip
+
+\begin{figure}[!h]
+    \caption{Hierarchical Model Patient Level Traceplots}
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{hierarchical_model_patient_level_traceplot.pdf}
+\end{figure}
+
+\begin{figure}[!h]
+    \caption{Hierarchical Model Population Level Traceplots}
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{hierarchical_model_population_level_traceplot.pdf}
+\end{figure}
+
+\input{../figures/single_patient_no_trend_diag_metrics.tex}
+
+\subsubsection{Checking the Posterior}
+\bigskip
+\begin{pyverbatim}
+    pm.plot_posterior(trace)
+    plt.show()
+\end{pyverbatim}
+\bigskip
+
+\subsubsection{Checking Model Fit with Posterior Sampling}
+\bigskip
+\begin{pyverbatim}
+# posterior sampling
+with hierarchical_model as model:
+    post_pred = pm.sample_posterior_predictive(trace, samples=500)
+    predictions = post_pred["y"]
+
+draw_posterior_checks(
+    predictions=predictions,
+    measurements_df=measurements_df,
+    parameters_df=parameters_df,
+    plot_name="hierarchical_model_posterior_sampling",
+)
+\end{pyverbatim}
+\bigskip
+
+\begin{figure}[!h]
+    \caption{Hierarchical Model Posterior Sample}
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{hierarchical_model_posterior_sampling.pdf}
+\end{figure}
 
 \subsection{Final Results}
 
 \chapter{Conclusion}
+
+We did not go over all the usual steps when building the models.
+
+No model testing and now trial and error with the amount of steps.
 
 % \addcontentsline{toc}{chapter}{Bibliography}
 
