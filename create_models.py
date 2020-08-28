@@ -14,7 +14,6 @@ load_dotenv()
 
 plt.style.use("seaborn-white")
 
-
 # %%
 
 seed = int(os.getenv("SEED"))
@@ -54,9 +53,7 @@ patient_index = measurements_df["patient_index"]
 
 # %%
 
-# ANALYZING SINGLE PATIENT
-
-# SINGLE PATIENT MODEL WITHOUT TREND
+# SINGLE PATIENT MODEL
 
 with pm.Model() as single_patient_no_trend_model:
 
@@ -125,127 +122,9 @@ draw_posterior_checks(
 
 # %%
 
-# ANALYZING ALL PATIENTS AT ONCE
+# HIERARCHICAL MODEL
 
-# UNPOOLED MODEL WITHOUT TREND
-
-with pm.Model() as all_patients_no_trend_model:
-
-    # separate parameter for each patient
-    treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10, shape=patients_n)
-    treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10, shape=patients_n)
-    sigma_prior = pm.HalfCauchy("sigma", beta=10, shape=patients_n)
-
-    measurement_est = (
-        treatment1_prior[patient_index] * measurements_df["treatment1_indicator"]
-        + treatment2_prior[patient_index] * measurements_df["treatment2_indicator"]
-    )
-
-    likelihood = pm.Normal(
-        "y",
-        measurement_est,
-        sigma=sigma_prior[patient_index],
-        observed=measurements_df["measurement"],
-    )
-
-    trace = pm.sample(800, tune=300, cores=3)
-
-    pm.traceplot(trace, ["treatment1", "treatment2", "sigma"])
-    plt.savefig(
-        os.path.join(visualization_path, "all_patients_no_trend_traceplot.pdf"),
-        bbox_inches="tight",
-    )
-    plt.show()
-
-    pm.plot_posterior(trace)
-    plt.savefig(
-        os.path.join(visualization_path, "all_patients_no_trend_posteriors.pdf"),
-        bbox_inches="tight",
-    )
-    plt.show()
-
-    pm.summary(trace)
-
-# %%
-
-# posterior sampling
-with all_patients_no_trend_model as model:
-    post_pred = pm.sample_posterior_predictive(trace, samples=500)
-    predictions = post_pred["y"]
-
-draw_posterior_checks(
-    predictions=predictions,
-    measurements_df=measurements_df,
-    parameters_df=parameters_df,
-    plot_name="all_patients_no_trend_posterior_sampling",
-)
-
-
-# %%
-
-# UNPOOLED MODEL WITH TREND
-
-with pm.Model() as all_patients_with_trend_model:
-
-    # separate parameter for each patient
-    treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10, shape=patients_n)
-    treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10, shape=patients_n)
-    trend_prior = pm.Normal("trend", mu=0, sigma=1, shape=patients_n)
-    sigma_prior = pm.HalfCauchy("sigma", beta=10, shape=patients_n)
-
-    measurement_est = (
-        treatment1_prior[patient_index] * measurements_df["treatment1_indicator"]
-        + treatment2_prior[patient_index] * measurements_df["treatment2_indicator"]
-        + trend_prior[patient_index] * measurements_df["measurement_index"]
-    )
-
-    likelihood = pm.Normal(
-        "y",
-        measurement_est,
-        sigma=sigma_prior[patient_index],
-        observed=measurements_df["measurement"],
-    )
-
-    trace = pm.sample(800, tune=300, cores=3)
-
-    pm.traceplot(trace, ["treatment1", "treatment2", "trend", "sigma"])
-    plt.savefig(
-        os.path.join(visualization_path, "all_patients_no_trend_traceplot.pdf"),
-        bbox_inches="tight",
-    )
-    plt.show()
-
-    pm.plot_posterior(trace)
-    plt.savefig(
-        os.path.join(visualization_path, "all_patients_no_trend_posteriors.pdf"),
-        bbox_inches="tight",
-    )
-    plt.show()
-
-    pm.summary(trace)
-
-# %%
-
-# posterior sampling
-with all_patients_with_trend_model as model:
-    post_pred = pm.sample_posterior_predictive(trace, samples=500)
-    predictions = post_pred["y"]
-
-draw_posterior_checks(
-    predictions=predictions,
-    measurements_df=measurements_df,
-    parameters_df=parameters_df,
-    plot_name="all_patients_with_trend_posterior_sampling",
-)
-
-# %%
-
-# HIERARCHICAL MODELS
-
-
-# HIERARCHICAL MODEL WITHOUT TREND
-
-with pm.Model() as hierarchical_no_trend_model:
+with pm.Model() as hierarchical_with_trend_model:
 
     # population priors
     population_treatment1_mean_prior = pm.Normal(
@@ -258,106 +137,13 @@ with pm.Model() as hierarchical_no_trend_model:
     )
     population_treatment2_sd_prior = pm.HalfCauchy("population_treatment2_sd", beta=10)
 
-    population_measurement_error_beta_prior = pm.HalfCauchy(
-        "population_measurement_error_beta", beta=10
-    )
-
-    # separate parameter for each patient
-    treatment1_prior = pm.Normal(
-        "treatment1",
-        mu=population_treatment1_mean_prior,
-        sigma=population_treatment1_sd_prior,
-        shape=patients_n,
-    )
-    treatment2_prior = pm.Normal(
-        "treatment2",
-        mu=population_treatment2_mean_prior,
-        sigma=population_treatment2_sd_prior,
-        shape=patients_n,
-    )
-    sigma_prior = pm.HalfCauchy(
-        "sigma", beta=population_measurement_error_beta_prior, shape=patients_n
-    )
-
-    measurement_est = (
-        treatment1_prior[patient_index] * measurements_df["treatment1_indicator"]
-        + treatment2_prior[patient_index] * measurements_df["treatment2_indicator"]
-    )
-
-    likelihood = pm.Normal(
-        "y",
-        measurement_est,
-        sigma=sigma_prior[patient_index],
-        observed=measurements_df["measurement"],
-    )
-
-    trace = pm.sample(800, tune=200, cores=3)
-
-    pm.traceplot(
-        trace,
-        [
-            "treatment1",
-            "treatment2",
-            "sigma",
-            "population_treatment1_mean",
-            "population_treatment1_sd",
-            "population_treatment2_mean",
-            "population_treatment2_sd",
-            "population_measurement_error_beta",
-        ],
-    )
-    plt.savefig(
-        os.path.join(visualization_path, "hierarchical_no_trend_traceplot.pdf"),
-        bbox_inches="tight",
-    )
-    plt.show()
-
-    pm.plot_posterior(trace)
-    plt.savefig(
-        os.path.join(visualization_path, "all_patients_no_trend_posteriors.pdf"),
-        bbox_inches="tight",
-    )
-    plt.show()
-
-    pm.summary(trace)
-
-# %%
-
-# posterior sampling
-with hierarchical_no_trend_model as model:
-    post_pred = pm.sample_posterior_predictive(trace, samples=500)
-    predictions = post_pred["y"]
-
-draw_posterior_checks(
-    predictions=predictions,
-    measurements_df=measurements_df,
-    parameters_df=parameters_df,
-    plot_name="hierarchical_no_trend_posterior_sampling",
-)
-
-# %%
-
-# HIERARCHICAL MODEL WITH TREND
-
-with pm.Model() as hierarchical_with_trend_model:
-
-    # population priors
-    population_treatment1_mean_prior = pm.Normal(
-        "population_treatment1_mean", mu=10, sigma=3
-    )
-    population_treatment1_sd_prior = pm.HalfCauchy("population_treatment1_sd", beta=10)
-
-    population_treatment2_mean_prior = pm.Normal(
-        "population_treatment2_mean", mu=0, sigma=1
-    )
-    population_treatment2_sd_prior = pm.HalfCauchy("population_treatment2_sd", beta=10)
-
-    population_measurement_error_beta_prior = pm.HalfCauchy(
-        "population_measurement_error_beta", beta=10
-    )
-
-    population_trend_mean_prior = pm.Normal("population_trend_mean", mu=0, sigma=0.3)
+    # TODO should the trend be capped so that nobody so get better?
+    population_trend_mean_prior = pm.Normal("population_trend_mean", mu=0.1, sigma=0.3)
     population_trend_sd_prior = pm.HalfCauchy("population_trend_sd", beta=2)
+
+    population_measurement_error_beta_prior = pm.HalfCauchy(
+        "population_measurement_error_beta", beta=10
+    )
 
     # separate parameter for each patient
     treatment1_prior = pm.Normal(
