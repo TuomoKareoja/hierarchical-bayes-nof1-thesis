@@ -222,3 +222,34 @@ plt.savefig(
 )
 
 # %%
+
+# PATIENT 1 TIMELINE
+fig, ax = plt.subplots(figsize=(8, 4))
+
+ax.plot(
+    measurements_df[measurements_df["patient_index"] == 0][
+        "measurement_index"
+    ],
+    measurements_df[measurements_df["patient_index"] == 0]["measurement"],
+    color='red',
+    linestyle="solid",
+    linewidth=1,
+)
+
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+plt.ylabel("Measurement Value")
+plt.xlabel("Time Index")
+
+# Add treatment periods
+for i in range(0, total_measurements_n):
+    if measurements_df['treatment1_indicator'][i] == 1:
+        plt.axvspan(i-0.5, i+0.5, facecolor='grey', alpha=0.15)
+
+plt.tight_layout()
+plt.savefig(
+    os.path.join(visualization_folder, "patient1_timeline.pdf"),
+    bbox_inches="tight",
+)
+
+# %%
