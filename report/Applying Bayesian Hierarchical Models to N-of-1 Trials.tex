@@ -14,6 +14,7 @@
 \usepackage{pythontex}
 \usepackage{booktabs}
 \usepackage{bookmark}
+\usepackage{float}
 
 \usetikzlibrary{matrix}
 
@@ -811,7 +812,7 @@ anywhere, but the fact that we could arithmetically solve that the posterior
 follows a well-defined distribution is not a general occurrence. Usually we need
 to go beyond arithmetic methods and solve the problem algorithmically.
 
-\subsection{Challenges of Bayesian Inference}\label{bayesproblems}
+\subsection{Challenges of Bayesian Inference}\label{bayesinferencechallenges}
 
 Although the Bayes formula is conceptually simple, but when actually utilizing
 it we run into two big difficulties. First is the common case when the
@@ -827,7 +828,7 @@ formulate our beliefs in a precise mathematic form and when we do not have prior
 need to define a prior, but in this case it has to be defined so that it has
 minimal effects on the posterior distribution.
 
-\subsubsection{Dealing with the Marginal Likelihood}\label{bayesproblems}
+\subsubsection{Dealing with the Marginal Likelihood}\label{marginallikehoodproblems}
 
 As mentioned before, the marginal likelihood can often be impossible or
 unfeasible to calculate analytically even in the case parameters with discrete
@@ -1110,12 +1111,13 @@ analysis about what treatments seems to be the best in general, but there is a b
 way to keeps true to the goal of N-of-1 experiments of finding the best treatment for
 each \emph{individual patient}.
 
-In the Bayesian framework we can do this by using hierarchical
-models where each model parameter is imagined to come from ``higher'' distributions
-that is controlled by its own parameters. Individual parameters lower-level parameters represent the
+\section{How to Make a Model Hierarchical?}
+
+In the Bayesian framework we can pool information by making our models hierarchical.
+This means that instead of defining priors for our model variables, each model parameter is imagined to come from a ``higher'' distributions
+that is controlled by its own parameters. In the case of N-of-1 studies the individual lower-level parameters represent the
 individual patients, the distribution where these parameters come from represents
-the population which the patients are drawn from and for this higher-level distribution
-we give our priors to. Lets take a simple example where we have $p$ patients with $n$
+the population which the patients are drawn. Priors are only defined for the higher-level distribution. Lets take a simple example where we have $p$ patients with $n$
 measurements and, to make things simple just one treatment option. We can model this by
 a simple two-parameter model:
 
@@ -1124,10 +1126,8 @@ a simple two-parameter model:
         y_{ij} = \theta_j + \epsilon_{ij}, i\in(1 \dots n), j\in(1 \dots p)
     \end{equation}
 \end{def}where $\theta_j$ represents the effect of the treatment for patient $j$ and
-\(\epsilon_{ij} \sim N(0,\tau_p^2)\) is the error term. As a Bayesian model we could
-represent the model conceptually like this:
-
-% TODO why did we choose the particular distributions?
+\(\epsilon_{ij} \sim N(0,\tau_p^2)\) is the error term for patient $j$ at observation
+$t$. We can visualize this model as a tree:
 
 \bigskip
 
@@ -1135,7 +1135,7 @@ represent the model conceptually like this:
 
     \matrix[matrix of math nodes, column sep=0pt, row sep=30pt] (mat)
     {
-        \ & \mu, \sigma, \beta & \ \\
+        \ & \mu, \sigma, \gamma & \ \\
         \theta_1, \tau_1 & \ldots & \theta_p, \tau_p \\
         y_{1,1}, \ldots, y_{n, 1} & \ldots & y_{1, p}, \ldots, y_{n, p} \\
     };
@@ -1150,7 +1150,7 @@ represent the model conceptually like this:
     {};
 
     \node[anchor=east] at ([xshift = -35pt]mat-2-1)
-    {$\theta_j \sim \text{N}(\mu, \sigma^2), \tau_j \sim \text{HalfCauchy}(\beta)$};
+    {$\theta_j \sim \text{N}(\mu, \sigma^2), \tau_j \sim \text{HalfCauchy}(\gamma)$};
 
     \node[anchor=east] at ([xshift = -35pt]mat-3-1)
     {$y_{i,j} \sim \text{N}(\theta_j, \tau_j^2)$};
@@ -1163,11 +1163,18 @@ On top are the prior parameters that represent our existing knowledge and are sh
 all patients. Next are actual prior distributions defined by these parameters from which the individual patient
 level patient parameters are drawn. At the bottom we describe the actual data generating
 process where values of individual observations are drawn from normal distributions
-defined by the patient level parameters. To broaden this model from just being a bunch
-of patient-specific models (with shared priors) we can combine
-them by adding a population level that links patients together:
+defined by the patient level parameters. For the prior distributions we choose a normal
+distribution for the treatment effect and half-Cauchy distribution for the variance. The
+normal distribution for the treatment effect is a natural choice as probably the
+treatment effect is dependent on multiple factors which many could be independent. If
+this is the case the central limit theorem says that the treatment effect to follow a
+normal distribution. The variance parameters is more difficult and there are multiple
+reasonable distributions to choose, but half-Cauchy distribution is recommended for
+reasons we don't have space to go into here\ \cite{variancepriors}.
 
-% TODO check where you have to put the exponent in the variance parameters
+To broaden this model from just being a bunch
+of patient-specific models with shared priors, we can combine the patient level models
+by adding a population level that links the patients together:
 
 \bigskip
 
@@ -1175,9 +1182,9 @@ them by adding a population level that links patients together:
 
     \matrix[matrix of math nodes, column sep=0pt, row sep=30pt] (mat)
     {
-        \ & \theta_{\mu}, \tau_{\mu}, \alpha_{\theta}, \alpha_{\beta} & \ \\
-        \ & \mu, \sigma, \beta & \ \\
-        \theta_1, \tau_1 & \ldots & \theta_p, \tau_p \\
+        \ & \theta_{\mu}, \sigma_{\mu}, \gamma_{\sigma}, \gamma_{\beta} & \ \\
+        \ & \mu, \sigma, \gamma & \ \\
+        \theta_1, \tau_1 & \ldots & \theta_j, \tau_j \\
         y_{1,1}, \ldots, y_{n, 1} & \ldots & y_{1, p}, \ldots, y_{n, p} \\
     };
 
@@ -1193,11 +1200,11 @@ them by adding a population level that links patients together:
     {};
 
     \node[anchor=east] at ([xshift = -35pt]mat-2-2)
-    {$\mu \sim \text{N}(\theta_{\mu}, \tau_{\mu}^2), \sigma \sim
-    \text{HalfCauchy}(\alpha_{\sigma}), \beta \sim \text{HalfCauchy}(\alpha_{\beta})$};
+    {$\mu \sim \text{N}(\theta_{\mu}, \sigma_{\mu}^2), \sigma \sim
+    \text{HalfCauchy}(0, \gamma_{\sigma}), \gamma \sim \text{HalfCauchy}(0, \gamma_{\gamma})$};
    
     \node[anchor=east] at ([xshift = -35pt]mat-3-1)
-    {$\theta_j \sim \text{N}(\mu, \sigma^2), \tau_j \sim \text{HalfCauchy}(\beta)$};
+    {$\theta_j \sim \text{N}(\mu, \sigma^2), \tau_j \sim \text{HalfCauchy}(0, \gamma)$};
 
     \node[anchor=east] at ([xshift = -35pt]mat-4-1)
     {$y_{ij} \sim \text{N}(\theta_j, \tau_j^2)$};
@@ -1207,12 +1214,41 @@ them by adding a population level that links patients together:
 \bigskip
 
 Now instead of drawing the patient level parameters from priors, these are drawn from
-the population level distribution. The parameters defining the population level
-distribution are drawn from the prior distribution. So instead of letting the patient
-level parameters being depend directly from the prior parameters, we have introduced an
-additional layer between these.
+the population level distribution and the parameters defining the population-level
+distributions are drawn from the prior distributions. So instead of letting the patient
+level parameters depend directly from the prior parameters, we have introduced an
+additional layer between these. For choosing the shape of the prior distributions for
+the population layer, the same logic that we used on the non-hierarchical model applies.
 
-With all the parameters that our model now has,the question now becomes, how we apply
+\section{Benefits of Hierarchical Models}
+
+The elegance of this method comes from the fact that, even though we now have
+population-level parameters we still keep the individual patient-level parameters that can vary
+between the patients. As the population-level parameters are not fixed, the
+patient-level data will inform us about the population-level parameters and this in turn affects the patient-level parameters. These kinds of
+dependencies among parameters are useful in several respects.
+First, the dependencies are meaningful for this application, e.g.\ we can
+model the treatment effect for a single patient as an instance from a
+broader population distribution of this effectiveness. Now the model will give us
+information also about the general population level and not just about the single
+patient. Second, because of the dependencies across parameters, all the data can now jointly inform all the
+parameter estimates. The reduction of variance in the estimators that this
+effect causes, is generally referred by the term ``shrinkage''. In general,
+shrinkage in hierarchical models causes lower-level parameters to
+shift toward the modes of the higher-level distribution. If the higher-level
+distribution has multiple modes, then the low-level parameter values cluster
+more tightly around those multiple modes, which might pull some
+low-level parameter estimates apart instead of together. The greatest thing
+is, that as we don't explicitly set the parameter values of the higher-level
+distributions, the amount of shrinkage is informed by the data so that
+similar observed data points from lower-level distributions lead to ``tighter''
+estimates for the higher-level distributions and in this in turn leads to
+greater shrinkage (e.g.\ posterior estimates of the patient level parameters being more
+tightly clustered together).
+
+\section{Applying the Bayes Formula to Hierarchical Models}
+
+With all the parameters that our model has, the question now becomes, how we apply
 the Bayesian formula in this case? Luckily this happens to be very simple as we just
 have to remember two rules of probability: the chain rule, that
 tells us that the probability of $A$ and $B$ is the probability of $B$ on condition $A$
@@ -1233,13 +1269,13 @@ probability of $A$ on condition $B$ is just the probability of $A$ if $A$ and $B
 
 Now lets see what happens when we apply write are our model in the Bayes formula\
 \ref{bayeswithparams} and apply these rules. For simplicity I assume that we only have
-two patients and leave out the prior parameters defining the shape of the population distribution.
+two patients and leave out the prior parameters defining the shape of the population distributions.
 
-% TODO how to make this look clean
 
 \begin{equation*}\label{}
     \begin{aligned}\label{conjugatebayesrule}
         posterior &= \frac{P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma,\beta| Y)}{P(Y)} \\
+        &\text{(dropping the constant term)} \nonumber \\
         &\propto P(Y|\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma,\beta)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma,\beta) \nonumber \\
         &\text{(using rule of independence as data Y depends only on parameters $\theta$ and $\tau$)} \nonumber \\
         &= P(Y|\theta_1,\tau_1, \theta_2, \tau_2)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma,\beta) \nonumber \\
@@ -1263,54 +1299,35 @@ expressed our hierarchical model in the Bayes formula. We could continue by writ
 formula out by adding in the prior terms and replacing the abstract probability
 markings with the actual probability density functions given by our chosen
 distributions, but this gets messy and, in this case, no nice analytical solution can be
-found anyway, so we will leave it at this.
-
-The elegance of this method comes from the fact that, even though we now have
-population-level parameters we still keep the individual patient-level parameters that can vary
-between the patients. As the population-level parameters are not fixed, the
-patient-level data will inform us about the population-level parameters and this in turn affects the patient-level parameters. These kinds of
-dependencies among parameters are useful in several respects.
-First, the dependencies are meaningful for the given application, e.g.\ we can
-model the treatment effect for a single patient as an instance from a
-broader population distribution of this effectiveness. Now the model will give us
-information also about the general population level and not just about the single
-patient. Second, because of the dependencies across parameters, all the data can now jointly inform all the
-parameter estimates. The reduction of variance in the estimators that this
-effect causes, is generally referred by the term ``shrinkage''. In general,
-shrinkage in hierarchical models causes lower-level parameters to
-shift toward the modes of the higher-level distribution. If the higher-level
-distribution has multiple modes, then the low-level parameter values cluster
-more tightly around those multiple modes, which might pull some
-low-level parameter estimates apart instead of together. The greatest thing
-is, that as we don't explicitly set the parameter values of the higher-level
-distributions, the amount of shrinkage is informed by the data so that
-similar observed data points from lower-level distributions lead to ``tighter''
-estimates for the higher-level distributions and in this in turn leads to
-greater shrinkage (e.g.\ posterior estimates of the patient level parameters being more
-tightly clustered together).
+found anyway, so we will leave it at this. It is also notable that we could add even
+more layers to the model and just apply the same rules we used here to write the formula
+out. Bayes formula makes no limitations on how complex and deep our hierarchical model
+can be.
 
 \chapter{Example of a Hierarchical Bayesian Analysis Using Simulated
   Data}\label{example}
 
 To put everything we learned into practice, lets go over an example Bayesian
-analysis of multiple N-of-1 trials, where first analyze the trials separately and then combine
-them using a hierarchical model. For the analysis we use Python and PyMC3 library\ \cite{pymc3} built
+analysis of multiple N-of-1 trials, where we first analyze one trial separately and then
+combine multiple trials by using a hierarchical model. For the analysis we use Python and PyMC3 library\ \cite{pymc3} built
 for probabilistic programming. We will not go over each part of the code, but focus only
 on the critical parts where we see how the models and inference we went over in the
 previous chapters look like when implemented in practice. For those who want to see the
-full code it is available from a GitHub repository\ \cite{github} with instructions how
+full code, it is available from a GitHub repository\ \cite{github} with instructions on how
 to run it.
 
 As we now jump from theoretical and analytical considerations to practical consideration
-when doing this kind of analysis, we will introduce some new concepts related to how
-PyMC3 is actually performing the calculations and what do we need to pay attention to
+when doing this kind of analysis, we will need revisit the concept that we went over
+while talking about the problems of dealing with marginal likelihood\
+\ref{marginallikehoodproblems} and introduce some new concepts related to how
+PyMC3 is actually dealing with this problem and what do we need to pay attention to
 make sure that what we get out is actually reliable. We will see how important
-visualizations are in interpreting the output and what new metrics to pay attention
-to diagnose if our model is performing adequately.
+visualizations are in interpreting the outputs and what new metrics to pay attention
+to diagnose if the estimation is working and the model fits the data.
 
 \section{Defining the Experiment}
 
-Lets first describe our experiment design, because this is critical for understanding
+Lets first describe our experiment design, as this is critical for understanding
 everything that comes later. Imagine that we have 6 patients that all suffer from the
 same medical condition to which there are two treatment options available (\(A\)) and (\(B\)). We know from the
 literature that there is clear patient-level variation in which treatment works better
@@ -1331,45 +1348,44 @@ disease and not curing it. Based on this information we come up with the followi
     the second block will have the treatments in reverse order creating a balanced
     design (ABBA or BAAB)
     \item Measurements will be taken by the patient at the end of each day so we end up with
-    28 measurements per patient with 14 for each of the treatments that separate by
-    roughly equal time periods
+    28 measurements per patient with 14 for each of the treatments that are separated by
+    roughly equal time-periods (one day)
     \item There will be no washout period when switching between the treatments
 \end{itemize}
 
-\bigskip
-{
+\begin{figure}[H]
     \centering
+    \caption{Example of the Experiment Design for a Single Patient}
     \includegraphics{design_for_simulated_experiment.pdf}
-    \par
-}
-\bigskip
-
-% TODO this needs more explanation and subchapters
+\end{figure}
 
 \section{Simulating the Data}
 
 Next we simulate the data that we could get from our defined experiment with Python.
-We do this in a fairly simple way that makes it easier to see how the models we build are
-actually doing. We don't go over the actual code that creates the data, but just look at
-the mathematical model used. Code for creating the data can be found in the repository
-\cite{github}. For simulating each observation \(t\) for patient \(i\) we use the following model:
+As there should not be any interaction effects between the treatments, the treatment
+effect onset should be immediate and there is no washout period, this is a fairly simple
+task. The benefit of having a relatively simple data generating process, is that it is
+easier to compare the results from out models with the actual parameters. We will not go
+over the code that creates the data in detail, but just look at
+the mathematical models used in it. The full code can be found in the GitHub repository
+\cite{github}. For simulating each observation at time \(t\) for patient \(j\) we use the following model:
 
 \begin{def}\label{simulationmodel}
     \begin{equation}\label{}
-        y_{ti} = Z_t\theta_{i} + W_t\eta{i} + t\beta_i + \epsilon_t + \rho_i\epsilon_{t-1},
+        y_{tj} = Z_{tj}\theta_{j} + W_{tj}\eta_{j} + t\beta_j + \epsilon_t + \rho_j\epsilon_{t-1},
     \end{equation}
-\end{def}where \(\theta_i\) and \(\mu_i\) are the treatment effects with \(Z_{ti}\) and \(W_{ti}\) being indicator
+\end{def}where \(\theta_j\) and \(\mu_j\) are the treatment effects with \(Z_{tj}\) and \(W_{tj}\) being indicator
 variables that are 1 when observation \(t\) is within a period where treatment was applied and
-0 otherwise. \(\beta_i\) is the trend representing the natural progress of the
-condition. \(\epsilon_{ti} \sim N(0,\tau_i^2) \) is the error term at \(t\) and
-\(\rho_i\) is the correlation between the consecutive errors.
+0 otherwise. \(\beta_j\) is the trend representing the natural progress of the
+condition. \(\epsilon_{tj} \sim N(0,\tau_j^2) \) is the error term at \(t\) and
+\(\rho_j\) is the correlation between consecutive errors.
 
 This data generating model has both a trend and a lag-1-autocorrelation. The trend we
 are going to be modeling later, but also modeling autocorrelation would make the model
 too complex for the limited amount observations we will be dealing with. This way the example tries to be more realistic
 by having the data generation function to be of such complexity that it cannot be
 fully modeled and some decisions have to be made on how to try to approximate
-the process with a simpler model.
+the process with a simplified version of reality.
 
 ``Above'' the part creating the individual observations we have a population-level parameters
 that define the distribution from which the patient-level parameters are drawn from:
@@ -1378,33 +1394,43 @@ that define the distribution from which the patient-level parameters are drawn f
 
 \begin{tikzpicture}
 
-    \matrix[matrix of math nodes, column sep=0pt, row sep=30pt] (mat)
+    \matrix[matrix of math nodes, column sep=-70pt, row sep=30pt] (mat)
     {
-        \mu_{\theta}, \sigma_{\theta}, \mu_{\eta},\sigma_{\eta}, \mu_{\beta}, \sigma_{\beta}, \gamma_{\tau}, \alpha_{\rho}, \beta_{\rho} \\
-        \theta_1, \eta_1, \beta_1, \tau_1, \rho_1 \\
-        \ \\
-        y_{1,i}, \ldots, y_{28, i} \\
+    \ & \mu_{\theta}, \sigma_{\theta}, \mu_{\eta},\sigma_{\eta}, \mu_{\beta},
+    \sigma_{\beta}, \gamma_{\tau}, \alpha_{\rho}, \beta_{\rho} & \ \\
+        \theta_1, \eta_1, \beta_1, \tau_1, \rho_1 & \ldots & \theta_6, \eta_6, \beta_6, \tau_6, \rho_6 & \\
+        \ & \ & \ \\
+        y_{1,1} \ldots, y_{28, 1} & \ldots & y_{1,6} \ldots, y_{28, 6} \\
     };
 
-    \draw[->,>=latex] (mat-1-1) -- (mat-2-1);
+    \draw[->,>=latex] (mat-1-2) -- (mat-2-1);
+    \draw[->,>=latex] (mat-1-2) -- (mat-2-3);
     \draw[->,>=latex] (mat-2-1) -- (mat-4-1);
+    \draw[->,>=latex] (mat-2-3) -- (mat-4-3);
 
     \node[anchor=east] at ([xshift = -40pt]mat-2-1)
     {$
-        \theta_1 \sim \mathcal{N}(\mu_{\theta},\sigma_{\theta}^2),
-        \eta_1 \sim \mathcal{N}(\mu_{\eta},\sigma_{\eta}^2),
-        \beta_1 \sim \mathcal{N}(\mu_{\beta},\sigma_{\beta}^2),
+        \theta_j \sim \mathcal{N}(\mu_{\theta},\sigma_{\theta}^2),
+        \eta_j \sim \mathcal{N}(\mu_{\eta},\sigma_{\eta}^2),
+        \beta_j \sim \mathcal{N}(\mu_{\beta},\sigma_{\beta}^2),
     $};
     \node[anchor=east] at ([xshift = -40pt]mat-3-1)
     {$
-        \tau_1 \sim HalfCauchy(0, \gamma_{\tau}),
-        \rho_1 \sim InvGamma(\alpha_{\rho}, \beta_{\rho})
+        \tau_j \sim HalfCauchy(0, \gamma_{\tau}),
+        \rho_j \sim Beta(\alpha_{\rho}, \beta_{\rho})
     $};
-
+    \node[anchor=east] at ([xshift = -40pt]mat-4-1)
+    {$
+        y_{tj} = Z_{tj}\theta_{j} + W_{tj}\eta_{j} + t\beta_j + \epsilon_t + \rho_j\epsilon_{t-1}
+    $};
 
 \end{tikzpicture}
 
-We set the population-level parameters to the following values:
+One noteworthy here is that we pick a beta distribution for the population
+autocorrelation as it is a natural choice as it limits the values nicely between 0 and 1.
+
+To create the simulated data, we set the population parameters as follows and then run
+our data creation process:
 
 \begin{align}\label{populationparameters}
     \text{population treatment A mean: } & \mu_{\theta} = 10 \nonumber \\
@@ -1425,71 +1451,96 @@ Second, the mean of the trend \(\beta \) is positive and its variance is small. 
 that almost all patient should have a steadily worsening condition (measurements get
 higher as the experiment progresses).
 
-Lets now simulate the data with these models and parameter values and see what we get:
+In figure \ref{measurementtimeline} we see timelines of measurements for each patient. Just by looking at this plot, it seems
+pretty obvious that for patients 2 and 1 there is a clear difference in the efficacy of the
+treatments, with the treatment periods clearly visible. We also see more ambivalent
+cases. Patient 4 seems to have very stable measurement values regardless of the
+treatment, while patient 2 has lots of random fluctuations in the data making it hard to
+interpret the data just by looking at the plot. We can also see the upwards trend in the
+measurement as all patients except patient 2 end the experiment with higher measurements
+that they started with (remember that because of the balanced design, patient start and
+end the experiment with the same treatment).
 
-% TODO how to make sure that the picture stays just below the above text?
-
-\begin{figure}[!h]
+\begin{figure}[H]
+    \label{measurementtimeline}
     \caption{Timeline of Measurements for Each Patient}
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{measurements_timeline.pdf}
 \end{figure}
 
-Here we see the measurement at each time index for each patient in separate lines. We
-have highlighted patient 1.
+Let's next look at the actual parameters that created the data. In figure
+\ref{parameterdistribution}, we have all patient-level parameter values and population
+distributions which they where drawn from. On the left side we can see both of the
+treatment effect means. As these are plotted on an identical axis, we can easily compare
+them. We can see that for every patient, except patient for patient 3, treatment A is
+the better (higher parameter value). The second interesting finding is that for patient
+1 the treatment B effectiveness is far better than for other patients. When we look at
+the hierarchical model these two patients are the ones to keep an eye out as we would
+expect the measurements from other patients to pull the treatment effectiveness of
+treatment B for patient 3 down (make it better) and conversely pull this up for patient 1. From the measurement error and autocorrelation
+there is less interesting things to see: the wild swings of the measurement for patient 2
+are explained by her high measurement error and autocorrelation values are quite tightly
+grouped up for all patients. For the trend we see that patients 2 and 4 are getting
+worse significantly slower than other patients.
 
-We can clearly see the for the highlighted
-patient one treatment is working better than the other one as we can easily pick out the
-ABBA treatment assignment from the picture. We can also see that for this patient the t
-
-Let's next look at the parameters themselves
-
-\begin{figure}[!h]
-    \caption{Population Parameter Distribution and the Individual Patient Parameters}
+\begin{figure}[H]
+    \label{parameterdistribution}
+    \caption{Parameter Used to Create Simulated Data}
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{population_parameter_distributions.pdf}
 \end{figure}
 
 \section{Analyzing a Single Trial}\label{1trial}
 
-% TODO use a model with a trend as we don't have the space to create
-% another model where we add that in. Justify by the fact that we clearly
-% see a trend in the timeseries plots
+We start with the case of analyzing just a single patient. We pick patient 1 as we saw
+previously when looking at the parameter values \ref{parameterdistribution} that this patient has a parameter value
+for treatment B that is significantly lower than for other patients. This makes for an
+interesting comparison as we can see how the estimate that we get for this parameters
+differs between the single patient model and the hierarchical model. We would expect the
+parameter value to be get pushed higher towards the other patients in the hierarchical
+model.
 
-We start with the case of analyzing just a single patient.
+In figure \ref{patient1timeline} we have the timeline of observations for patient 1. We
+have highlighted the period where the patient was on treatment A with grey and can
+clearly see that this treatment is the inferior option for this patient.
 
-% TODO show chart for the patient
+\begin{figure}[H]
+    \label{patient1timeline}
+    \caption{Timeline of Measurements for Patient 1}
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{patient1_timeline.pdf}
+\end{figure}
 
-Normally before we start creating any models we would first start with an extensive
-exploration of the data, but as teaching preliminary analysis
+Normally before we would start with more extensive exploration of the data, but as teaching preliminary analysis
 is not the focus here and we created the data ourself and so know exactly what kind
 of distribution it follows, we will skip this here. For analyzing any real-world data
 this part would be \emph{mandatory}.
 
 \subsection{Defining the Model}
 
-We start with a very simple model with just the treatment parameters and an error term:
+We could start with a very simpole with just the treatment parameters and an error term,
+but as we know from the data creation process and can see from figure
+\ref{patient1timeline} that there is a trend in the data, we start with a model that has
+already has a trend:
 
-\begin{def}\label{simplesinglepatientmodel}
+\begin{def}\label{singlepatientmodel}
     \begin{equation}\label{}
         y_t = Z_t\theta + W_t\eta + t\beta + \epsilon_t
     \end{equation}
 \end{def} where \(\theta \) and \(\eta \) are the treatment effects with \(Z_t\) and \(W_t\) being indicator
 variables that is 1 when observation \(t\) is within a period where treatment was applied and
-0 otherwise. \(\epsilon_{t} \sim N(0,\tau^2) \) is the error term at \(t\).
-
-% TODO add explanation of the beta term
+0 otherwise. \(\beta\) is the trend and \(\epsilon_{t} \sim N(0,\tau^2) \) is the error term at \(t\).
 
 Our model assumes that the measurement values are distributed normally with
-variance \(\tau^2\) and a mean of either \(\theta \) or \(\eta \) depending on which
-treatment is applied at the observation \(y_t \sim N(Z_t\theta + W_t\eta, \tau^2)\) and
-so our likelihood function is a bit of special normal distribution with a varying mean. This
-will cause use some headache later as this is definitely a not a text book example.
+variance \(\tau^2\) and with a mean of either \(\theta \) or \(\eta \) depending on which
+treatment is applied at the observation \(y_t \sim N(Z_t\theta + W_t\eta, \tau^2)\).
+This means that our likelihood function will have to be a bit special as using a simple
+normal distribution will not do. We will see that this will cause use some headache
+later when we try to implement the model.
 
-Next we go to choose the prior distribution for our model. We choose
-normal distributions for the treatment effect parameters as it makes sense to think
-that the effectiveness would depends on multiple independent biological and social
-factors (very reasonable assumption!) then the central limit theorem tells us the that
-the effect should be normally distributed. For the variance of the error term we choose
-a half-Cauchy distribution.
+Next we go to choose the prior distributions for our model. We choose
+normal distributions for the treatment effect parameters and the trend as it makes sense to think
+that these would depends on multiple independent biological and social
+factors (very reasonable assumption!) and the central limit theorem tells us the that
+the parameters should then be normally distributed. For the variance of the error term we choose
+a half-Cauchy distribution as this is a common recommendation for the prior of variance\ \cite{variancepriors}.
 
 \begin{align}\label{}
     \theta &\sim N(\mu_{\theta}, \sigma_{\theta}) \\
@@ -1509,8 +1560,12 @@ Lets define next what kind of parameters we should give to our prior distributio
     \text{treatment A standard deviation prior: } & \sigma_{\theta} = 0.2 \nonumber \\
     \text{treatment B mean prior: } & \mu_{\eta} = 10 \nonumber \\
     \text{treatment B standard deviation prior: } & \sigma_{\eta} = 0.3 \nonumber \\
+    \text{trend mean prior: } & \mu_{\beta} = 0.1 \nonumber \\
+    \text{trend standard deviation prior: } & \sigma_{\beta} = 0.3 \nonumber \\
     \text{measurement error scale prior: } & \gamma_{\tau} = 0.1 \nonumber
 \end{align}
+
+% TODO explanation of the chosen values
 
 \subsection{Implementing the Model in PyMC3}
 
@@ -1547,21 +1602,22 @@ with pm.Model() as single_patient_no_trend_model:
     # separate priors for each treatment
     treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10)
     treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
+    trend_prior = pm.Normal("trend", mu=0.1, sigma=0.3)
     # common variance parameter defining the error
     gamma_prior = pm.HalfCauchy("gamma", beta=10)
 
     # measurements are created from both priors, with a indicator setting the
     # values to 0 if the particular treatment is not applied at the observation
-    measurement_means = (
-        treatment1_prior
-        * measurements_df[patient == 0]["treatment1"]
-        + treatment2_prior
-        * measurements_df[patient == 0]["treatment2"]
+    measurement_est = (
+        treatment1_prior * measurements_df[patient_idx == 0]["treatment1_idx"]
+        + treatment2_prior * measurements_df[patient_idx == 0]["treatment2_idx"]
+        + trend_prior * measurements_df[patient_idx == 0]["measurement_idx"]
     )
 
     # likelihood is normal distribution with the same amount of dimensions
     # as the patient has measurements and and the mean is defined by either
-    # the treatment 1 prior or treatment 2 prior with the same sigma
+    # the treatment 1 prior or treatment 2 prior + trend at that that measurement
+    # with always the same variance
     likelihood = pm.Normal(
         "y",
         measurement_means,
@@ -2289,7 +2345,12 @@ No model testing and now trial and error with the amount of steps.
     Science, 2016, 2:e55
 
     \bibitem{github}
-    Tuomo Kareoja: https://github.com/TuomoKareoja/hierarchical-bayes-nof1-thesis, GitHub repository, 2020
+    Tuomo Kareoja: https://github.com/TuomoKareoja/hierarchical-bayes-nof1-thesis,
+    GitHub repository, 2020
+
+    \bibitem{variancepriors}
+    Andrew Gelman: Prior distributions for variance parameters in hierarchical models
+    (comment on article by Browne and Draper). Bayesian analysis 1.3, 2006;515-534.
 
 \end{thebibliography}
 \end{document}
