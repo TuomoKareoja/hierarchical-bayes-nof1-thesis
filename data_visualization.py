@@ -219,13 +219,6 @@ fig, ax = plt.subplots(figsize=(8, 4))
 
 for patient, color in zip(measurements_df["patient_index"].unique(), patient_colors):
 
-    # highlight patient with index 0
-    if patient == 0:
-        alpha = 1
-
-    else:
-        alpha = 0.3
-
     ax.plot(
         measurements_df[measurements_df["patient_index"] == patient][
             "measurement_index"
@@ -233,34 +226,21 @@ for patient, color in zip(measurements_df["patient_index"].unique(), patient_col
         measurements_df[measurements_df["patient_index"] == patient]["measurement"],
         color=color,
         linestyle="solid",
-        alpha=alpha,
         linewidth=2,
+        label="Patient {}".format(patient + 1),
     )
 
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
 plt.ylabel("Measurement Value")
 plt.xlabel("Time Index")
-
-plt.annotate(
-    "Patient 1",
-    xy=(
-        10,
-        measurements_df[
-            (measurements_df["patient_index"] == 0)
-            & (measurements_df["measurement_index"] == 10)
-        ]["measurement"],
-    ),
-    xytext=(
-        10 - 5,
-        measurements_df[
-            (measurements_df["patient_index"] == 0)
-            & (measurements_df["measurement_index"] == 10)
-        ]["measurement"]
-        + 1,
-    ),
-    color="red",
-    arrowprops={"arrowstyle": "->", "color": "black"},
+plt.legend(
+    loc="upper left",
+    ncol=2,
+    handletextpad=0.5,
+    borderpad=1,
+    columnspacing=1,
+    labelspacing=1,
 )
 
 plt.tight_layout()
