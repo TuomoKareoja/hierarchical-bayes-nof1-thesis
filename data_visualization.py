@@ -53,15 +53,15 @@ population_alpha = 0.6
 
 # POPULATION PARAMETER DISTRIBUTIONS
 
-fig, (ax1, ax2, ax3, ax4) = plt.subplots(nrows=1, ncols=4, figsize=(8, 2))
+fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2, figsize=(8, 8))
 
 # treatment1
 x = np.linspace(
     scipy.stats.norm.ppf(
-        0.01, loc=population_treatment1_mean, scale=population_treatment1_sd
+        0.00000001, loc=population_treatment1_mean, scale=population_treatment1_sd
     ),
     scipy.stats.norm.ppf(
-        0.99, loc=population_treatment1_mean, scale=population_treatment1_sd
+        0.999, loc=population_treatment1_mean, scale=population_treatment1_sd
     ),
 )
 y = scipy.stats.norm.pdf(
@@ -69,6 +69,7 @@ y = scipy.stats.norm.pdf(
 )
 
 ax1.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
+ax1.set_xlim(8.8, 10.4)
 ax1.spines["top"].set_visible(False)
 ax1.spines["right"].set_visible(False)
 ax1.set_xlabel("Treatment A Effect")
@@ -81,7 +82,7 @@ for value, color in zip(parameters_df["treatment1"], patient_colors):
 # TREATMENT EFFECT
 x = np.linspace(
     scipy.stats.norm.ppf(
-        0.01, loc=population_treatment2_mean, scale=population_treatment2_sd
+        0.001, loc=population_treatment2_mean, scale=population_treatment2_sd
     ),
     scipy.stats.norm.ppf(
         0.99, loc=population_treatment2_mean, scale=population_treatment2_sd,
@@ -91,38 +92,40 @@ y = scipy.stats.norm.pdf(
     x, loc=population_treatment2_mean, scale=population_treatment2_sd,
 )
 
-ax2.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
-ax2.spines["top"].set_visible(False)
-ax2.spines["right"].set_visible(False)
-ax2.set_xlabel("Treatment B Effect")
+ax3.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
+ax3.set_xlim(8.8, 10.4)
+ax3.spines["top"].set_visible(False)
+ax3.spines["right"].set_visible(False)
+ax3.set_xlabel("Treatment B Effect")
 
 # add patient parameter values
 for value, color in zip(parameters_df["treatment2"], patient_colors):
-    ax2.axvline(x=value, color=color)
+    ax3.axvline(x=value, color=color)
 
 # MEASUREMENT ERROR
 x = np.linspace(
-    scipy.stats.halfcauchy.ppf(0.01, loc=0, scale=population_measurement_error_scale,),
-    scipy.stats.halfcauchy.ppf(0.90, loc=0, scale=population_measurement_error_scale,),
+    scipy.stats.halfcauchy.ppf(0.00, loc=0, scale=population_measurement_error_scale,),
+    scipy.stats.halfcauchy.ppf(0.9, loc=0, scale=population_measurement_error_scale,),
 )
 y = scipy.stats.halfcauchy.pdf(x, loc=0, scale=population_measurement_error_scale,)
 
-ax3.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
-ax3.spines["top"].set_visible(False)
-ax3.spines["right"].set_visible(False)
-ax3.set_xlabel("Measurement Error")
+ax2.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
+ax2.set_xlim(0, 0.58)
+ax2.spines["top"].set_visible(False)
+ax2.spines["right"].set_visible(False)
+ax2.set_xlabel("Measurement Error")
 
 # add patient parameter values
 for value, color in zip(parameters_df["measurement_error_sd"], patient_colors):
-    ax3.axvline(x=value, color=color)
+    ax2.axvline(x=value, color=color)
 
 # AUTOCORRELATION
 x = np.linspace(
     scipy.stats.beta.ppf(
-        0.01, a=population_autocorrelation_alpha, b=population_autocorrelation_beta
+        0.0001, a=population_autocorrelation_alpha, b=population_autocorrelation_beta
     ),
     scipy.stats.beta.ppf(
-        0.99, a=population_autocorrelation_alpha, b=population_autocorrelation_beta,
+        0.9999, a=population_autocorrelation_alpha, b=population_autocorrelation_beta,
     ),
 )
 y = scipy.stats.beta.pdf(
@@ -130,6 +133,7 @@ y = scipy.stats.beta.pdf(
 )
 
 ax4.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
+ax4.set_xlim(0.25, 0.42)
 ax4.spines["top"].set_visible(False)
 ax4.spines["right"].set_visible(False)
 ax4.set_xlabel("Autocorrelation")
