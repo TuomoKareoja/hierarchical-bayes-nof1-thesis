@@ -53,7 +53,7 @@ population_alpha = 0.6
 
 # POPULATION PARAMETER DISTRIBUTIONS
 
-fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2, figsize=(8, 8))
+fig, ((ax1, ax2, ax5), (ax3, ax4, ax6)) = plt.subplots(nrows=2, ncols=3, figsize=(12, 8))
 
 # treatment1
 x = np.linspace(
@@ -76,8 +76,19 @@ ax1.set_xlabel("Treatment A Effect")
 ax1.set_ylabel("Probability Density")
 
 # add patient parameter values
-for value, color in zip(parameters_df["treatment1"], patient_colors):
-    ax1.axvline(x=value, color=color)
+for value, color, patient_idx in zip(
+    parameters_df["treatment1"], patient_colors, parameters_df["patient_index"]
+):
+    ax1.axvline(x=value, color=color, label="Patient {}".format(patient_idx + 1))
+
+ax1.legend(
+    loc="upper left",
+    ncol=1,
+    handletextpad=0.5,
+    borderpad=1,
+    columnspacing=1,
+    labelspacing=1,
+)
 
 # TREATMENT EFFECT
 x = np.linspace(
@@ -142,77 +153,34 @@ ax4.set_xlabel("Autocorrelation")
 for value, color in zip(parameters_df["autocorrelation"], patient_colors):
     ax4.axvline(x=value, color=color)
 
-plt.savefig(
-    os.path.join(visualization_folder, "population_parameter_distributions.pdf"),
-    bbox_inches="tight",
+# TREND
+x = np.linspace(
+    scipy.stats.norm.ppf(
+        0.0001, loc=population_trend_mean, scale=population_trend_sd
+    ),
+    scipy.stats.norm.ppf(
+        0.9999, loc=population_trend_mean, scale=population_trend_sd
+    ),
+)
+y = scipy.stats.norm.pdf(
+    x, loc=population_trend_mean, scale=population_trend_sd
 )
 
-
-# %%
-
-# PATIENT PARAMETER DISTRIBUTIONS
-
-fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(
-    nrows=2, ncols=3, figsize=(8, 5.5)
-)
-
-ax1.hist(parameters_df["treatment1"])
-ax1.spines["top"].set_visible(False)
-ax1.spines["right"].set_visible(False)
-ax1.set_xlabel("Treatment A Effect")
-ax1.set_ylabel("Number of Patients")
-
-ax2.hist(parameters_df["treatment2"])
-ax2.spines["top"].set_visible(False)
-ax2.spines["right"].set_visible(False)
-ax2.set_xlabel("Treatment B Effect")
-
-ax3.hist(parameters_df["trend"])
-ax3.spines["top"].set_visible(False)
-ax3.spines["right"].set_visible(False)
-ax3.set_xlabel("Trend")
-
-ax4.hist(parameters_df["measurement_error_sd"])
-ax4.spines["top"].set_visible(False)
-ax4.spines["right"].set_visible(False)
-ax4.set_xlabel("Measurement Error")
-
-ax5.hist(parameters_df["autocorrelation"])
+ax5.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
+ax5.set_xlim(-0.005, 0.045)
 ax5.spines["top"].set_visible(False)
 ax5.spines["right"].set_visible(False)
-ax5.set_xlabel("Autocorrelation")
+ax5.set_xlabel("Trend")
 
-ax6.axis("off")
+# add patient parameter values
+for value, color in zip(parameters_df["trend"], patient_colors):
+    ax5.axvline(x=value, color=color)
+    
+# make the unused plot invisible
+ax6.axis('off')
 
-plt.tight_layout()
 plt.savefig(
-    os.path.join(visualization_folder, "patient_parameter_distribution.pdf"),
-    bbox_inches="tight",
-)
-
-# %%
-
-# PARAMETER CORRELATIONS
-
-parameters_nice_names_df = parameters_df[
-    ["treatment1", "treatment2", "trend", "measurement_error_sd", "autocorrelation",]
-]
-
-parameters_nice_names_df.columns = [
-    "Treatment 1",
-    "Treatment 2",
-    "Trend",
-    "Measurement Error",
-    "Autocorrelation",
-]
-
-sns.set(rc={"figure.figsize": (8, 8)})
-sns.set_style("ticks")
-sns.pairplot(data=parameters_nice_names_df, corner=True)
-
-plt.tight_layout()
-plt.savefig(
-    os.path.join(visualization_folder, "patient_parameter_relationships.pdf"),
+    os.path.join(visualization_folder, "population_parameter_distributions.pdf"),
     bbox_inches="tight",
 )
 
@@ -230,7 +198,7 @@ for patient, color in zip(measurements_df["patient_index"].unique(), patient_col
         measurements_df[measurements_df["patient_index"] == patient]["measurement"],
         color=color,
         linestyle="solid",
-        linewidth=2,
+        linewidth=1,
         label="Patient {}".format(patient + 1),
     )
 
