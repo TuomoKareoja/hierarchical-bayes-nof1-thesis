@@ -1491,14 +1491,14 @@ worse significantly slower than other patients.
 \section{Analyzing a Single Trial}\label{1trial}
 
 We start with the case of analyzing just a single patient. We pick patient 1 as we saw
-previously when looking at the parameter values \ref{parameterdistribution} that this patient has a parameter value
+previously when looking at the parameter values\ \ref{parameterdistribution} that this patient has a parameter value
 for treatment B that is significantly lower than for other patients. This makes for an
-interesting comparison as we can see how the estimate that we get for this parameters
+interesting comparison as we can see how the estimates that we get for this parameter
 differs between the single patient model and the hierarchical model. We would expect the
 parameter value to be get pushed higher towards the other patients in the hierarchical
 model.
 
-In figure \ref{patient1timeline} we have the timeline of observations for patient 1. We
+In figure\ \ref{patient1timeline} we have the timeline of observations for patient 1. We
 have highlighted the period where the patient was on treatment A with grey and can
 clearly see that this treatment is the inferior option for this patient.
 
@@ -1508,7 +1508,7 @@ clearly see that this treatment is the inferior option for this patient.
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{patient1_timeline.pdf}
 \end{figure}
 
-Normally before we would start with more extensive exploration of the data, but as teaching preliminary analysis
+Normally before we would start with a more extensive exploration of the data, but as teaching preliminary analysis
 is not the focus here and we created the data ourself and so know exactly what kind
 of distribution it follows, we will skip this here. For analyzing any real-world data
 this part would be \emph{mandatory}.
@@ -1570,25 +1570,24 @@ Lets define next what kind of parameters we should give to our prior distributio
 \subsection{Implementing the Model in PyMC3}
 
 PyMC3 is Python package that is built for probabilistic programming. Although it is not
-limited to Bayesian methods, that is its main focus. The package work in principal so
-that you give it all the parts of the Bayesian formula: the likelihood, prior
+limited to Bayesian methods, that it is its main focus. Implementing Bayesian models in
+the package work so that you give it all the parts of the Bayesian formula except the
+marginal likelihood: the likelihood, prior
 distribution and the values defining the prior distributions. Then it automatically
 chooses a Markov Chain Monte Carlo method (MCMC) that it thinks can most efficiently
-algorithmically approximate the posterior distribution. After it has solved to the
-model, it has multiple inbuilt model checking methods that the user can use to get a
-sense of how well the approximation is working. This is very nice, as this takes out a
+algorithmically approximate the posterior distribution. This is very nice, as this takes out a
 huge chunk of work from us, namely choosing and implementing the approximation method
 ourselves. But now that we have entered the territory of algorithmic solutions, we have
 introduced a new hurdle, namely checking that the algorithm is actually works for our
-defined model and gives us good approximations. On top of this we of course have all the
+model and gives us good approximations. On top of this we of course have all the
 usual stuff related to model accuracy and checking that our model itself is a good
-approximation of the reality.
-
-Lets just jump in and implement our model in PyMC3 and then walk trough what the code is
+approximation of the reality. We will go over how these problems manifest themselves and
+how we can work with them, when these problems pop up, so lets us just jump in and
+implement the model in PyMC3 and then walk trough what the code is
 actually doing line by line\footnote{The code snippets that we will be showing are a
 slight simplification of the actual code that was used to calculate the results. The simplification does not mean
 that the code shown is not runnable, but parts of it that are related to technical niceties
-(e.g. inter operational system compatibility, saving the plots \ldots) are taken out to focus on what is
+(e.g. inter OS compatibility, saving the plots \ldots) are taken out to focus on what is
 important for Bayesian calculations}.
 
 \begin{pyverbatim}
@@ -1606,34 +1605,34 @@ with pm.Model() as single_patient_no_trend_model:
     # common variance parameter defining the error
     gamma_prior = pm.HalfCauchy("gamma", beta=10)
 
-    # measurements are created from both priors, with a indicator setting the
+    # means are created from both priors, with a indicator setting the
     # values to 0 if the particular treatment is not applied at the observation
-    measurement_est = (
-        treatment1_prior * measurements_df[patient_idx == 0]["treatment1_idx"]
-        + treatment2_prior * measurements_df[patient_idx == 0]["treatment2_idx"]
-        + trend_prior * measurements_df[patient_idx == 0]["measurement_idx"]
+    # adding in the effect of the trend at the particular observation
+    measurement_means = (
+        treatment1_prior * measurements_df[patient == 0]["treatment1"]
+        + treatment2_prior * measurements_df[patient == 0]["treatment2"]
+        + trend_prior * measurements_df[patient == 0]["measurement"]
     )
 
     # likelihood is normal distribution with the same amount of dimensions
-    # as the patient has measurements and and the mean is defined by either
-    # the treatment 1 prior or treatment 2 prior + trend at that that measurement
-    # with always the same variance
+    # as the patient has measurements and and the mean is defined by one of the
+    # treatment priors + trend at that that measurement with always the same variance
     likelihood = pm.Normal(
         "y",
         measurement_means,
         sigma=gamma_prior,
-        observed=measurements_df[patient == 0]["measurement"],
+        observed=measurements_df[patient == 0]["value"],
     )
 
     # running the model
     trace = pm.sample(800, tune=500, cores=3)
 
     # Checking diagnostic describing how the MCMC method performed
-    pm.traceplot(trace, ["treatment1", "treatment2", "gamma"])
+    pm.traceplot(trace, ["treatment1", "treatment2", "trend", "gamma"])
     plt.show()
     pm.summary(trace)
 
-    # checking the posterior distribution
+    # checking the posterior distributions
     pm.plot_posterior(trace)
     plt.show()
 
@@ -1672,16 +1671,16 @@ import pandas as pd
 measurements_path = os.path.join("..", "data", "patient_measurements.csv")
 measurements_df = pd.read_csv(measurements_path)
 measurements_df.columns = ['patient', 'measurement', 'period', 'block',
-'treatement1', 'treatment2', 'measurement']
+'treatement1', 'treatment2', 'value']
 print(measurements_df.head(10).to_latex(index=False))
 \end{pycode}
 \bigskip
 
-All columns expect the last one are index columns. As is normal in Python indices are
-zero-indexed. First indexes the patient (0-5), second the
+All columns expect the last one are index columns. As is the standard in Python, everything
+zero-indexed. First column indexes the patient (0-5), second the
 measurement (0-27), third the treatment period (0-3), fourth the block (0-1) and fifth
 and sixth which treatment was applied during the particular measurement (0-1). Last
-column is the actual measurement. PyMC3 does not require any particular format from the
+column is the value of measurement. PyMC3 does not require any particular format from the
 data and almost any format is possible as long as you can feed the right values into
 the right places in the model definition. Also using the Pandas package to handle the
 data as a dataframe is not necessary, but is very convenient.
@@ -1694,11 +1693,11 @@ with pm.Model() as single_patient_no_trend_model:
 \end{pyverbatim}
 \bigskip
 
-PyMC3 models are usually defined within the Python context manager (with statements).
+PyMC3 models are usually defined within the Python context manager (``with'' statements).
 This is not necessary, but makes the model definition much cleaner as when the model is
-defined in the context manager, all subsequent parts defined within this context are
-automatically associated with this particular model. This gets rid of the need to
-manually define for each part, which model we want to associate it with.
+defined in the context manager, all subsequent parts defined within the manager
+(indented parts of the code) are automatically associated with this particular model.
+This gets rid of the need to manually define for each part which model we want to associate it with.
 
 \subsubsection{Defining the Priors}
 
@@ -1706,27 +1705,23 @@ manually define for each part, which model we want to associate it with.
 \begin{pyverbatim}
 treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10)
 treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
+trend_prior = pm.Normal("trend", mu=0.1, sigma=0.3)
 gamma_prior = pm.HalfCauchy("gamma", beta=10)
 \end{pyverbatim}
 \bigskip
 
 Now we start getting to the actual modeling. We start by defining our prior
-distributions. For both treatments we use a normal distribution with the same mean
-(assume that we got the mean from the existing literature) and a very large variance.
-For the prior for the variance of the error term \(\gamma\) we use a Half-Cauchy
-distribution with also very large variance. The location term does not need to be
-defined as it is by default zero, just like we want it. These priors could be considered
-to weakly informative priors as they contain some actual information (namely the mean of
-the treatment effects), but are very wide and don't make strong assumptions.
-
-As the distributions that we are using are all
+distributions. For both treatments and the trend we use a normal distribution and
+for the variance of the error term \(\gamma \) we use a half-Cauchy. For the half-Cauchy
+distribution we don't need to define the location terms as it is by default zero, just
+like we want it. As the distributions that we are using are all
 widely used distributions with well-known properties we can find functions implementing
 them already built-in PyMC3. It is also possible to define completely custom
 distributions, but unfortunately this is quite complex, as you don't just have to worry
 about the math part, but also all you have to implement all the methods that PyMC3
 relies on when making the calculations\footnote{This complexity is a reason why the author would recommend using the Stan package for very complex models with lots of weird
 distributions. Although Stan requires to you to write model definition with its own
-language, this hurdle is worth in some cases for the greater flexibility as you just
+language, this hurdle is worth in some cases as you just have
 worry about the math and there is no need to consider implementing any helper functions}.
 
 \subsubsection{Defining the Likelihood}
@@ -1738,31 +1733,39 @@ measurement_means = (
     * measurements_df[patient == 0]["treatment1"]
     + treatment2_prior
     * measurements_df[patient == 0]["treatment2"]
+    + trend_prior
+    * measurements_df[patient == 0]["measurement"]
 )
 
 likelihood = pm.Normal(
     "y",
     measurement_means,
     sigma=gamma_prior,
-    observed=measurements_df[patient == 0]["measurement"],
+    observed=measurements_df[patient == 0]["value"],
 )
 \end{pyverbatim}
 \bigskip
 
-Defining the likelihood is the most complex part our model definition because of the
+Defining the likelihood is the most difficult part our model definition because of the
 complexity introduced by the varying treatments. Because of this, the likelihood cannot
 be implemented as a simple normal distribution. We solve this problem by instead using a
 multivariate normal distribution with as many dimensions as the patient has
-measurements. For each of the dimensions one of the two treatment effects priors is used for the mean
-and the gamma distribution is used for variance in all cases. We construct the vector of
-treatment means by multiplying the treatment priors by the treatment indices (1 when
-treatment given, 0 when not). So instead of considering
+measurements. We construct the vector of
+means for this distribution by multiplying the treatment priors by the treatment indices (1 when
+treatment given, 0 when not) and add the trend multiplied by the index of the
+measurement (\(t\)). So instead of considering
 the observations separately we thing of them as a single multidimensional sample from
-multivariate normal distribution. This is not the only possible way to solve the
-problem, but happens to be the most convenient one here. If we would have some
+a multivariate normal distribution. This is not the only possible way to solve the
+problem, but is probably the most convenient. If we would have some
 dependencies between the measurements in our model (e.g. autocorrelation), this approach
 would not work. In this case we would have to implement the likelihood distribution
-ourselves.
+ourselves. One thing to note here is that overthought we are using a multivariate normal
+distribution, we still use the same PyMC3 function for normal distribution and just give
+it a vector of means that matches the amount of our observations. This strategy work
+with all the inbuilt PyMC3 distributions: you can either have them using one set of
+parameters or a vector of parameters matching the data and PyMC3 will automatically
+change from using single dimensional distribution with multiple observations to
+multidimensional distribution with one observation vector.
 
 \subsubsection{Running the Model}
 
@@ -1776,11 +1779,11 @@ trace = pm.sample(draw=800, tune=500, cores=3)
 
 Now that we have defined our priors and our likelihood we can move on to running the
 model. Notice that priors and the likelihood is all we need to have defined. We don't
-have to worry about the ``bottom part'' of the Bayes formula \ref{bayesrule}. PyMC3 will
+have to worry about the marginal likelihood at ``bottom part'' of the Bayes formula \ref{bayesrule}. PyMC3 will
 now estimate the posterior with an automatically chosen Markov Chain Monte Carlo (MCMC) method
 that moves trough the posterior from point to point. We could also manually choose what
 algorithm to use, but unless we see problems when we evaluate the estimation efficiency,
-we should go with the automatic selection. We also don't need to define the point in the
+we should stick with the automatic selection. We also don't need to define the point in the
 posterior distribution where the chain starts as this is also automatically chosen. This
 we could also define manually, but unless we run into problems, we should not need to.
 
@@ -1790,14 +1793,14 @@ The three parameters that we have to manually define are as follow:
     \item draw = how many moves the MCMC chain should calculate
     \item tune = how many moves the MCMC chain should take before it start to
     take the observations into account
-    \item cores = how many chains we should calculate in parallel
+    \item cores = how many MCMC chains we will calculate in parallel
 \end{itemize}
 
 The total steps taken by each chain is draw + tune. The reason for the tuning step is
 that the starting position of the chain is probably biased. We would want the starting
 position to be a sample from the posterior so that it probability of it being in a certain
 point would be defined by the posterior. We can do this by letting the chain first take
-a number of steps and as its moves trough the posterior its location will start to
+a number of steps and as its moves trough the posterior its location distribution will start to
 reflect the actual posterior. If we would not have the tuning steps it would be possible
 that the chain starts in a weird position and the first steps it takes don't reflect the
 posterior as it might have to make lots of moves in a certain direction to get to the
@@ -1811,40 +1814,40 @@ model.
 
 As modern CPUs have usually multiple cores, we can speed up the calculation by running
 multiple chains in parallel. Each chain will be independent of each other and each will
-take same amount of draws and tuning steps. As the chain can run in parallel, having
-multiple chains running at once does not make the other calculations any slower. This can
-dramatically lower the time that our estimation takes. The total number of steps that
-the posterior will be calculated with is the combined draws (but tuning steps) of the
+take same amount of draws and tuning steps. As the chains can runs in parallel, having
+multiple chains running can dramatically speed up our estimation. The total number of steps that
+the posterior will be calculated with is the combined draws (not tuning steps) of the
 chains. So in our case we will use 3 cores and have 3 chains (running this on a 4 core
 CPU so we will leave 1 core free for other tasks), in total these chains will make (800 +
-500) * 3 = 3900 steps, of which 800 * 3 = 2400 steps will be used for the estimation.
-
-% TODO add the command line printout for running the model
+700) * 3 = 4500 steps, of which 800 * 3 = 2400 steps will be used for the posterior estimation.
 
 \subsubsection{Checking Algorithm Diagnostics}
 
 \bigskip
 \begin{pyverbatim}
 # Checking diagnostic describing how the MCMC method performed
-pm.traceplot(trace, ["treatment1", "treatment2", "gamma"])
+pm.traceplot(trace, ["treatment1", "treatment2", "trend", "gamma"])
 plt.show()
 pm.summary(trace)
 \end{pyverbatim}
 \bigskip
 
-Now that we have run the model we need to evaluate if the algorithm did good job with
+Now that we have run the model we need to evaluate if the algorithm did a good job with
 the estimation. We can evaluate this by looking at diagnostic plots and from diagnostic
-metrics. Lets first look at the traceplots:
+metrics. Lets first look at the visualizations of the MCMC-chain steps called traceplots:
 
-\begin{figure}[!h]
+\begin{figure}[H]
     \caption{Single Patient Traceplots}
+    \label{traceplots}
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_traceplot.pdf}
 \end{figure}
 
-On the left we can see the steps taken for each chain in our three parameters. These are
+On the right in figure\ \ref{traceplots} we can see the steps taken for each
+chain in our four parameters. These are
 just the steps used for the posterior estimation and don't include the tuning steps. Each
 chain is portrayed with a different color. What we want to see here is that the timeseries
-looks like noise with no obvious patterns. If we would see these, it would mean that the
+looks like noise with no obvious patterns. If we would see any patterns, like the chains
+moving values moving systematically up and down, it would mean that the
 chains had problems moving trough the posterior and ended up taking biased samples.
 These effects should be most pronounced at the beginning steps and if we would see
 these, we should increase the number of tuning steps.
@@ -1855,7 +1858,6 @@ each other. If this is not the case it means that the chains got stuck in differ
 parts of the posterior. This would also show on the left side plots with the different
 chains staying in different parts of the posterior and being distinguishable from each
 other. If we see this problem the solution is once again to increase the tuning steps.
-
 
 \input{../figures/single_patient_no_trend_diag_metrics.tex}
 

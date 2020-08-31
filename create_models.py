@@ -83,7 +83,7 @@ with pm.Model() as single_patient_no_trend_model:
     )
 
     # running the model
-    trace = pm.sample(800, tune=600, cores=3)
+    trace = pm.sample(draws=800, tune=700, cores=3, random_seed=[seed, seed + 1, seed + 2])
 
     pm.traceplot(trace, ["treatment1", "treatment2", "trend", "gamma"])
     plt.savefig(
