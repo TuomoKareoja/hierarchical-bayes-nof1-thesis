@@ -82,6 +82,8 @@ with pm.Model() as single_patient_no_trend_model:
         observed=measurements_df[patient_index == 0]["measurement"],
     )
 
+    difference = pm.Deterministic('difference', treatment1_prior - treatment2_prior)
+
     # running the model
     trace = pm.sample(draws=800, tune=700, cores=3, random_seed=[seed, seed + 1, seed + 2])
 

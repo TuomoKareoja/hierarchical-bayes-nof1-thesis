@@ -867,6 +867,8 @@ samples from this distribution we could approximate the posterior distribution
 with the probability distribution of the values of the samples. The general
 method to get this kind of sample is the following:
 
+% TODO Need to mention how this work in case of multiple parameters
+
 \begin{enumerate}
     \item Pick a set of values for our parameters as our starting position in
           the parameter space. The starting location has to be a plausible set
@@ -918,8 +920,8 @@ Metropolis-Hastings algorithms. All of these methods follow the principles
 above, but they differ in the way they decide where to move next. Although with
 even very simple rules of picking a random proposed value the described will end
 up exploring the whole posterior distribution eventually, more clever algorithms
-can make this process much more efficient. By proposing steps that are more
-likely in posterior distribution a clever algorithm can lower the chance of
+can make this process much more efficient, by proposing steps that are more
+likely to be accepted. A clever algorithm can lower the chance of
 proposing steps that have a high probability of being rejected and so assure
 efficient moving trough the parameter space with less steps.
 
@@ -1624,6 +1626,9 @@ with pm.Model() as single_patient_no_trend_model:
         observed=measurements_df[patient == 0]["value"],
     )
 
+    # adding the comparison between the treatments
+    difference = pm.Deterministic('difference', treatment1_prior - treatment2_prior)
+
     # running the model
     trace = pm.sample(800, tune=500, cores=3)
 
@@ -1767,6 +1772,27 @@ parameters or a vector of parameters matching the data and PyMC3 will automatica
 change from using single dimensional distribution with multiple observations to
 multidimensional distribution with one observation vector.
 
+\subsection{Defining the Parameter Comparison}
+
+\bigskip
+\begin{pyverbatim}
+    difference = pm.Deterministic('difference', treatment1_prior - treatment2_prior)
+\end{pyverbatim}
+\bigskip
+
+As the estimate we are most interested is not actually any individual parameter, but the
+\emph{difference} between the two treatment parameters, we have to add this comparison separately.
+We can do this before or after running our model, but here we have decided to do it
+beforehand. As the difference is actually determined by the values of the treatment
+parameters, we have to use PyMC3 pm.deterministic function that calculates the posterior
+by simple subtracting the value of treatment 2 parameter value from treatment 1
+parameter value at each step in the chain. The reason why it is important do this, is
+that just looking at the estimates of our parameter values separately, will not take
+into account the possible correlation between these two values (in this case a strong
+positive correlation is very likely).
+
+% TODO add more details based on Krutschke
+
 \subsubsection{Running the Model}
 
 \bigskip
@@ -1775,11 +1801,9 @@ trace = pm.sample(draw=800, tune=500, cores=3)
 \end{pyverbatim}
 \bigskip
 
-% TODO what is the actual number of steps as the amount of parameters affects this!
-
 Now that we have defined our priors and our likelihood we can move on to running the
 model. Notice that priors and the likelihood is all we need to have defined. We don't
-have to worry about the marginal likelihood at ``bottom part'' of the Bayes formula \ref{bayesrule}. PyMC3 will
+have to worry about the marginal likelihood at ``bottom part'' of the Bayes formula\ \ref{bayesrule}. PyMC3 will
 now estimate the posterior with an automatically chosen Markov Chain Monte Carlo (MCMC) method
 that moves trough the posterior from point to point. We could also manually choose what
 algorithm to use, but unless we see problems when we evaluate the estimation efficiency,
@@ -1842,24 +1866,38 @@ metrics. Lets first look at the visualizations of the MCMC-chain steps called tr
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_traceplot.pdf}
 \end{figure}
 
-On the right in figure\ \ref{traceplots} we can see the steps taken for each
-chain in our four parameters. These are
+On the right in figure\ \ref{traceplots} we can see the steps taken by each
+chain in our four parameters (remember from chapter\ \ref{bayesinferencechallenges} that
+each chain takes steps in all parameter values simultaneously. These are
 just the steps used for the posterior estimation and don't include the tuning steps. Each
 chain is portrayed with a different color. What we want to see here is that the timeseries
-looks like noise with no obvious patterns. If we would see any patterns, like the chains
+looks like noise with no obvious patterns \footnote{With this model it is hard to
+demonstrate this problem effectively in PyMC3 as not having enough tuning and and calculation steps just leads
+the model to fail outright without any results}. If we would see any patterns, like the chains
 moving values moving systematically up and down, it would mean that the
 chains had problems moving trough the posterior and ended up taking biased samples.
 These effects should be most pronounced at the beginning steps and if we would see
 these, we should increase the number of tuning steps.
 
-On the right we can see the distribution of the posterior values for each chain. Here we
-would want to see that the distributions from different chain more or less align with
-each other. If this is not the case it means that the chains got stuck in different
+On the right side of the figure, we can see the distribution of the posterior values for each chain. Here we
+would want to see that distributions from different chains more or less align with
+each other. If this is not the case, it means that the chains got stuck in different
 parts of the posterior. This would also show on the left side plots with the different
 chains staying in different parts of the posterior and being distinguishable from each
 other. If we see this problem the solution is once again to increase the tuning steps.
 
-\input{../figures/single_patient_no_trend_diag_metrics.tex}
+Besides looking at plots, we can also estimate the success of the estimation from
+diagnostic metrics. PyMC3 has an inbuilt method for printing the common metrics
+(pm.summary(trace)). Below\ \ref{singlepatientdiagnosticmetrics} we can see the output from this methods:
+
+\bigskip
+\begin{figure}[H]
+    \caption{Single Patient Traceplots}
+    \label{singlepatientdiagnosticmetrics}
+    \bigskip
+    \input{../figures/single_patient_no_trend_diag_metrics.tex}
+\end{figure}
+\bigskip
 
 % TODO how to use the diagnostic metrics
 % TODO explain how PyMC3 automatically checks these metrics
@@ -1871,29 +1909,47 @@ PyMC3 automatically chose (can be seen from the model computation printout) and 
 if we get better results. If this does not seem to work, we have to over our model and
 think if the model is in some way improperly defined.
 
-% TODO what does an improperly defined maen
-% TODO add an example of traceplots when no tuning is done
+% TODO what does an improperly defined model mean
+% simple mistake in defining the model
+% improper posterior that is caused by using improper priors
+
+One thing that we should not here is that we only looked at diagnostic values for our
+parameters, but not the difference between the treatment means, that we are actually the
+most interested in. The reason for this, is that the difference is entirely determined
+by the individual treatment parameters, so if the estimation of these is in order, so
+will be the estimate of their difference.
+
+\subsubsection{Checking the Posterior}
 
 \bigskip
-\subsubsection{Checking the Posterior}
 \begin{pyverbatim}
 pm.plot_posterior(trace)
 \end{pyverbatim}
 \bigskip
 
 If the estimation looks fine, we can move on to checking the actual results and look at
-the computed posterior distributions. In this case just looking at individual
-posterior parameter estimates is not enough, as we are interested in the distribution of
-the \emph{differences} between the two treatments.
+the computed posterior distributions\ \ref{singlepatientposteriors}:
 
-% TODO check Kruschke for explaining the problem
-
-\begin{figure}[!h]
+\bigskip
+\begin{figure}[H]
     \caption{Single Patient Posterior Distributions}
+    \label{singlepatientposteriors}
+    \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_posteriors.pdf}
 \end{figure}
+\bigskip
 
-% TODO understanding the plots
+The inbuilt PyMC3 method prints the posterior distribution for all of out parameters,
+with their posterior mean and highest posterior density interval (HPD) for approximately
+95 \% of the values. We can see that that the even though the posterior means between
+the two treatment options are clearly different, there is quite a lot of overlap for the
+HPD. Luckily we also defined the difference between these two parameters and can see
+this as a separate plot and this gives us the result we are interested in. We can see
+that the mean is positive and the HPD does not include zero, we can quite certain that
+treatment A is a worse option for this patient than treatment B, with the likely values of
+the difference falling between 0.71 and 0.94.
+
+% TODO comparison to the actual difference between the parameters
 
 \subsubsection{Checking Model Fit with Posterior Sampling}
 
@@ -1913,46 +1969,78 @@ draw_posterior_checks(
 \end{pyverbatim}
 \bigskip
 
-After checking the trace diagnostics to see if the algorithm is doing a good estimating
-the posterior there is still one more important diagnostic to make: we need to see if
-the estimated model actually fits the data nicely. We do this by generating samples from
-the posterior distributions and for each of these samples create simulated dataset based
-on the chosen parameter values. For this purpose we have written a special function
-called ``draw posteriors''. We don't go over the code of this function, but what it does is to use the sampled
-posterior parameters with model we specified and generate a dataset that simulates data
-from a new experiment, where the data generating process works exactly like our
-specified model. It does this for every parameter sample we picked (in this case 500
-samples) and then calculates the mean treatment effectiveness for both of our two
-treatments (taking the measurements done under this treatment) for each simulated new
-experiment and then plots these means as distribution against the mean treatment
-effectiveness calculated from the original data. It also does for the difference of the
-treatment effectiviness and in this case also compares it to the actual difference in
-the treatment effectiveness that we picked for the patient. Normally we would not know
-this true value, but in this case we do as we generated the data ourselves. This
-makes it possible to see how accurate the model is and how uncertain are the predictions.
+% TODO add timeseries plots, showing that the data looks very much like our experiment
 
-\begin{figure}[!h]
-    \caption{Single Patient Posterior Sample}
+Even though we already checked that the estimation seems to be working correctly and saw
+that the posterior estimates clearly favor treatment option B for this patient, there is
+still one important thing that we should check before announcing our results. We should
+make sure that our model is actually a good fit for our data. We could have clear
+results with good estimation, but if our model does a poor job at reflecting the
+reality, we should not be very excited about our results.
+
+Checking model fit for Bayesian models can be done with posterior sampling where we generate samples from
+the posterior distributions and for each of these samples we create a simulated dataset based
+on the chosen parameter values. Then we compare these simulated datasets to the actual
+data. What we want to see is that actual data looks like a typical case for a simulated
+dataset e.g. if our model where the exact way that the data was created, we would not be
+surprised to see the data that we got from the experiment.
+
+PyMC3 has an inbuilt method for taking the posterior samples, but for comparing these
+samples to the real dataset we have to create our own function. We have written a special function
+called ``draw posteriors'' for this purpose. We don't go over the code of this function,
+but what it does is to use the datasets created by the PyMC3 inbuilt method and
+calculates the mean of the measurements under each treatment and difference between
+these means. It then plots these means as distribution against the mean treatment
+measures and the difference of these means between the treatment calculated from the
+original data. For the difference between the means it also adds in the actual
+difference of the true parameters. Normally we would not know
+this true value, but in this case we do as we generated the data ourselves. This
+makes it possible to see how accurate the model actually is.
+
+\bigskip
+\begin{figure}[H]
+    \caption{Single Patient Posterior Sampling}
+    \label{singlepatientposteriorsampling}
+    \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_posterior_sampling.pdf}
 \end{figure}
+\bigskip
 
+In figure\ \ref{singlepatientposteriorsampling} we can see the plots generated by our function. 
 We see that the distribution of mean treatment effectiveness calculated from the
 generated datasets matches nicely with the actual mean of the data. This means that our
-model is not biased. Also when we look at the difference in the treatment effectiveness,
-we see that our model captures the true value quite nicely.
-
-% TODO add timeseries plots of the values to show that simulated datasets actually look
-% like new experiments
+model seems to be good enough approximation of reality. Also when we look at the difference in the treatment effectiveness,
+we see that the posterior of difference between the treatments lines very nicely with the
+true parameter difference.
 
 \subsection{Final Results}
+
+After going to the steps of:
+
+\begin{enumerate}
+    \item Defining the model
+    \item Implementing the model in PyMC3
+    \item Calculating the results
+    \item Evaluating the estimation process
+    \item Checking the posterior values
+    \item Making sure that our model is an accurate enough description of reality
+\end{enumerate}
+
+We can say that for this patient treatment B is recommended over treatment A with
+treatment B giving 0.82 points lower measurements. We can also easily communicate
+the uncertainty in our estimation by with the HPD by saying that the true difference of
+the treatments is with 95 \% probability between 0.71 and 0.94. 
 
 % TODO what can we infer and how should we communicate our results
 
 \section{Analyzing Multiple Trials With Hierarchical Models}\label{pooling}
 
-Lets next combine all the trials to understand general patterns and see if what kind of
-an effect the population parameters have on the estimates we got from our single patient
-model.
+Lets next add in all the other patients and connect the trials with a hierarchical
+model. We will still focus on patient 1 that we analyzed previously and pay special
+attention on how the posterior parameters estimates change when we pool all the data
+that we have. Our suspicion is that estimate of the difference in treatment effectiveness
+should be toned down as the treatment effectiveness for treatment B for patient 1 was an
+outlier compared to the other patients.
 
 \subsection{Defining the Model}\label{hiermodel}
 
