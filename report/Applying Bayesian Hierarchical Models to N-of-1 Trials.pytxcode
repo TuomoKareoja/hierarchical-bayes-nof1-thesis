@@ -17,9 +17,9 @@ with pm.Model() as single_patient_no_trend_model:
     # values to 0 if the particular treatment is not applied at the observation
     # adding in the effect of the trend at the particular observation
     measurement_means = (
-        treatment1_prior * measurements_df[patient == 0]["treatment1"]
-        + treatment2_prior * measurements_df[patient == 0]["treatment2"]
-        + trend_prior * measurements_df[patient == 0]["measurement"]
+        treatment1_prior * measurements_df[patient_idx == 0]["treatment1_idx"]
+        + treatment2_prior * measurements_df[patient_idx == 0]["treatment2_idx"]
+        + trend_prior * measurements_df[patient_idx == 0]["measurement_idx"]
     )
 
     # likelihood is normal distribution with the same amount of dimensions
@@ -29,7 +29,7 @@ with pm.Model() as single_patient_no_trend_model:
         "y",
         measurement_means,
         sigma=gamma_prior,
-        observed=measurements_df[patient == 0]["value"],
+        observed=measurements_df[patient_idx == 0]["value"],
     )
 
     # adding the comparison between the treatments
@@ -56,7 +56,7 @@ with single_patient_no_trend_model as model:
 draw_posterior_checks(
     predictions=predictions,
     measurements_df=measurements_df[patient == 0],
-    parameters_df=parameters_df[parameters_df["patient"] == 0],
+    parameters_df=parameters_df[parameters_df["patient_idx"] == 0],
 )
 =>PYTHONTEX#py#default#defaultverb#1#verbatim#####1660#
 import pymc3 as pm
@@ -118,7 +118,10 @@ draw_posterior_checks(
     parameters_df=parameters_df[parameters_df["patient_index"] == 0],
     plot_name="single_patient_no_trend_posterior_sampling",
 )
-=>PYTHONTEX#py#default#defaultverb#10#verbatim#####2112#
+=>PYTHONTEX#py#default#defaultverb#10#verbatim#####2133#
+
+patient_idx = measurements_df["patient_idx"]
+
 with pm.Model() as hierarchical_model:
 
     # population priors
@@ -135,8 +138,8 @@ with pm.Model() as hierarchical_model:
     pop_trend_mean_prior = pm.Normal("pop_trend_mean", mu=0.1, sigma=0.3)
     pop_trend_sd_prior = pm.HalfCauchy("pop_trend_sd", beta=2)
 
-    pop_measurement_error_beta_prior = pm.HalfCauchy(
-        "pop_measurement_error_beta", beta=10
+    pop_measurement_error_prior = pm.HalfCauchy(
+        "pop_measurement_error", beta=10
     )
 
     # separate parameter for each patient
@@ -163,17 +166,20 @@ with pm.Model() as hierarchical_model:
     )
 
     measurement_means = (
-        pat_treatment1[patient_idx] * measurements_df["treatment1"]
-        + pat_treatment2[patient_idx] * measurements_df["treatment2"]
-        + pat_trend[patient_idx] * measurements_df["measurement_index"]
+        pat_treatment1[patient_idx] * measurements_df["treatment1_idx"]
+        + pat_treatment2[patient_idx] * measurements_df["treatment2_idx"]
+        + pat_trend[patient_idx] * measurements_df["measurement_idx"]
     )
 
     likelihood = pm.Normal(
         "y",
         measurement_means,
         sigma=patients_sigma[patient_idx],
-        observed=measurements_df["measurement"],
+        observed=measurements_df["value"],
     )
+
+    # adding the comparison between the treatments
+    difference = pm.Deterministic('difference', pat_treatment1 - pat_treatment2)
 
     trace = pm.sample(800, tune=300, cores=3)
 
@@ -211,7 +217,10 @@ draw_posterior_checks(
     parameters_df=parameters_df,
     plot_name="hierarchical_model_posterior_sampling",
 )
-=>PYTHONTEX#py#default#defaultverb#11#verbatim#####2210#
+=>PYTHONTEX#py#default#defaultverb#11#verbatim#####2237#
+
+patient_idx = measurements_df["patient_idx"]
+
 with pm.Model() as hierarchical_model:
 
     # population priors
@@ -231,33 +240,33 @@ with pm.Model() as hierarchical_model:
     pop_measurement_error_beta_prior = pm.HalfCauchy(
         "pop_measurement_error_beta", beta=10
     )
-=>PYTHONTEX#py#default#defaultverb#12#verbatim#####2236#
+=>PYTHONTEX#py#default#defaultverb#12#verbatim#####2274#
     pat_treatment1 = pm.Normal(
         "treatment1",
         mu=pop_treatment1_mean_prior,
         sigma=pop_treatment1_sd_prior,
-        shape=patients_n,
+        shape=6,
     )
     pat_treatment2 = pm.Normal(
         "treatment2",
         mu=pop_treatment2_mean_prior,
         sigma=pop_treatment2_sd_prior,
-        shape=patients_n,
+        shape=6,
     )
     pat_sigma = pm.HalfCauchy(
-        "sigma", beta=pop_measurement_error_beta_prior, shape=patients_n,
+        "sigma", beta=pop_measurement_error_beta_prior, shape=6,
     )
     pat_trend = pm.Normal(
         "trend",
         mu=pop_trend_mean_prior,
         sigma=pop_trend_sd_prior,
-        shape=patients_n,
+        shape=6,
     )
-=>PYTHONTEX#py#default#defaultverb#13#verbatim#####2263#
+=>PYTHONTEX#py#default#defaultverb#13#verbatim#####2313#
     measurement_means = (
-        treatment1_prior[patient_idx] * measurements_df["treatment1"]
-        + treatment2_prior[patient_idx] * measurements_df["treatment2"]
-        + trend_prior[patient_idx] * measurements_df["measurement_idx"]
+        pat_treatment1[patient_idx] * measurements_df["treatment1"]
+        + pat_treatment2[patient_idx] * measurements_df["treatment2"]
+        + pat_trend[patient_idx] * measurements_df["measurement_idx"]
     )
 
     likelihood = pm.Normal(
@@ -266,21 +275,10 @@ with pm.Model() as hierarchical_model:
         sigma=patients_sigma[patient_idx],
         observed=measurements_df["measurement"],
     )
-=>PYTHONTEX#py#default#defaultverb#14#verbatim#####2290#
+=>PYTHONTEX#py#default#defaultverb#14#verbatim#####2341#
     trace = pm.sample(800, tune=300, cores=3)
-=>PYTHONTEX#py#default#defaultverb#15#verbatim#####2297#
-   pm.traceplot(
-        trace,
-        [
-            "treatment1",
-            "treatment2",
-            "sigma",
-            "trend",
-        ],
-   )
-   plt.show()
-
-   pm.traceplot(
+=>PYTHONTEX#py#default#defaultverb#15#verbatim#####2355#
+    pm.traceplot(
         trace,
         [
             "pop_treatment1_mean",
@@ -294,11 +292,22 @@ with pm.Model() as hierarchical_model:
     )
     plt.show()
 
+    pm.traceplot(
+        trace,
+        [
+            "treatment1",
+            "treatment2",
+            "sigma",
+            "trend",
+        ],
+    )
+    plt.show()
+
     pm.summary(trace)
-=>PYTHONTEX#py#default#defaultverb#16#verbatim#####2341#
+=>PYTHONTEX#py#default#defaultverb#16#verbatim#####2429#
     pm.plot_posterior(trace)
     plt.show()
-=>PYTHONTEX#py#default#defaultverb#17#verbatim#####2349#
+=>PYTHONTEX#py#default#defaultverb#17#verbatim#####2437#
 # posterior sampling
 with hierarchical_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)

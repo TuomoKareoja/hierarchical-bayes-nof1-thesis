@@ -82,10 +82,12 @@ with pm.Model() as single_patient_no_trend_model:
         observed=measurements_df[patient_index == 0]["measurement"],
     )
 
-    difference = pm.Deterministic('difference', treatment1_prior - treatment2_prior)
+    difference = pm.Deterministic("difference", treatment1_prior - treatment2_prior)
 
     # running the model
-    trace = pm.sample(draws=800, tune=700, cores=3, random_seed=[seed, seed + 1, seed + 2])
+    trace = pm.sample(
+        draws=800, tune=700, cores=3, random_seed=[seed, seed + 1, seed + 2]
+    )
 
     pm.traceplot(trace, ["treatment1", "treatment2", "trend", "gamma"])
     plt.savefig(
@@ -97,8 +99,7 @@ with pm.Model() as single_patient_no_trend_model:
     print(summary_metrics_df)
     # TODO only keep the most important metrics to have the table with the page
     with open(
-        os.path.join(visualization_path, "single_patient_diag_metrics.tex"),
-        "w",
+        os.path.join(visualization_path, "single_patient_diag_metrics.tex"), "w",
     ) as file:
         file.write(
             summary_metrics_df.drop(
@@ -141,13 +142,10 @@ with pm.Model() as hierarchical_with_trend_model:
     pop_treatment2_mean_prior = pm.Normal("pop_treatment2_mean", mu=10, sigma=10)
     pop_treatment2_sd_prior = pm.HalfCauchy("pop_treatment2_sd", beta=10)
 
-    # TODO should the trend be capped so that nobody so get better?
     pop_trend_mean_prior = pm.Normal("pop_trend_mean", mu=0.1, sigma=0.3)
     pop_trend_sd_prior = pm.HalfCauchy("pop_trend_sd", beta=2)
 
-    pop_measurement_error_beta_prior = pm.HalfCauchy(
-        "pop_measurement_error_beta", beta=10
-    )
+    pop_measurement_error_prior = pm.HalfCauchy("pop_measurement_error", beta=10)
 
     # separate parameter for each patient
     pat_treatment1 = pm.Normal(
@@ -162,8 +160,8 @@ with pm.Model() as hierarchical_with_trend_model:
         sigma=pop_treatment2_sd_prior,
         shape=patients_n,
     )
-    pat_sigma = pm.HalfCauchy(
-        "sigma", beta=pop_measurement_error_beta_prior, shape=patients_n,
+    pat_gamma = pm.HalfCauchy(
+        "gamma", beta=pop_measurement_error_prior, shape=patients_n,
     )
     pat_trend = pm.Normal(
         "trend", mu=pop_trend_mean_prior, sigma=pop_trend_sd_prior, shape=patients_n,
@@ -174,18 +172,21 @@ with pm.Model() as hierarchical_with_trend_model:
         + pat_treatment2[patient_index] * measurements_df["treatment2_indicator"]
         + pat_trend[patient_index] * measurements_df["measurement_index"]
     )
-
+    
     likelihood = pm.Normal(
         "y",
         measurement_means,
-        sigma=pat_sigma[patient_index],
+        sigma=pat_gamma[patient_index],
         observed=measurements_df["measurement"],
     )
 
-    trace = pm.sample(800, tune=500, cores=3)
+    # adding the comparison between the treatments
+    difference = pm.Deterministic("difference", pat_treatment1 - pat_treatment2)
+
+    trace = pm.sample(800, tune=500, cores=3, random_seed=[seed, seed + 1, seed + 2])
 
     pm.traceplot(
-        trace, ["treatment1", "treatment2", "sigma",],
+        trace, ["treatment1", "treatment2", "trend", "gamma"],
     )
     plt.savefig(
         os.path.join(
@@ -202,9 +203,9 @@ with pm.Model() as hierarchical_with_trend_model:
             "pop_treatment1_sd",
             "pop_treatment2_mean",
             "pop_treatment2_sd",
-            "pop_measurement_error_beta",
             "pop_trend_mean",
             "pop_trend_sd",
+            "pop_measurement_error",
         ],
     )
     plt.savefig(
@@ -219,8 +220,7 @@ with pm.Model() as hierarchical_with_trend_model:
     print(summary_metrics_df)
     # TODO only keep the most important metrics to have the table with the page
     with open(
-        os.path.join(visualization_path, "hierarchical_model_diag_metrics.tex"),
-        "w",
+        os.path.join(visualization_path, "hierarchical_model_diag_metrics.tex"), "w",
     ) as file:
         file.write(
             summary_metrics_df.drop(
@@ -229,12 +229,12 @@ with pm.Model() as hierarchical_with_trend_model:
         )
 
     # TODO We need to separate this into multiple plots
-    # pm.plot_posterior(trace)
-    # plt.savefig(
-    #     os.path.join(visualization_path, "hierarchical_with_trend_posteriors.pdf"),
-    #     bbox_inches="tight",
-    # )
-    # plt.show()
+    pm.plot_posterior(trace)
+    plt.savefig(
+        os.path.join(visualization_path, "hierarchical_model_posteriors.pdf"),
+        bbox_inches="tight",
+    )
+    plt.show()
 
     pm.summary(trace)
 

@@ -1528,7 +1528,7 @@ already has a trend:
     \end{equation}
 \end{def} where \(\theta \) and \(\eta \) are the treatment effects with \(Z_t\) and \(W_t\) being indicator
 variables that is 1 when observation \(t\) is within a period where treatment was applied and
-0 otherwise. \(\beta\) is the trend and \(\epsilon_{t} \sim N(0,\tau^2) \) is the error term at \(t\).
+0 otherwise. \(\beta \) is the trend and \(\epsilon_{t} \sim N(0,\tau^2) \) is the error term at \(t\).
 
 Our model assumes that the measurement values are distributed normally with
 variance \(\tau^2\) and with a mean of either \(\theta \) or \(\eta \) depending on which
@@ -1611,9 +1611,9 @@ with pm.Model() as single_patient_no_trend_model:
     # values to 0 if the particular treatment is not applied at the observation
     # adding in the effect of the trend at the particular observation
     measurement_means = (
-        treatment1_prior * measurements_df[patient == 0]["treatment1"]
-        + treatment2_prior * measurements_df[patient == 0]["treatment2"]
-        + trend_prior * measurements_df[patient == 0]["measurement"]
+        treatment1_prior * measurements_df[patient_idx == 0]["treatment1_idx"]
+        + treatment2_prior * measurements_df[patient_idx == 0]["treatment2_idx"]
+        + trend_prior * measurements_df[patient_idx == 0]["measurement_idx"]
     )
 
     # likelihood is normal distribution with the same amount of dimensions
@@ -1623,7 +1623,7 @@ with pm.Model() as single_patient_no_trend_model:
         "y",
         measurement_means,
         sigma=gamma_prior,
-        observed=measurements_df[patient == 0]["value"],
+        observed=measurements_df[patient_idx == 0]["value"],
     )
 
     # adding the comparison between the treatments
@@ -1650,7 +1650,7 @@ with single_patient_no_trend_model as model:
 draw_posterior_checks(
     predictions=predictions,
     measurements_df=measurements_df[patient == 0],
-    parameters_df=parameters_df[parameters_df["patient"] == 0],
+    parameters_df=parameters_df[parameters_df["patient_idx"] == 0],
 )
 \end{pyverbatim}
 
@@ -2040,76 +2040,100 @@ model. We will still focus on patient 1 that we analyzed previously and pay spec
 attention on how the posterior parameters estimates change when we pool all the data
 that we have. Our suspicion is that estimate of the difference in treatment effectiveness
 should be toned down as the treatment effectiveness for treatment B for patient 1 was an
-outlier compared to the other patients.
+outlier compared to the other patients (see figure\ \ref{parameterdistribution}).
 
 \subsection{Defining the Model}\label{hiermodel}
 
-For the single patients we use the same model as before, but now we index all our
-measurements not just by time \(t\), but also by patient \(i\):
+We start with the same model that we used for the single patient, but now we index all our
+measurements not just by time \(t\), but also by patient \(j\):
 
-\begin{def}\label{simplesinglepatientmodel}
+\begin{def}\label{hierarchicalmodel}
     \begin{equation}\label{}
-        y_{ti} = Z_{ti}\theta_{i} + W_{ti}\eta_{i} + t\beta_{i} + \epsilon_{ti}
+        y_{tj} = Z_{tj}\theta_{j} + W_{tj}\eta_{j} + t\beta_{j} + \epsilon_{tj}
     \end{equation}
-\end{def} where \(\theta_{i} \) and \(\eta_{i} \) are the treatment effects with \(Z_{ti}\) and \(W_{ti}\) being indicator
+\end{def} where \(\theta_{j} \) and \(\eta_{j} \) are the treatment effects with \(Z_{tj}\) and \(W_{tj}\) being indicator
 variables that is 1 when observation \(t\) is within a period where treatment was applied and
-0 otherwise. \(\epsilon_{ti} \sim N(0,\tau_{i}^2) \) is the error term at \(t\).
+0 otherwise. \(\beta_j\) is the trend representing the natural progress of the
+condition. \(\epsilon_{tj} \sim N(0,\tau_j^2) \) is the error term at \(t\) and
+\(\rho_j\) is the correlation between consecutive errors.
 
-On top of the individual patient model we now add the population-level parameters, which the
-patient-level parameters are drawn from.
+To make this model hierarchical we now add the population level distributions which 
+the patient-level parameters are drawn from and the prior distributions for the
+parameters defining the population level distribution:
 
 \bigskip
-
 \begin{tikzpicture}
 
     \matrix[matrix of math nodes, column sep=-35pt, row sep=30pt] (mat)
     {
         \ & \mu_{\theta}, \sigma_{\theta}, \mu_{\eta},\sigma_{\eta}, \mu_{\beta}, \sigma_{\beta}, \gamma_{\tau} & \ \\
-        \ & \theta_i, \eta_i, \beta_i, \tau_i & \\\
+        \ \\
+        \ \\
+        \ \\
+        \ & \theta_j, \eta_j, \beta_j, \tau_j & \\\
         \ \\
         y_{1,1}, \ldots, y_{28, 1} & \ldots & y_{1,6}, \ldots, y_{28, 6} \\
     };
 
-    \draw[->,>=latex] (mat-1-2) -- (mat-2-2);
-    \draw[->,>=latex] (mat-2-2) -- (mat-4-1);
-    \draw[->,>=latex] (mat-2-2) -- (mat-4-3);
+    \draw[->,>=latex] (mat-1-2) -- (mat-5-2);
+    \draw[->,>=latex] (mat-5-2) -- (mat-7-1);
+    \draw[->,>=latex] (mat-5-2) -- (mat-7-3);
 
+    \node[anchor=east] at ([xshift = 0pt]mat-1-1)
+    {$
+        \mu_{\theta} \sim \mathcal{N}(10, 10),
+        \sigma_{\theta} \sim HalfCauchy(0, 10),
+    $};
     \node[anchor=east] at ([xshift = 0pt]mat-2-1)
     {$
-        \theta_{i} \sim \mathcal{N}(\mu_{\theta},\sigma_{\theta}^2),
-        \eta_{i} \sim \mathcal{N}(\mu_{\eta},\sigma_{\eta}^2),
-        \beta_{i} \sim \mathcal{N}(\mu_{\beta},\sigma_{\beta}^2),
+        \mu_{\eta} \sim \mathcal{N}(10, 10),
+        \sigma_{\eta} \sim HalfCauchy(0, 10),
     $};
     \node[anchor=east] at ([xshift = 0pt]mat-3-1)
     {$
-        \tau_{i} \sim HalfCauchy(0, \gamma_{\tau}),
+        \mu_{\beta} \sim \mathcal{N}(0.01, 0.3),
+        \sigma_{\beta} \sim HalfCauchy(0, 2),
     $};
-
+    \node[anchor=east] at ([xshift = 0pt]mat-4-1)
+    {$
+        \gamma_{\tau} \sim HalfCauchy(0, 10)
+    $};
+    \node[anchor=east] at ([xshift = 0pt]mat-5-1)
+    {$
+        \theta_{j} \sim \mathcal{N}(\mu_{\theta},\sigma_{\theta}^2),
+        \eta_{j} \sim \mathcal{N}(\mu_{\eta},\sigma_{\eta}^2),
+        \beta_{j} \sim \mathcal{N}(\mu_{\beta},\sigma_{\beta}^2),
+    $};
+    \node[anchor=east] at ([xshift = 0pt]mat-6-1)
+    {$
+        \tau_{j} \sim HalfCauchy(0, \gamma_{\tau}),
+    $};
+    \node[anchor=east] at ([xshift = -35pt]mat-7-1)
+    {$
+        y_{tj} = Z_{tj}\theta_{j} + W_{tj}\eta_{j} + t\beta_{j} + \epsilon_{tj}
+    $};
 \end{tikzpicture}
 
-Last we need to define prior distributions for the parameters defining the population distribution:
+As the priors are defined on the population level we have to think about defining the
+parameters of these distributions in a bit different way
 
-\begin{align}\label{}
-    \mu_{\theta} &\sim \mathcal{N}(10, 10) \nonumber \\
-    \sigma_{\theta} &\sim HalfCauchy(0, 10) \nonumber \\
-    \mu_{\eta} &\sim \mathcal{N}(10, 10) \nonumber \\
-    \sigma_{\eta} &\sim HalfCauchy(0, 10) \nonumber \\
-    \mu_{\beta} &\sim \mathcal{N}(0.01, 0.3) \nonumber \\
-    \sigma_{\beta} &\sim HalfCauchy(0, 2) \nonumber \\
-    \gamma_{\tau} &\sim HalfCauchy(0, 10) \nonumber
-\end{align}
+% TODO what is the logic of defining the priors
+% TODO should the priors be defined bit tighter as we are now talking about population?
 
 \subsection{Implementing the Model in PyMC3}
 
-As we are now already familiar with basics of PyMC3, we can now skip explaining some
-parts of the code.
+Next we move to implementing our hierarchical model in PyMC3. As by now we are already 
+familiar with basics of PyMC3, we can now skip explaining the whole code and just focus
+on the difference from the single patient model.
 
-There is no need to load the packages and the data as they have already been loaded in.
 
 % TODO add code and explanation for patient numbers and patient indices
 
 \bigskip
 \begin{pyverbatim}
+
+patient_idx = measurements_df["patient_idx"]
+
 with pm.Model() as hierarchical_model:
 
     # population priors
@@ -2126,8 +2150,8 @@ with pm.Model() as hierarchical_model:
     pop_trend_mean_prior = pm.Normal("pop_trend_mean", mu=0.1, sigma=0.3)
     pop_trend_sd_prior = pm.HalfCauchy("pop_trend_sd", beta=2)
 
-    pop_measurement_error_beta_prior = pm.HalfCauchy(
-        "pop_measurement_error_beta", beta=10
+    pop_measurement_error_prior = pm.HalfCauchy(
+        "pop_measurement_error", beta=10
     )
 
     # separate parameter for each patient
@@ -2154,17 +2178,20 @@ with pm.Model() as hierarchical_model:
     )
 
     measurement_means = (
-        pat_treatment1[patient_idx] * measurements_df["treatment1"]
-        + pat_treatment2[patient_idx] * measurements_df["treatment2"]
-        + pat_trend[patient_idx] * measurements_df["measurement_index"]
+        pat_treatment1[patient_idx] * measurements_df["treatment1_idx"]
+        + pat_treatment2[patient_idx] * measurements_df["treatment2_idx"]
+        + pat_trend[patient_idx] * measurements_df["measurement_idx"]
     )
 
     likelihood = pm.Normal(
         "y",
         measurement_means,
         sigma=patients_sigma[patient_idx],
-        observed=measurements_df["measurement"],
+        observed=measurements_df["value"],
     )
+
+    # adding the comparison between the treatments
+    difference = pm.Deterministic('difference', pat_treatment1 - pat_treatment2)
 
     trace = pm.sample(800, tune=300, cores=3)
 
@@ -2208,6 +2235,9 @@ draw_posterior_checks(
 \subsubsection{Defining the Population Level Priors}
 \bigskip
 \begin{pyverbatim}
+
+patient_idx = measurements_df["patient_idx"]
+
 with pm.Model() as hierarchical_model:
 
     # population priors
@@ -2230,41 +2260,61 @@ with pm.Model() as hierarchical_model:
 \end{pyverbatim}
 \bigskip
 
+The first thing we do even before defining the population level priors is the create an
+index variable of the patient index. This is done just for clarity as referring to
+patient\_idx instead of measurements\_df[``patient\_idx''].
+
+With the population priors we use the exact same method that we used when we were
+defining priors in the single patient model. All the distributions that we use are
+inbuilt in PyMC3, so now complex procedures are needed here.
 
 \subsubsection{Defining the Patient Level Parameters}
+
 \bigskip
 \begin{pyverbatim}
     pat_treatment1 = pm.Normal(
         "treatment1",
         mu=pop_treatment1_mean_prior,
         sigma=pop_treatment1_sd_prior,
-        shape=patients_n,
+        shape=6,
     )
     pat_treatment2 = pm.Normal(
         "treatment2",
         mu=pop_treatment2_mean_prior,
         sigma=pop_treatment2_sd_prior,
-        shape=patients_n,
+        shape=6,
     )
     pat_sigma = pm.HalfCauchy(
-        "sigma", beta=pop_measurement_error_beta_prior, shape=patients_n,
+        "sigma", beta=pop_measurement_error_beta_prior, shape=6,
     )
     pat_trend = pm.Normal(
         "trend",
         mu=pop_trend_mean_prior,
         sigma=pop_trend_sd_prior,
-        shape=patients_n,
+        shape=6,
     )
 \end{pyverbatim}
 \bigskip
+
+When defining the patient level we run into bigger differences compared to the single
+patient model. As every parameter has to be defined for each patient, every distribution
+has to be multidimensional. As we saw when defining the single patient likelihood, PyMC3
+can create multidimensional distributions if the distributions parameters are vectors
+instead of single values, but now the parameters are single values (we have only one
+population distribution), but we still want multidimensional distributions. We can do
+this by explicitly defining the shape parameter of the distribution. This, a bit
+confusingly named parameter (conflict with a commonly used terms for distribution
+parameters), takes an integer value and makes the distribution have that many
+dimensions, using the same parameter values for each dimensions. The parameter values
+for the distributions we get from the population distributions.
 
 \subsubsection{Defining the Likelihood}
 \bigskip
 \begin{pyverbatim}
     measurement_means = (
-        treatment1_prior[patient_idx] * measurements_df["treatment1"]
-        + treatment2_prior[patient_idx] * measurements_df["treatment2"]
-        + trend_prior[patient_idx] * measurements_df["measurement_idx"]
+        pat_treatment1[patient_idx] * measurements_df["treatment1"]
+        + pat_treatment2[patient_idx] * measurements_df["treatment2"]
+        + pat_trend[patient_idx] * measurements_df["measurement_idx"]
     )
 
     likelihood = pm.Normal(
@@ -2276,15 +2326,16 @@ with pm.Model() as hierarchical_model:
 \end{pyverbatim}
 \bigskip
 
+Defining the likelihood is done very similarly as we did with the single patient model,
+but now we have to use indices to get separate values for each patient. The measurement
+means now becomes a 6X28 size matrix, where every patient get her own row with
+measurement means varying by the treatment given. For sigma we use a vector that is
+indexed the same way as the treatment means. This vector has one value for each patient
+and all the 28 observations of the patient will use this same value.
+
+% TODO understand how the indexing is actually happening
 
 \subsubsection{Running the Model}
-
-As our model is now much more complex than with the with the single patient model with
-more parameters, we need to use more steps to get a reliable estimate.
-
-Also the number of tuning steps needs to increased.
-
-% TODO what is the actual number of steps as the amount of parameters affects this!
 
 \bigskip
 \begin{pyverbatim}
@@ -2292,21 +2343,17 @@ Also the number of tuning steps needs to increased.
 \end{pyverbatim}
 \bigskip
 
+As our model is now much more complex than with the with the single patient model with
+more parameters, we need to use more tuning and calculation steps compared to our single
+patient model. Otherwise nothing changes. We still use 3 chains and now this chains take
+steps in the multidimensional posterior defined not just by patient parameters, but also
+population parameters, adding 7 more dimensions.
+
 \subsubsection{Checking Algorithm Diagnostics}
+
 \bigskip
 \begin{pyverbatim}
-   pm.traceplot(
-        trace,
-        [
-            "treatment1",
-            "treatment2",
-            "sigma",
-            "trend",
-        ],
-   )
-   plt.show()
-
-   pm.traceplot(
+    pm.traceplot(
         trace,
         [
             "pop_treatment1_mean",
@@ -2320,19 +2367,60 @@ Also the number of tuning steps needs to increased.
     )
     plt.show()
 
+    pm.traceplot(
+        trace,
+        [
+            "treatment1",
+            "treatment2",
+            "sigma",
+            "trend",
+        ],
+    )
+    plt.show()
+
     pm.summary(trace)
 \end{pyverbatim}
 \bigskip
 
-\begin{figure}[!h]
-    \caption{Hierarchical Model Patient Level Traceplots}
-    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{hierarchical_model_patient_level_traceplot.pdf}
-\end{figure}
+When checking algorithm diagnostic the amount of parameters is now so big that it makes
+sense to separate the traceplots into multiple chunks. We start with the population
+traceplots as these look the same as with patient level traceplots in the single patient
+model. In figure\ \ref{hierarchicalmodelpopulationtraceplots}
 
-\begin{figure}[!h]
+\bigskip
+\begin{figure}[H]
     \caption{Hierarchical Model Population Level Traceplots}
+    \label{hierarchicalmodelpopulationtraceplots}
+    \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{hierarchical_model_population_level_traceplot.pdf}
 \end{figure}
+\bigskip
+
+In figure\ \ref{hierarchicalmodelpatienttraceplots} we can see traceplots for each of
+the 7 population level parameters. Once again, we hope to see that the timeseries looks
+like noise and that the posterior distributions of the chains align nicely. Everything
+seems to be in order except that we see some spikes.
+
+\bigskip
+\begin{figure}[H]
+    \caption{Hierarchical Model Patient Level Traceplots}
+    \label{hierarchicalmodelpatienttraceplots}
+    \bigskip
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{hierarchical_model_patient_level_traceplot.pdf}
+\end{figure}
+\bigskip
+
+In table\ \ref{hierarchicalmodeldiagnosticmeasures}
+
+\bigskip
+\begin{figure}[H]
+    \caption{Hierarchical Model Diagnostic Measures}
+    \label{hierarchicalmodeldiagnosticmeasures}
+    \bigskip
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{hierarchical_model_patient_level_traceplot.pdf}
+\end{figure}
+\bigskip
+
 
 \input{../figures/single_patient_no_trend_diag_metrics.tex}
 
