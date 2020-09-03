@@ -9,6 +9,9 @@ visualization_path = os.path.join("figures")
 def draw_posterior_checks(
     predictions, measurements_df, parameters_df, plot_name,
 ):
+    _, axes = plt.subplots(
+        nrows=len(parameters_df), ncols=3, figsize=(12, 4 * len(parameters_df))
+    )
 
     for patient in parameters_df["patient_index"]:
 
@@ -28,7 +31,15 @@ def draw_posterior_checks(
             == 1,
         ]
 
-        _, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(14, 6))
+        if len(parameters_df) == 1:
+            ax1 = axes[0]
+            ax2 = axes[1]
+            ax3 = axes[2]
+
+        else:
+            ax1 = axes[patient, 0]
+            ax2 = axes[patient, 1]
+            ax3 = axes[patient, 2]
 
         # Treatment 1
         sns.distplot(
@@ -45,7 +56,15 @@ def draw_posterior_checks(
             color="red",
             label="Mean in Data",
         )
-        ax1.set_title("Treatment 1")
+        # Add label for the patient number
+        ax1.text(
+            x=0.09,
+            y=0.9,
+            s="Patient {}".format(patient + 1),
+            # horizontalalignement="center",
+            # verticalalignement="center",
+            transform=ax1.transAxes
+        )
 
         # Treatment 2
         sns.distplot(
@@ -62,7 +81,6 @@ def draw_posterior_checks(
             color="red",
             label="Mean in Data",
         )
-        ax2.set_title("Treatment 2")
 
         # Treatment difference
         sns.distplot(
@@ -90,10 +108,22 @@ def draw_posterior_checks(
             color="green",
             label="Real Parameter Value",
         )
-        ax3.set_title("Treatment 1 - Treatment 2")
-        ax3.legend()
-        plt.savefig(
-            os.path.join(visualization_path, plot_name + str(".pdf")),
-            bbox_inches="tight",
-        )
-        plt.show()
+
+    if len(parameters_df) == 1:
+        ax1 = axes[0]
+        ax2 = axes[1]
+        ax3 = axes[2]
+
+    else:
+        ax1 = axes[0, 0]
+        ax2 = axes[0, 1]
+        ax3 = axes[0, 2]
+
+    ax1.set_title("Treatment 1")
+    ax2.set_title("Treatment 2")
+    ax3.set_title("Treatment 1 - Treatment 2")
+    ax3.legend()
+    plt.savefig(
+        os.path.join(visualization_path, plot_name + str(".pdf")), bbox_inches="tight",
+    )
+    plt.show()

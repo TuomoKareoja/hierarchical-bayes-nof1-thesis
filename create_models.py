@@ -89,7 +89,9 @@ with pm.Model() as single_patient_no_trend_model:
         draws=800, tune=700, cores=3, random_seed=[seed, seed + 1, seed + 2]
     )
 
-    pm.traceplot(trace, ["treatment1", "treatment2", "trend", "gamma"])
+    pm.traceplot(
+        trace, ["treatment1", "treatment2", "trend", "gamma"], divergences="top"
+    )
     plt.savefig(
         os.path.join(visualization_path, "single_patient_traceplot.pdf"),
         bbox_inches="tight",
@@ -172,7 +174,7 @@ with pm.Model() as hierarchical_with_trend_model:
         + pat_treatment2[patient_index] * measurements_df["treatment2_indicator"]
         + pat_trend[patient_index] * measurements_df["measurement_index"]
     )
-    
+
     likelihood = pm.Normal(
         "y",
         measurement_means,
@@ -181,7 +183,10 @@ with pm.Model() as hierarchical_with_trend_model:
     )
 
     # adding the comparison between the treatments
-    difference = pm.Deterministic("difference", pat_treatment1 - pat_treatment2)
+    pop_difference = pm.Deterministic(
+        "pat_difference", pop_treatment1_mean_prior - pop_treatment2_mean_prior
+    )
+    pat_difference = pm.Deterministic("pop_difference", pat_treatment1 - pat_treatment2)
 
     trace = pm.sample(800, tune=500, cores=3, random_seed=[seed, seed + 1, seed + 2])
 
@@ -207,6 +212,7 @@ with pm.Model() as hierarchical_with_trend_model:
             "pop_trend_sd",
             "pop_measurement_error",
         ],
+        divergences="top",
     )
     plt.savefig(
         os.path.join(
@@ -228,10 +234,30 @@ with pm.Model() as hierarchical_with_trend_model:
             ).to_latex()
         )
 
-    # TODO We need to separate this into multiple plots
-    pm.plot_posterior(trace)
+    pm.plot_posterior(
+        trace,
+        [
+            "pop_treatment1_mean",
+            "pop_treatment2_mean",
+            "pop_trend_mean",
+            "pop_difference",
+        ],
+    )
     plt.savefig(
-        os.path.join(visualization_path, "hierarchical_model_posteriors.pdf"),
+        os.path.join(
+            visualization_path, "hierarchical_model_population_level_posteriors.pdf"
+        ),
+        bbox_inches="tight",
+    )
+    plt.show()
+
+    pm.plot_posterior(
+        trace, ["treatment1", "treatment2", "trend", "pat_difference"]
+    )
+    plt.savefig(
+        os.path.join(
+            visualization_path, "hierarchical_model_patient_level_posteriors.pdf"
+        ),
         bbox_inches="tight",
     )
     plt.show()

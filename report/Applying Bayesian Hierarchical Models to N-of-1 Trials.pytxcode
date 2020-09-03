@@ -304,10 +304,10 @@ with pm.Model() as hierarchical_model:
     plt.show()
 
     pm.summary(trace)
-=>PYTHONTEX#py#default#defaultverb#16#verbatim#####2429#
+=>PYTHONTEX#py#default#defaultverb#16#verbatim#####2436#
     pm.plot_posterior(trace)
     plt.show()
-=>PYTHONTEX#py#default#defaultverb#17#verbatim#####2437#
+=>PYTHONTEX#py#default#defaultverb#17#verbatim#####2472#
 # posterior sampling
 with hierarchical_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)
