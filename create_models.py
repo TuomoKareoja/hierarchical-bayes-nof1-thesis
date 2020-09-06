@@ -27,10 +27,10 @@ treatment_measurements_n = int(os.getenv("TREATMENT_MEASUREMENTS_N"))
 # treatment and no treatment only. No multiple treatments
 total_measurements_n = blocks_n * treatment_measurements_n * 2
 
-population_treatment1_mean = float(os.getenv("POPULATION_TREATMENT1_MEAN"))
-population_treatment1_sd = float(os.getenv("POPULATION_TREATMENT1_SD"))
-population_treatment2_mean = float(os.getenv("POPULATION_TREATMENT2_MEAN"))
-population_treatment2_sd = float(os.getenv("POPULATION_TREATMENT2_SD"))
+population_treatment_a_mean = float(os.getenv("POPULATION_TREATMENT1_MEAN"))
+population_treatment_a_sd = float(os.getenv("POPULATION_TREATMENT1_SD"))
+population_treatment_b_mean = float(os.getenv("POPULATION_TREATMENT2_MEAN"))
+population_treatment_b_sd = float(os.getenv("POPULATION_TREATMENT2_SD"))
 population_trend_mean = float(os.getenv("POPULATION_TREND_MEAN"))
 population_trend_sd = float(os.getenv("POPULATION_TREND_SD"))
 
@@ -57,19 +57,18 @@ patient_index = measurements_df["patient_index"]
 
 with pm.Model() as single_patient_no_trend_model:
 
-    # separate priors for each treatment
-    treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10)
-    treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
-    trend_prior = pm.Normal("trend", mu=0.1, sigma=0.3)
+    treatment_a = pm.Normal("Treatment A", mu=10, sigma=1)
+    treatment_b = pm.Normal("Treatment B", mu=10, sigma=1)
+    trend = pm.Normal("Trend", mu=0.1, sigma=0.3)
     # common variance parameter defining the error
-    gamma_prior = pm.HalfCauchy("gamma", beta=10)
+    gamma = pm.HalfCauchy("Gamma", beta=1)
 
     # measurements are created from both priors, with a indicator setting the
     # values to 0 if the treatment is not applied at the particular observation
     measurement_est = (
-        treatment1_prior * measurements_df[patient_index == 0]["treatment1_indicator"]
-        + treatment2_prior * measurements_df[patient_index == 0]["treatment2_indicator"]
-        + trend_prior * measurements_df[patient_index == 0]["measurement_index"]
+        treatment_a * measurements_df[patient_index == 0]["treatment1_indicator"]
+        + treatment_b * measurements_df[patient_index == 0]["treatment2_indicator"]
+        + trend * measurements_df[patient_index == 0]["measurement_index"]
     )
 
     # likelihood is normal distribution with the same amount of dimensions
@@ -78,11 +77,13 @@ with pm.Model() as single_patient_no_trend_model:
     likelihood = pm.Normal(
         "y",
         measurement_est,
-        sigma=gamma_prior,
+        sigma=gamma,
         observed=measurements_df[patient_index == 0]["measurement"],
     )
 
-    difference = pm.Deterministic("difference", treatment1_prior - treatment2_prior)
+    difference = pm.Deterministic(
+        "Treatment Difference (A-B)", treatment_a - treatment_b
+    )
 
     # running the model
     trace = pm.sample(
@@ -90,7 +91,7 @@ with pm.Model() as single_patient_no_trend_model:
     )
 
     pm.traceplot(
-        trace, ["treatment1", "treatment2", "trend", "gamma"], divergences="top"
+        trace, ["Treatment A", "Treatment B", "Trend", "Gamma"], divergences="top"
     )
     plt.savefig(
         os.path.join(visualization_path, "single_patient_traceplot.pdf"),
@@ -138,40 +139,39 @@ draw_posterior_checks(
 with pm.Model() as hierarchical_with_trend_model:
 
     # population priors
-    pop_treatment1_mean_prior = pm.Normal("pop_treatment1_mean", mu=10, sigma=10)
-    pop_treatment1_sd_prior = pm.HalfCauchy("pop_treatment1_sd", beta=10)
+    pop_treatment_a_mean = pm.Normal("Population Treatment A Mean", mu=10, sigma=10)
+    pop_treatment_a_sd = pm.HalfCauchy("Population Treatment A Sd", beta=10)
 
-    pop_treatment2_mean_prior = pm.Normal("pop_treatment2_mean", mu=10, sigma=10)
-    pop_treatment2_sd_prior = pm.HalfCauchy("pop_treatment2_sd", beta=10)
+    pop_treatment_b_mean = pm.Normal("Population Treatment B Mean", mu=10, sigma=10)
+    pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=10)
 
-    pop_trend_mean_prior = pm.Normal("pop_trend_mean", mu=0.1, sigma=0.3)
-    pop_trend_sd_prior = pm.HalfCauchy("pop_trend_sd", beta=2)
+    pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.3)
+    pop_trend_sd = pm.HalfCauchy("Population Trend SD", beta=2)
 
-    pop_measurement_error_prior = pm.HalfCauchy("pop_measurement_error", beta=10)
+    pop_gamma = pm.HalfCauchy("Population Gamma", beta=10)
 
     # separate parameter for each patient
-    pat_treatment1 = pm.Normal(
-        "treatment1",
-        mu=pop_treatment1_mean_prior,
-        sigma=pop_treatment1_sd_prior,
+    pat_treatment_a = pm.Normal(
+        "Treatment A",
+        mu=pop_treatment_a_mean,
+        sigma=pop_treatment_a_sd,
         shape=patients_n,
     )
-    pat_treatment2 = pm.Normal(
-        "treatment2",
-        mu=pop_treatment2_mean_prior,
-        sigma=pop_treatment2_sd_prior,
+    pat_treatment_b = pm.Normal(
+        "Treatment B",
+        mu=pop_treatment_b_mean,
+        sigma=pop_treatment_b_sd,
         shape=patients_n,
     )
-    pat_gamma = pm.HalfCauchy(
-        "gamma", beta=pop_measurement_error_prior, shape=patients_n,
-    )
+    # TODO check what is the parameter implemented in PyMC3
+    pat_gamma = pm.HalfCauchy("Gamma", beta=pop_gamma, shape=patients_n,)
     pat_trend = pm.Normal(
-        "trend", mu=pop_trend_mean_prior, sigma=pop_trend_sd_prior, shape=patients_n,
+        "Trend", mu=pop_trend_mean, sigma=pop_trend_sd, shape=patients_n,
     )
 
     measurement_means = (
-        pat_treatment1[patient_index] * measurements_df["treatment1_indicator"]
-        + pat_treatment2[patient_index] * measurements_df["treatment2_indicator"]
+        pat_treatment_a[patient_index] * measurements_df["treatment1_indicator"]
+        + pat_treatment_b[patient_index] * measurements_df["treatment2_indicator"]
         + pat_trend[patient_index] * measurements_df["measurement_index"]
     )
 
@@ -184,14 +184,37 @@ with pm.Model() as hierarchical_with_trend_model:
 
     # adding the comparison between the treatments
     pop_difference = pm.Deterministic(
-        "pat_difference", pop_treatment1_mean_prior - pop_treatment2_mean_prior
+        "Population Treatment Difference (A-B)",
+        pop_treatment_a_mean - pop_treatment_b_mean,
     )
-    pat_difference = pm.Deterministic("pop_difference", pat_treatment1 - pat_treatment2)
+    pat_difference = pm.Deterministic(
+        "Treatment Difference (A-B)", pat_treatment_a - pat_treatment_b
+    )
 
     trace = pm.sample(800, tune=500, cores=3, random_seed=[seed, seed + 1, seed + 2])
 
     pm.traceplot(
-        trace, ["treatment1", "treatment2", "trend", "gamma"],
+        trace,
+        [
+            "Population Treatment A Mean",
+            "Population Treatment A Sd",
+            "Population Treatment B Mean",
+            "Population Treatment B Sd",
+            "Population Trend Mean",
+            "Population Trend SD",
+            "Population Gamma",
+        ],
+    )
+    plt.savefig(
+        os.path.join(
+            visualization_path, "hierarchical_model_population_level_traceplot.pdf"
+        ),
+        bbox_inches="tight",
+    )
+    plt.show()
+
+    pm.traceplot(
+        trace, ["Treatment A", "Treatment B", "Trend", "Gamma"],
     )
     plt.savefig(
         os.path.join(
@@ -201,26 +224,7 @@ with pm.Model() as hierarchical_with_trend_model:
     )
     plt.show()
 
-    pm.traceplot(
-        trace,
-        [
-            "pop_treatment1_mean",
-            "pop_treatment1_sd",
-            "pop_treatment2_mean",
-            "pop_treatment2_sd",
-            "pop_trend_mean",
-            "pop_trend_sd",
-            "pop_measurement_error",
-        ],
-        divergences="top",
-    )
-    plt.savefig(
-        os.path.join(
-            visualization_path, "hierarchical_model_population_level_traceplot.pdf"
-        ),
-        bbox_inches="tight",
-    )
-    plt.show()
+    pm.summary(trace)
 
     summary_metrics_df = pd.DataFrame(pm.summary(trace))
     print(summary_metrics_df)
@@ -237,10 +241,11 @@ with pm.Model() as hierarchical_with_trend_model:
     pm.plot_posterior(
         trace,
         [
-            "pop_treatment1_mean",
-            "pop_treatment2_mean",
-            "pop_trend_mean",
-            "pop_difference",
+            "Population Treatment A Mean",
+            "Population Treatment B Mean",
+            "Population Trend Mean",
+            "Population Gamma",
+            "Population Treatment Difference (A-B)",
         ],
     )
     plt.savefig(
@@ -252,7 +257,7 @@ with pm.Model() as hierarchical_with_trend_model:
     plt.show()
 
     pm.plot_posterior(
-        trace, ["treatment1", "treatment2", "trend", "pat_difference"]
+        trace, ["Treatment A", "Treatment B", "Trend", "Treatment Difference (A-B)"]
     )
     plt.savefig(
         os.path.join(
@@ -262,7 +267,6 @@ with pm.Model() as hierarchical_with_trend_model:
     )
     plt.show()
 
-    pm.summary(trace)
 
 # %%
 

@@ -862,7 +862,7 @@ distribution follows the shape of the distribution of likelihood times prior:
 
 Even though we can't calculate the exact posterior probability any set value of
 values for our parameters because we don't know the correct denominator, we now
-have distribution whose shape is identical to the posterior. If we could take
+have a distribution whose shape is identical to the posterior. If we could take
 samples from this distribution we could approximate the posterior distribution
 with the probability distribution of the values of the samples. The general
 method to get this kind of sample is the following:
@@ -876,7 +876,7 @@ method to get this kind of sample is the following:
           \(P(D|\Theta)P(\Theta)\) has the same shape as our posterior and so if
           the value of this function is zero when we pluck our set of
           parameter values in it, these values are impossible and should not be
-          use as a starting point.
+          uses as a starting point.
     \item Pick a second set of values for our parameters with some random method.
     \item Calculate the probability of moving from our current position in the
           parameter space to the second set of parameter values with the
@@ -888,11 +888,10 @@ method to get this kind of sample is the following:
               \end{equation}
           \end{def}
           In other words, if the value calculated with the proposed parameter
-          value set is higher than the value for the current set we always move
-          to the new proposed location in the parameter space and if the value
+          value set is higher than the value for the current set, we always move
+          to the new proposed location in the parameter space, and if the value
           is lower we move there with a probability defined by the ratio of the
-          two values.
-
+          two probabilities.
     \item Generate a random number between 0 and 1 and move to the proposed
           location in the parameter space if the number is lower than the
           probability that we calculated in the previous step. Otherwise we stay
@@ -933,7 +932,7 @@ possible, as even with the computational power of a modern computer, more comple
 models can run into unfeasibly long computational times. On top of choosing the
 right algorithm, there are lots of other things related to the computation to
 consider when implementing Bayesian inference, but we will return to these later
-with the example of practical implementation of this kind of calculation with
+in the example of practical implementation of this kind of calculation with
 Python and PyMC3 package.
 
 \subsubsection{How to Define the Priors?}\label{bayesproblems}
@@ -1108,9 +1107,9 @@ Let's say we have our N-of-1 trial set up nicely and we have a good model for an
 results. After running the first trials we continue to perform the same kind of setup
 with multiple patients as the treatments we are considering seem to have lots of
 individual variation in their effectiveness. Running these experiments separately is
-fine, but one might wonder could these separate trials be somehow combined. Of course, we could pool the data and run a group-based
+fine, but one might wonder if these separate trials could somehow be combined. Of course, we could pool the data and run a group-based
 analysis about what treatments seems to be the best in general, but there is a better
-way to keeps true to the goal of N-of-1 experiments of finding the best treatment for
+way that keeps true to the goal of N-of-1 experiments of finding the best treatment for
 each \emph{individual patient}.
 
 \section{How to Make a Model Hierarchical?}
@@ -1118,21 +1117,21 @@ each \emph{individual patient}.
 In the Bayesian framework we can pool information by making our models hierarchical.
 This means that instead of defining priors for our model variables, each model parameter is imagined to come from a ``higher'' distributions
 that is controlled by its own parameters. In the case of N-of-1 studies the individual lower-level parameters represent the
-individual patients, the distribution where these parameters come from represents
+individual patients, and the distribution where these parameters are taken from could represent
 the population which the patients are drawn. Priors are only defined for the higher-level distribution. Lets take a simple example where we have $p$ patients with $n$
 measurements and, to make things simple just one treatment option. We can model this by
 a simple two-parameter model:
 
 \begin{def}\label{}
     \begin{equation}\label{simplehierachical}
-        y_{ij} = \theta_j + \epsilon_{ij}, i\in(1 \dots n), j\in(1 \dots p)
+        y_{tj} = \theta_j + \epsilon_{tj}, i\in(1 \dots n), j\in(1 \dots p)
     \end{equation}
 \end{def}where $\theta_j$ represents the effect of the treatment for patient $j$ and
-\(\epsilon_{ij} \sim N(0,\tau_p^2)\) is the error term for patient $j$ at observation
-$t$. We can visualize this model as a tree:
+\(\epsilon_{tj} \sim N(0,\tau_j^2)\) is the error term for patient $j$ at observation
+taken on time $t$. We can visualize this model as a tree:
 
 \bigskip
-
+\begin{equation}\label{unpooledmodelexampletree}
 \begin{tikzpicture}
 
     \matrix[matrix of math nodes, column sep=0pt, row sep=30pt] (mat)
@@ -1155,10 +1154,10 @@ $t$. We can visualize this model as a tree:
     {$\theta_j \sim \text{N}(\mu, \sigma^2), \tau_j \sim \text{HalfCauchy}(\gamma)$};
 
     \node[anchor=east] at ([xshift = -35pt]mat-3-1)
-    {$y_{i,j} \sim \text{N}(\theta_j, \tau_j^2)$};
+    {$y_{tj} \sim \text{N}(\theta_j, \tau_j^2)$};
 
 \end{tikzpicture}
-
+\end{equation}
 \bigskip
 
 On top are the prior parameters that represent our existing knowledge and are shared by
@@ -1169,20 +1168,27 @@ defined by the patient level parameters. For the prior distributions we choose a
 distribution for the treatment effect and half-Cauchy distribution for the variance. The
 normal distribution for the treatment effect is a natural choice as probably the
 treatment effect is dependent on multiple factors which many could be independent. If
-this is the case the central limit theorem says that the treatment effect to follow a
+this is the case, then the central limit theorem says that the treatment effect will follow a
 normal distribution. The variance parameters is more difficult and there are multiple
-reasonable distributions to choose, but half-Cauchy distribution is recommended for
-reasons we don't have space to go into here\ \cite{variancepriors}.
+reasonable distributions to choose, but half-Cauchy distribution is generally
+recommended for reasons we don't have space to go into here\ \cite{variancepriors}.
 
-To broaden this model from just being a bunch
-of patient-specific models with shared priors, we can combine the patient level models
-by adding a population level that links the patients together:
+Even though each patient shares the same prior parameters, the estimates of the patient-level parameters
+are only affected by the data of the other patients as the shared prior parameter values are set
+beforehand and are not affected by the data. To change this we need to introduce
+some parameter that is shared by all patients and that is also being estimated based on
+the data. We can accomplish this by changing the priors from set values to distributions
+that are themselves affected by new higher level prior values. This new level of
+``uncertain priors'' can be interpreted in this context as the population-level
+distribution of the treatment effectiveness:
+
+hierarchical
 
 \bigskip
-
+\begin{equation}\label{hierarhicalmodelexampletree}
 \begin{tikzpicture}
 
-    \matrix[matrix of math nodes, column sep=0pt, row sep=30pt] (mat)
+    \matrix[matrix of math nodes, column sep=-18pt, row sep=30pt] (mat)
     {
         \ & \theta_{\mu}, \sigma_{\mu}, \gamma_{\sigma}, \gamma_{\beta} & \ \\
         \ & \mu, \sigma, \gamma & \ \\
@@ -1212,67 +1218,76 @@ by adding a population level that links the patients together:
     {$y_{ij} \sim \text{N}(\theta_j, \tau_j^2)$};
 
 \end{tikzpicture}
-
+\end{equation}
 \bigskip
 
-Now instead of drawing the patient level parameters from priors, these are drawn from
-the population level distribution and the parameters defining the population-level
-distributions are drawn from the prior distributions. So instead of letting the patient
-level parameters depend directly from the prior parameters, we have introduced an
-additional layer between these. For choosing the shape of the prior distributions for
-the population layer, the same logic that we used on the non-hierarchical model applies.
+Now instead of drawing the patient level parameters straight from distributions defined
+by the priors, these are drawn from the population-level distributions. The parameters
+population-level distributions themselves are taken from set distributions defined by
+the prior values. With the addition of this new layer, something very important happens:
+As the population-level parameters are not predefined, they are part of our estimation
+and as they are shared between the patients, they are informed by all the data we
+gather, and as estimated patient-level parameters are affected by the estimated shape of the
+population-level distribution, data from one patient can influence the estimated
+parameters for another patient trough this new higher level parameter layer. The
+elegance of this method comes from the fact that, even though we now have
+population-level parameters we still keep the individual patient-level parameters that can vary
+between the patients and the amount of effect that the data from one patient has on the
+other patients is itself influences by the data as the effects works trough the posteriors estimates we get for
+the population-level parameters.
 
 \section{Benefits of Hierarchical Models}
 
-The elegance of this method comes from the fact that, even though we now have
-population-level parameters we still keep the individual patient-level parameters that can vary
-between the patients. As the population-level parameters are not fixed, the
-patient-level data will inform us about the population-level parameters and this in turn affects the patient-level parameters. These kinds of
-dependencies among parameters are useful in several respects.
-First, the dependencies are meaningful for this application, e.g.\ we can
+The kinds of multilayered dependencies introduced with hierarchical models are useful in many ways.
+First, the dependencies can meaningful for the application, e.g.\ we can
 model the treatment effect for a single patient as an instance from a
-broader population distribution of this effectiveness. Now the model will give us
-information also about the general population level and not just about the single
-patient. Second, because of the dependencies across parameters, all the data can now jointly inform all the
-parameter estimates. The reduction of variance in the estimators that this
-effect causes, is generally referred by the term ``shrinkage''. In general,
-shrinkage in hierarchical models causes lower-level parameters to
-shift toward the modes of the higher-level distribution. If the higher-level
+broader population distribution of this effectiveness. The population level is not just
+a mathematical curiosity, but it has a meaningful interpretation and the estimates we
+get for the population-level parameters are interesting by themselves. Second, because
+of the dependencies across parameters, all the data can now jointly inform all the
+parameter estimates. As there is now more data used for the lower-level estimates trough
+intelligent pooling there is usually some reduction in the variance of these estimates.
+This reduction of variance is generally referred by the term ``shrinkage''. In general,
+shrinkage in hierarchical models causes lower-level parameters to shift toward the modes
+of the higher-level distribution. This does not mean that
+estimates are always just pulled closer together, because if the higher-level
 distribution has multiple modes, then the low-level parameter values cluster
-more tightly around those multiple modes, which might pull some
+more tightly around these modes, which might pull some
 low-level parameter estimates apart instead of together. The greatest thing
 is, that as we don't explicitly set the parameter values of the higher-level
 distributions, the amount of shrinkage is informed by the data so that
 similar observed data points from lower-level distributions lead to ``tighter''
 estimates for the higher-level distributions and in this in turn leads to
 greater shrinkage (e.g.\ posterior estimates of the patient level parameters being more
-tightly clustered together).
+tightly clustered together). This means that using a hierarchical model in the case where the
+patients are actually are very different, does not force the estimates together as
+widely spread measurements leads to the estimates of the population level-distributions to
+have a large variance and thus to have little impact on the patient level estimates. So
+instead forcing similarity, the model ``makes the decisions'' if this is appropriate informed by the data.
 
 \section{Applying the Bayes Formula to Hierarchical Models}
 
-With all the parameters that our model has, the question now becomes, how we apply
-the Bayesian formula in this case? Luckily this happens to be very simple as we just
-have to remember two rules of probability: the chain rule, that
+With all the parameters introduced by the new parameter levels in hierarchical models, the question now becomes, how we apply
+the Bayesian formula in these cases? Luckily this happens to be very simple as we just
+have to remember two rules of probability: the chain rule\ \ref{chainrule}, that
 tells us that the probability of $A$ and $B$ is the probability of $B$ on condition $A$
-times the probability of $A$, and the rule of independence that states that the
+times the probability of $A$, and the rule of independence\ \ref{ruleofindependence} that states that the
 probability of $A$ on condition $B$ is just the probability of $A$ if $A$ and $B$ are independent.
 
-\begin{def}\label{}
-    \begin{equation}\label{chainrule}
-        P(A \cap B) = P(B|A)P(A)
-    \end{equation}
-\end{def}
+\begin{equation}\label{chainrule}
+    P(A \cap B) = P(B|A)P(A)
+\end{equation}
 
-\begin{def}\label{}
-    \begin{equation}\label{chainrule}
-        P(A|B) = P(A), \text{ if } P(A \cap B) = P(A)P(B)
-    \end{equation}
-\end{def}
+\begin{equation}\label{ruleofindependence}
+    P(A|B) = P(A), \text{ if } P(A \cap B) = P(A)P(B)
+\end{equation}
+\smallskip
 
-Now lets see what happens when we apply write are our model in the Bayes formula\
+Now lets see what happens when we apply write are our previously defined hierarchical
+model\ \ref{hierarhicalmodelexampletree} in the Bayes formula\
 \ref{bayeswithparams} and apply these rules. For simplicity I assume that we only have
-two patients and leave out the prior parameters defining the shape of the population distributions.
-
+two patients and leave out the prior parameters defining the shape of the population
+distributions for clarity.
 
 \begin{equation*}\label{}
     \begin{aligned}\label{conjugatebayesrule}
@@ -1322,10 +1337,8 @@ As we now jump from theoretical and analytical considerations to practical consi
 when doing this kind of analysis, we will need revisit the concept that we went over
 while talking about the problems of dealing with marginal likelihood\
 \ref{marginallikehoodproblems} and introduce some new concepts related to how
-PyMC3 is actually dealing with this problem and what do we need to pay attention to
-make sure that what we get out is actually reliable. We will see how important
-visualizations are in interpreting the outputs and what new metrics to pay attention
-to diagnose if the estimation is working and the model fits the data.
+PyMC3 deals with this problem and what do we need to pay attention to
+make sure that the algorithmically derived results we get are actually reliable.
 
 \section{Defining the Experiment}
 
@@ -1337,7 +1350,7 @@ so we decide to test this with N-of-1 trials. We know that both of the treatment
 very fast and that there are no known problems with interaction effects between them.
 The state of the condition can also be easily measured at home so no visits to
 a hospital are needed to take the measurements. Higher measurements mean worse condition
-so we would like to find the treatment that gives the lowest measurements. The condition is usually steadily
+so we would like to find the treatment that gives the lowest measurements for each patient. The condition is usually steadily
 worsening with or without the treatment as the treatment is more for managing the
 disease and not curing it. Based on this information we come up with the following experiment design:
 
@@ -1365,11 +1378,11 @@ disease and not curing it. Based on this information we come up with the followi
 
 Next we simulate the data that we could get from our defined experiment with Python.
 As there should not be any interaction effects between the treatments, the treatment
-effect onset should be immediate and there is no washout period, this is a fairly simple
+effect onset is immediate and there is no washout period, this is a fairly simple
 task. The benefit of having a relatively simple data generating process, is that it is
 easier to compare the results from out models with the actual parameters. We will not go
 over the code that creates the data in detail, but just look at
-the mathematical models used in it. The full code can be found in the GitHub repository
+the mathematical models used for it. The full code can be found in the GitHub repository
 \cite{github}. For simulating each observation at time \(t\) for patient \(j\) we use the following model:
 
 \begin{def}\label{simulationmodel}
@@ -1434,17 +1447,21 @@ autocorrelation as it is a natural choice as it limits the values nicely between
 To create the simulated data, we set the population parameters as follows and then run
 our data creation process:
 
-\begin{align}\label{populationparameters}
-    \text{population treatment A mean: } & \mu_{\theta} = 10 \nonumber \\
-    \text{population treatment A standard deviation: } & \sigma_{\theta} = 0.2 \nonumber \\
-    \text{population treatment B mean: } & \mu_{\eta} = 9.7 \nonumber \\
-    \text{population treatment B standard deviation: } & \sigma_{\eta} = 0.3 \nonumber \\
-    \text{population trend mean: } & \mu_{\beta} = 0.02 \nonumber \\
-    \text{population trend standard error: } & \sigma_{\beta} = 0.01 \nonumber \\
-    \text{population measurement error scale: } & \gamma_{\tau} = 0.3 \nonumber \\
-    \text{population error autocorrelation alpha: } & \alpha_{\rho} = 100 \nonumber \\
-    \text{population error autocorrelation beta: } & \beta_{\rho} = 200 \nonumber
-\end{align}
+\begin{table}
+    \caption{Population Level Parameter Values for the Simulated Data}
+    \label{}
+    \begin{align}\label{populationparameters}
+        \text{population treatment A mean: } & \mu_{\theta} = 10 \nonumber \\
+        \text{population treatment A standard deviation: } & \sigma_{\theta} = 0.2 \nonumber \\
+        \text{population treatment B mean: } & \mu_{\eta} = 9.7 \nonumber \\
+        \text{population treatment B standard deviation: } & \sigma_{\eta} = 0.3 \nonumber \\
+        \text{population trend mean: } & \mu_{\beta} = 0.02 \nonumber \\
+        \text{population trend standard error: } & \sigma_{\beta} = 0.01 \nonumber \\
+        \text{population measurement error scale: } & \gamma_{\tau} = 0.3 \nonumber \\
+        \text{population error autocorrelation alpha: } & \alpha_{\rho} = 100 \nonumber \\
+        \text{population error autocorrelation beta: } & \beta_{\rho} = 200 \nonumber
+    \end{align}
+\end{table}
 
 There are some important things to note about these values. First, we defined the
 treatment \(A\) to usually have higher mean than treatment \(B\) meaning that the
@@ -1459,17 +1476,17 @@ treatments, with the treatment periods clearly visible. We also see more ambival
 cases. Patient 4 seems to have very stable measurement values regardless of the
 treatment, while patient 2 has lots of random fluctuations in the data making it hard to
 interpret the data just by looking at the plot. We can also see the upwards trend in the
-measurement as all patients except patient 2 end the experiment with higher measurements
-that they started with (remember that because of the balanced design, patient start and
+measurement as all patients except patient 2 end the experiment with higher measurement values
+that they started with (remember that because of the balanced design, patients start and
 end the experiment with the same treatment).
 
 \begin{figure}[H]
-    \label{measurementtimeline}
     \caption{Timeline of Measurements for Each Patient}
+    \label{measurementtimeline}
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{measurements_timeline.pdf}
 \end{figure}
 
-Let's next look at the actual parameters that created the data. In figure
+Let's next look at the actual parameters that created this data. In figure\
 \ref{parameterdistribution}, we have all patient-level parameter values and population
 distributions which they where drawn from. On the left side we can see both of the
 treatment effect means. As these are plotted on an identical axis, we can easily compare
@@ -1481,12 +1498,12 @@ expect the measurements from other patients to pull the treatment effectiveness 
 treatment B for patient 3 down (make it better) and conversely pull this up for patient 1. From the measurement error and autocorrelation
 there is less interesting things to see: the wild swings of the measurement for patient 2
 are explained by her high measurement error and autocorrelation values are quite tightly
-grouped up for all patients. For the trend we see that patients 2 and 4 are getting
-worse significantly slower than other patients.
+grouped up for all patients. For the trend we see that patients 2, 4 and 5 are getting
+worse significantly slower than the other patients.
 
 \begin{figure}[H]
-    \label{parameterdistribution}
     \caption{Parameter Used to Create Simulated Data}
+    \label{parameterdistribution}
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{population_parameter_distributions.pdf}
 \end{figure}
 
@@ -1505,25 +1522,24 @@ have highlighted the period where the patient was on treatment A with grey and c
 clearly see that this treatment is the inferior option for this patient.
 
 \begin{figure}[H]
-    \label{patient1timeline}
     \caption{Timeline of Measurements for Patient 1}
+    \label{patient1timeline}
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{patient1_timeline.pdf}
 \end{figure}
 
 Normally before we would start with a more extensive exploration of the data, but as teaching preliminary analysis
 is not the focus here and we created the data ourself and so know exactly what kind
-of distribution it follows, we will skip this here. For analyzing any real-world data
-this part would be \emph{mandatory}.
+of distribution it follows, we will skip this step here. For analyzing any real-world data
+this proper data exploration would be \emph{mandatory}.
 
 \subsection{Defining the Model}
 
-We could start with a very simpole with just the treatment parameters and an error term,
-but as we know from the data creation process and can see from figure
-\ref{patient1timeline} that there is a trend in the data, we start with a model that has
-already has a trend:
+We use a model with the two treatment parameters and error term and a trend\ \ref{singlepatientmodel}. We could
+start with a more simple model without the trend, but as we saw from figure\ \ref{patient1timeline}
+that there is a clearly trend in the data, so adding this parameter from the start seem appropriate:
 
-\begin{def}\label{singlepatientmodel}
-    \begin{equation}\label{}
+\begin{def}\label{}
+    \begin{equation}\label{singlepatientmodel}
         y_t = Z_t\theta + W_t\eta + t\beta + \epsilon_t
     \end{equation}
 \end{def} where \(\theta \) and \(\eta \) are the treatment effects with \(Z_t\) and \(W_t\) being indicator
@@ -1534,7 +1550,7 @@ Our model assumes that the measurement values are distributed normally with
 variance \(\tau^2\) and with a mean of either \(\theta \) or \(\eta \) depending on which
 treatment is applied at the observation \(y_t \sim N(Z_t\theta + W_t\eta, \tau^2)\).
 This means that our likelihood function will have to be a bit special as using a simple
-normal distribution will not do. We will see that this will cause use some headache
+normal distribution will not do. We will see that this will cause use some headaches
 later when we try to implement the model.
 
 Next we go to choose the prior distributions for our model. We choose
@@ -1542,98 +1558,153 @@ normal distributions for the treatment effect parameters and the trend as it mak
 that these would depends on multiple independent biological and social
 factors (very reasonable assumption!) and the central limit theorem tells us the that
 the parameters should then be normally distributed. For the variance of the error term we choose
-a half-Cauchy distribution as this is a common recommendation for the prior of variance\ \cite{variancepriors}.
+a half-Cauchy distribution as this is a common recommendation for the prior of variance\
+\cite{variancepriors}.
 
-\begin{align}\label{}
-    \theta &\sim N(\mu_{\theta}, \sigma_{\theta}) \\
-    \eta &\sim N(\mu_{\eta}, \sigma_{\eta}) \nonumber \\
-    \beta &\sim N(\mu_{\beta}, \sigma_{\beta}) \nonumber \\
-    \tau &\sim HalfCauchy(0, \gamma_{\tau}) \nonumber
-\end{align}
+\bigskip
+\begin{tikzpicture}
 
-Lets define next what kind of parameters we should give to our prior distributions.
+    \matrix[matrix of math nodes, column sep=0pt, row sep=30pt] (mat)
+    {
+        \mu_{\theta}, \sigma_{\theta}, \mu_{\eta}, \sigma_{\eta}, \mu_{\beta}, \sigma_{\beta}, \gamma_{\tau} \\
+        \theta, \eta, \beta, \tau \\
+        \ \\
+        y_{1} \ldots, y_{28} \\
+    };
 
-% TODO Using previous knowledge
-% TODO minimally informed priors
-% TODO should the priors be defined so that they contain fictional information
+    \draw[->,>=latex] (mat-1-1) -- (mat-2-1);
+    \draw[->,>=latex] (mat-2-1) -- (mat-4-1);
 
-\begin{align}\label{singlepatientpriorparameters}
-    \text{treatment A mean prior: } & \mu_{\theta} = 10 \\
-    \text{treatment A standard deviation prior: } & \sigma_{\theta} = 0.2 \nonumber \\
-    \text{treatment B mean prior: } & \mu_{\eta} = 10 \nonumber \\
-    \text{treatment B standard deviation prior: } & \sigma_{\eta} = 0.3 \nonumber \\
-    \text{trend mean prior: } & \mu_{\beta} = 0.1 \nonumber \\
-    \text{trend standard deviation prior: } & \sigma_{\beta} = 0.3 \nonumber \\
-    \text{measurement error scale prior: } & \gamma_{\tau} = 0.1 \nonumber
-\end{align}
+    \node[anchor=east] at ([xshift = -40pt]mat-2-1)
+    {$
+        \theta \sim N(\mu_{\theta}, \sigma^2_{\theta}),
+        \eta \sim N(\mu_{\eta}, \sigma^2_{\eta}),
+    $};
+    \node[anchor=east] at ([xshift = -40pt]mat-3-1)
+    {$
+        \beta \sim N(\mu_{\beta}, \sigma^2_{\beta}),
+        \tau \sim HalfCauchy(0, \gamma_{\tau})
+    $};
+    \node[anchor=east] at ([xshift = -40pt]mat-4-1)
+    {$
+        y_t = Z_t\theta + W_t\eta + t\beta + \epsilon_t
+    $};
 
-% TODO explanation of the chosen values
+\end{tikzpicture}
+\bigskip
+
+Now that we have our model defined we should think about what kind of values we should
+give to our prior parameters. Lets say that for treatment A and B we know from existing
+literature that the typical measurements taken under these treatments are around 10. We
+can just slot this value in for the mean prior parameter values. The case for the
+standard deviance is harder as now we have to codify the strength of our belief in the
+treatment means. As we have actual (imagined) information available we can use the
+standard deviance of the means from different studies as our guidelines. Lets say that this value is
+0.5, so that it is rare to values above 11 or under 9. We can tone down this certainty
+as we are not very sure that the patients on which the previous studies where conducted
+are that similar to our patients, so we double the standard deviance prior to 1 for both
+treatment options. For the trend we are not so certain, but we assume that it should be
+increasing slightly, so we set the mean to 0.1. Because of our uncertain we set the
+standard deviance
+to 0.3, giving this value a lot of flexibility and allowing the trend to be also
+positive without the patient being a huge outlier. For the scale of the half-Cauchy
+distribution we go with a non-informative prior as the error also depends on if on
+properly the measurement is performed (remember that the measurements are taken by the
+patients) and this is very hard to estimate so we set the value \(\gamma \) value to 1
+for an non-informative prior. The set prior values can be seen in table\ \ref{singlelpatientmodelpriorvalues}.
+
+\begin{table}
+    \caption{Single Patient Model Prior Values}
+    \label{singlelpatientmodelpriorvalues}
+    \begin{align}\label{}
+        \text{treatment A mean prior: } & \mu_{\theta} = 10 \nonumber \\
+        \text{treatment A standard deviance prior: } & \sigma_{\theta} = 1 \nonumber \\
+        \text{treatment B mean prior: } & \mu_{\eta} = 10 \nonumber \\
+        \text{treatment B standard deviance prior: } & \sigma_{\eta} = 1 \nonumber \\
+        \text{trend mean prior: } & \mu_{\beta} = 0.1 \nonumber \\
+        \text{trend standard deviance prior: } & \sigma_{\beta} = 0.3 \nonumber \\
+        \text{measurement error scale prior: } & \gamma_{\tau} = 1 \nonumber
+    \end{align}
+\end{table}
 
 \subsection{Implementing the Model in PyMC3}
 
-PyMC3 is Python package that is built for probabilistic programming. Although it is not
+PyMC3 is Python package built for probabilistic programming. Although it is not
 limited to Bayesian methods, that it is its main focus. Implementing Bayesian models in
-the package work so that you give it all the parts of the Bayesian formula except the
+the package works so that you give it all the parts of the Bayesian formula except the
 marginal likelihood: the likelihood, prior
 distribution and the values defining the prior distributions. Then it automatically
 chooses a Markov Chain Monte Carlo method (MCMC) that it thinks can most efficiently
 algorithmically approximate the posterior distribution. This is very nice, as this takes out a
 huge chunk of work from us, namely choosing and implementing the approximation method
-ourselves. But now that we have entered the territory of algorithmic solutions, we have
+ourself. But now that we have entered the territory of algorithmic solutions, we have
 introduced a new hurdle, namely checking that the algorithm is actually works for our
 model and gives us good approximations. On top of this we of course have all the
 usual stuff related to model accuracy and checking that our model itself is a good
 approximation of the reality. We will go over how these problems manifest themselves and
-how we can work with them, when these problems pop up, so lets us just jump in and
+how we can deal with them when these problems pop up, so lets us just jump in and
 implement the model in PyMC3 and then walk trough what the code is
 actually doing line by line\footnote{The code snippets that we will be showing are a
 slight simplification of the actual code that was used to calculate the results. The simplification does not mean
-that the code shown is not runnable, but parts of it that are related to technical niceties
-(e.g. inter OS compatibility, saving the plots \ldots) are taken out to focus on what is
-important for Bayesian calculations}.
+that the code shown is not executable, but parts of it that are related to technical niceties
+(e.g. inter OS compatibility, saving the plots\ldots) are taken out to focus on what is
+important for Bayesian calculations.}.
+
+% need to make the code look cleaner without the footnote getting in the way
+\pagebreak
+
+\subsubsection{Full Model Implementation in PyMC3}
 
 \begin{pyverbatim}
+# load in needed packages
 import pymc3 as pm
 import pandas as pd
 
+# load measurement data and true parameter values
 measurements_df = pd.read_csv("patient_measurements.csv")
+parameters_df = pd.read_csv("patient_parameters.csv")
+
+# convenience variable for easier indexing
+patient_idx = measurements_df["patient"]
    
+# define the model
 with pm.Model() as single_patient_no_trend_model:
 
-    # separate priors for each treatment
-    treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10)
-    treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
-    trend_prior = pm.Normal("trend", mu=0.1, sigma=0.3)
-    # common variance parameter defining the error
-    gamma_prior = pm.HalfCauchy("gamma", beta=10)
+    # defing our prior beliefs of the distributions of parameters
+    treatment_a = pm.Normal("Treatment A", mu=10, sigma=1)
+    treatment_b = pm.Normal("Treatment B", mu=10, sigma=1)
+    trend = pm.Normal("Trend", mu=0.1, sigma=0.3)
+    gamma = pm.HalfCauchy("Gamma", beta=1)
 
-    # means are created from both priors, with a indicator setting the
-    # values to 0 if the particular treatment is not applied at the observation
-    # adding in the effect of the trend at the particular observation
+    # creating a vector definig the expected means of the observations
     measurement_means = (
-        treatment1_prior * measurements_df[patient_idx == 0]["treatment1_idx"]
-        + treatment2_prior * measurements_df[patient_idx == 0]["treatment2_idx"]
-        + trend_prior * measurements_df[patient_idx == 0]["measurement_idx"]
+        treatment_a * measurements_df[patient_idx == 0]["treatment_a"]
+        + treatment_b * measurements_df[patient_idx == 0]["treatment_b"]
+        + trend * measurements_df[patient_idx == 0]["measurement"]
     )
 
     # likelihood is normal distribution with the same amount of dimensions
-    # as the patient has measurements and and the mean is defined by one of the
-    # treatment priors + trend at that that measurement with always the same variance
+    # as the patient has measurements and and the means are defined by one of the
+    # treatment priors + trend with always the same variance
     likelihood = pm.Normal(
         "y",
         measurement_means,
-        sigma=gamma_prior,
+        sigma=gamma,
         observed=measurements_df[patient_idx == 0]["value"],
     )
 
     # adding the comparison between the treatments
-    difference = pm.Deterministic('difference', treatment1_prior - treatment2_prior)
+    difference = pm.Deterministic(
+        "Treatment Difference (A-B)", treatment_a - treatment_b
+    )
 
     # running the model
     trace = pm.sample(800, tune=500, cores=3)
 
     # Checking diagnostic describing how the MCMC method performed
-    pm.traceplot(trace, ["treatment1", "treatment2", "trend", "gamma"])
+    pm.traceplot(
+        trace, ["Treatment A", "Treatment B", "Trend", "Gamma"], divergences="top"
+    )
     plt.show()
     pm.summary(trace)
 
@@ -1647,10 +1718,11 @@ with single_patient_no_trend_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)
     predictions = post_pred["y"]
 
+# visualizing posterior samples to check model match with reality
 draw_posterior_checks(
     predictions=predictions,
-    measurements_df=measurements_df[patient == 0],
-    parameters_df=parameters_df[parameters_df["patient_idx"] == 0],
+    measurements_df=measurements_df[patient_idx == 0],
+    parameters_df=parameters_df[parameters_df["patient"] == 0],
 )
 \end{pyverbatim}
 
@@ -1659,9 +1731,12 @@ draw_posterior_checks(
 \bigskip
 \begin{pyverbatim}
 import pymc3 as pm
-import pandas
+import pandas as pd
 
 measurements_df = pd.read_csv("patient_measurements.csv")
+parameters_df = pd.read_csv("patient_parameters.csv")
+
+patient_idx = measurements_df["patient"]
 \end{pyverbatim}
 \bigskip
 
@@ -1676,7 +1751,7 @@ import pandas as pd
 measurements_path = os.path.join("..", "data", "patient_measurements.csv")
 measurements_df = pd.read_csv(measurements_path)
 measurements_df.columns = ['patient', 'measurement', 'period', 'block',
-'treatement1', 'treatment2', 'value']
+'treatement_a', 'treatment_b', 'value']
 print(measurements_df.head(10).to_latex(index=False))
 \end{pycode}
 \bigskip
@@ -1685,10 +1760,32 @@ All columns expect the last one are index columns. As is the standard in Python,
 zero-indexed. First column indexes the patient (0-5), second the
 measurement (0-27), third the treatment period (0-3), fourth the block (0-1) and fifth
 and sixth which treatment was applied during the particular measurement (0-1). Last
-column is the value of measurement. PyMC3 does not require any particular format from the
+column is the value of the measurements. PyMC3 does not require any particular format from the
 data and almost any format is possible as long as you can feed the right values into
 the right places in the model definition. Also using the Pandas package to handle the
 data as a dataframe is not necessary, but is very convenient.
+
+The parameters\_df dataframe contains the true parameter values of the patients. This data is used to
+check how accurate our predictions actually are. Each row is a patient and contains the
+true parameter values for each of the parameters we used to create the simulated data.
+Only a couple of the columns included in the dataset are shown here, because the full
+table would not fit.
+
+\bigskip
+\begin{pycode}
+import os
+import pandas as pd
+
+parameters_path = os.path.join("..", "data", "patient_parameters.csv")
+parameters_df = pd.read_csv(parameters_path)
+parameters_df.drop(columns=["treatment_order", 'autocorrelation'], inplace=True)
+parameters_df.columns = ['patient', 'treatment_a', 'treatment_b', 'trend', 'measurement_error_sd']
+print(parameters_df.to_latex(index=False))
+\end{pycode}
+\bigskip
+
+The last part of the code where we create the variable patient\_idx is just for
+convenience so that we need to type less when referring to the data of a particular patient.
 
 \subsubsection{Initializing the Model}
 
@@ -1701,26 +1798,29 @@ with pm.Model() as single_patient_no_trend_model:
 PyMC3 models are usually defined within the Python context manager (``with'' statements).
 This is not necessary, but makes the model definition much cleaner as when the model is
 defined in the context manager, all subsequent parts defined within the manager
-(indented parts of the code) are automatically associated with this particular model.
-This gets rid of the need to manually define for each part which model we want to associate it with.
+(indented parts of the code) are automatically associated with this particular model
+without need for manually defining this.
 
 \subsubsection{Defining the Priors}
 
 \bigskip
 \begin{pyverbatim}
-treatment1_prior = pm.Normal("treatment1", mu=10, sigma=10)
-treatment2_prior = pm.Normal("treatment2", mu=10, sigma=10)
-trend_prior = pm.Normal("trend", mu=0.1, sigma=0.3)
-gamma_prior = pm.HalfCauchy("gamma", beta=10)
+treatment_a = pm.Normal("Treatment A", mu=10, sigma=1)
+treatment_b = pm.Normal("Treatment B", mu=10, sigma=1)
+trend = pm.Normal("Trend", mu=0.1, sigma=0.3)
+gamma = pm.HalfCauchy("Gamma", beta=1)
 \end{pyverbatim}
 \bigskip
 
-Now we start getting to the actual modeling. We start by defining our prior
-distributions. For both treatments and the trend we use a normal distribution and
+Now we start getting to the actual modeling. We start by defining our prior beliefs about
+out the parameter distributions. You could call these distributions the prior
+distributions, but this does not make much sense in PyMC3 as final output are these
+distributions with modified parameters. For both treatments and the trend we use a normal distribution and
 for the variance of the error term \(\gamma \) we use a half-Cauchy. For the half-Cauchy
-distribution we don't need to define the location terms as it is by default zero, just
-like we want it. As the distributions that we are using are all
-widely used distributions with well-known properties we can find functions implementing
+distribution we don't need to define the location term as it is by default zero, just
+like we want it. Something to note here is that the PyMC3 normal distribution sigma
+paramaters expects the standard deviation and not the variance. As all the distributions
+that we are using here are widely used, we can find functions implementing
 them already built-in PyMC3. It is also possible to define completely custom
 distributions, but unfortunately this is quite complex, as you don't just have to worry
 about the math part, but also all you have to implement all the methods that PyMC3
@@ -1734,19 +1834,19 @@ worry about the math and there is no need to consider implementing any helper fu
 \bigskip
 \begin{pyverbatim}
 measurement_means = (
-    treatment1_prior
-    * measurements_df[patient == 0]["treatment1"]
-    + treatment2_prior
-    * measurements_df[patient == 0]["treatment2"]
-    + trend_prior
-    * measurements_df[patient == 0]["measurement"]
+    treatment_a
+    * measurements_df[patient_idx == 0]["treatment_a"]
+    + treatment_b
+    * measurements_df[patient_idx == 0]["treatment_b"]
+    + trend
+    * measurements_df[patient_idx == 0]["measurement"]
 )
 
 likelihood = pm.Normal(
     "y",
     measurement_means,
-    sigma=gamma_prior,
-    observed=measurements_df[patient == 0]["value"],
+    sigma=gamma,
+    observed=measurements_df[patient_idx == 0]["value"],
 )
 \end{pyverbatim}
 \bigskip
@@ -1755,28 +1855,30 @@ Defining the likelihood is the most difficult part our model definition because 
 complexity introduced by the varying treatments. Because of this, the likelihood cannot
 be implemented as a simple normal distribution. We solve this problem by instead using a
 multivariate normal distribution with as many dimensions as the patient has
-measurements. We construct the vector of
-means for this distribution by multiplying the treatment priors by the treatment indices (1 when
+measurements. We construct the vector of means for this distribution by multiplying the
+treatment distributions by the treatment indices (1 when
 treatment given, 0 when not) and add the trend multiplied by the index of the
 measurement (\(t\)). So instead of considering
-the observations separately we thing of them as a single multidimensional sample from
+the observations separately we think of them as a single multidimensional sample from
 a multivariate normal distribution. This is not the only possible way to solve the
 problem, but is probably the most convenient. If we would have some
 dependencies between the measurements in our model (e.g. autocorrelation), this approach
-would not work. In this case we would have to implement the likelihood distribution
-ourselves. One thing to note here is that overthought we are using a multivariate normal
+would not work. In this case we would have to implement the likelihood function
+ourselves. One thing to note here is that even though we are using a multivariate normal
 distribution, we still use the same PyMC3 function for normal distribution and just give
-it a vector of means that matches the amount of our observations. This strategy work
+it a vector of means that matches the amount of our observations. This strategy works
 with all the inbuilt PyMC3 distributions: you can either have them using one set of
 parameters or a vector of parameters matching the data and PyMC3 will automatically
-change from using single dimensional distribution with multiple observations to
+change from using a single dimensional distribution with multiple observations to
 multidimensional distribution with one observation vector.
 
 \subsection{Defining the Parameter Comparison}
 
 \bigskip
 \begin{pyverbatim}
-    difference = pm.Deterministic('difference', treatment1_prior - treatment2_prior)
+    difference = pm.Deterministic(
+        "Treatment Difference (A-B)", treatment_a - treatment_b
+    )
 \end{pyverbatim}
 \bigskip
 
@@ -1786,12 +1888,7 @@ We can do this before or after running our model, but here we have decided to do
 beforehand. As the difference is actually determined by the values of the treatment
 parameters, we have to use PyMC3 pm.deterministic function that calculates the posterior
 by simple subtracting the value of treatment 2 parameter value from treatment 1
-parameter value at each step in the chain. The reason why it is important do this, is
-that just looking at the estimates of our parameter values separately, will not take
-into account the possible correlation between these two values (in this case a strong
-positive correlation is very likely).
-
-% TODO add more details based on Krutschke
+parameter value at each step in the chain.
 
 \subsubsection{Running the Model}
 
@@ -1801,28 +1898,27 @@ trace = pm.sample(draw=800, tune=500, cores=3)
 \end{pyverbatim}
 \bigskip
 
-Now that we have defined our priors and our likelihood we can move on to running the
-model. Notice that priors and the likelihood is all we need to have defined. We don't
-have to worry about the marginal likelihood at ``bottom part'' of the Bayes formula\ \ref{bayesrule}. PyMC3 will
-now estimate the posterior with an automatically chosen Markov Chain Monte Carlo (MCMC) method
+Now that we have defined our prior beliefs and our likelihood, we can move on to running the
+model. PyMC3 will now estimate the posterior with an automatically chosen Markov Chain
+Monte Carlo (MCMC) method (see chapter\ \ref{bayesinferencechallenges})
 that moves trough the posterior from point to point. We could also manually choose what
 algorithm to use, but unless we see problems when we evaluate the estimation efficiency,
 we should stick with the automatic selection. We also don't need to define the point in the
-posterior distribution where the chain starts as this is also automatically chosen. This
+posterior distribution where the estimation starts as this is also automatically chosen. This
 we could also define manually, but unless we run into problems, we should not need to.
 
 The three parameters that we have to manually define are as follow:
 
 \begin{itemize}
-    \item draw = how many moves the MCMC chain should calculate
-    \item tune = how many moves the MCMC chain should take before it start to
+    \item[] draw = how many moves the MCMC chain should calculate
+    \item[] tune = how many moves the MCMC chain should take before it start to
     take the observations into account
-    \item cores = how many MCMC chains we will calculate in parallel
+    \item[] cores = how many MCMC chains we will calculate in parallel
 \end{itemize}
 
-The total steps taken by each chain is draw + tune. The reason for the tuning step is
+The total steps taken by each chain is draw+tune. The reason for the tuning steps is
 that the starting position of the chain is probably biased. We would want the starting
-position to be a sample from the posterior so that it probability of it being in a certain
+position to be a sample from the posterior so that its probability of it being in a certain
 point would be defined by the posterior. We can do this by letting the chain first take
 a number of steps and as its moves trough the posterior its location distribution will start to
 reflect the actual posterior. If we would not have the tuning steps it would be possible
@@ -1850,7 +1946,9 @@ CPU so we will leave 1 core free for other tasks), in total these chains will ma
 \bigskip
 \begin{pyverbatim}
 # Checking diagnostic describing how the MCMC method performed
-pm.traceplot(trace, ["treatment1", "treatment2", "trend", "gamma"])
+pm.traceplot(
+        trace, ["Treatment A", "Treatment B", "Trend", "Gamma"], divergences="top"
+    )
 plt.show()
 pm.summary(trace)
 \end{pyverbatim}
@@ -1872,8 +1970,8 @@ each chain takes steps in all parameter values simultaneously. These are
 just the steps used for the posterior estimation and don't include the tuning steps. Each
 chain is portrayed with a different color. What we want to see here is that the timeseries
 looks like noise with no obvious patterns \footnote{With this model it is hard to
-demonstrate this problem effectively in PyMC3 as not having enough tuning and and calculation steps just leads
-the model to fail outright without any results}. If we would see any patterns, like the chains
+demonstrate this problem effectively in PyMC3 as not having enough tuning and and
+calculation steps often just leads the model to fail outright without any results}. If we would see any patterns, like the chains
 moving values moving systematically up and down, it would mean that the
 chains had problems moving trough the posterior and ended up taking biased samples.
 These effects should be most pronounced at the beginning steps and if we would see
@@ -1962,8 +2060,8 @@ with single_patient_no_trend_model as model:
 
 draw_posterior_checks(
     predictions=predictions,
-    measurements_df=measurements_df[patient_index == 0],
-    parameters_df=parameters_df[parameters_df["patient_index"] == 0],
+    measurements_df=measurements_df[patient_idx == 0],
+    parameters_df=parameters_df[parameters_df["patient_idx"] == 0],
     plot_name="single_patient_no_trend_posterior_sampling",
 )
 \end{pyverbatim}
@@ -2015,7 +2113,7 @@ true parameter difference.
 
 \subsection{Final Results}
 
-After going to the steps of:
+After going trough the steps of:
 
 \begin{enumerate}
     \item Defining the model
@@ -2137,84 +2235,101 @@ patient_idx = measurements_df["patient_idx"]
 with pm.Model() as hierarchical_model:
 
     # population priors
-    pop_treatment1_mean_prior = pm.Normal(
-        "pop_treatment1_mean", mu=10, sigma=10
+    pop_treatment_a_mean = pm.Normal(
+        "Population Treatment A Mean", mu=10, sigma=1
     )
-    pop_treatment1_sd_prior = pm.HalfCauchy("pop_treatment1_sd", beta=10)
+    pop_treatment_a_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
 
-    pop_treatment2_mean_prior = pm.Normal(
-        "pop_treatment2_mean", mu=10, sigma=10
+    pop_treatment_b_mean = pm.Normal(
+        "Population Treatment B Mean", mu=10, sigma=1
     )
-    pop_treatment2_sd_prior = pm.HalfCauchy("pop_treatment2_sd", beta=10)
+    pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
 
-    pop_trend_mean_prior = pm.Normal("pop_trend_mean", mu=0.1, sigma=0.3)
-    pop_trend_sd_prior = pm.HalfCauchy("pop_trend_sd", beta=2)
+    pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.3)
+    pop_trend_sd = pm.HalfCauchy("Population Trend Sd", beta=2)
 
-    pop_measurement_error_prior = pm.HalfCauchy(
-        "pop_measurement_error", beta=10
+    pop_gamma = pm.HalfCauchy(
+        "Population Gamma", beta=10
     )
 
     # separate parameter for each patient
-    pat_treatment1 = pm.Normal(
-        "treatment1",
-        mu=pop_treatment1_mean_prior,
-        sigma=pop_treatment1_sd_prior,
-        shape=patients_n,
+    pat_treatment_a = pm.Normal(
+        "Treatment A",
+        mu=pop_treatment_a_mean,
+        sigma=pop_treatment_a_sd,
+        shape=6,
     )
-    pat_treatment2 = pm.Normal(
-        "treatment2",
-        mu=pop_treatment2_mean_prior,
-        sigma=pop_treatment2_sd_prior,
-        shape=patients_n,
+    pat_treatment_b = pm.Normal(
+        "Treatment B",
+        mu=pop_treatment_b_mean,
+        sigma=pop_treatment_b_sd,
+        shape=6,
     )
-    pat_sigma = pm.HalfCauchy(
-        "sigma", beta=pop_measurement_error_beta_prior, shape=patients_n,
+    pat_gamma = pm.HalfCauchy(
+        "Gamma", beta=pop_gamma, shape=6,
     )
     pat_trend = pm.Normal(
         "trend",
-        mu=pop_trend_mean_prior,
-        sigma=pop_trend_sd_prior,
-        shape=patients_n,
+        mu=pop_trend_mean,
+        sigma=pop_trend_sd,
+        shape=6,
     )
 
     measurement_means = (
-        pat_treatment1[patient_idx] * measurements_df["treatment1_idx"]
-        + pat_treatment2[patient_idx] * measurements_df["treatment2_idx"]
-        + pat_trend[patient_idx] * measurements_df["measurement_idx"]
+        pat_treatment_a[patient_idx] * measurements_df["treatment_a"]
+        + pat_treatment_b[patient_idx] * measurements_df["treatment_a"]
+        + pat_trend[patient_idx] * measurements_df["measurement"]
     )
 
     likelihood = pm.Normal(
         "y",
         measurement_means,
-        sigma=patients_sigma[patient_idx],
+        sigma=pat_gamma[patient_idx],
         observed=measurements_df["value"],
     )
 
     # adding the comparison between the treatments
-    difference = pm.Deterministic('difference', pat_treatment1 - pat_treatment2)
+    pop_difference = pm.Deterministic(
+        "Population Treatment Difference (A-B)",
+        pop_treatment_a_mean - pop_treatment_b_mean,
+    )
+    pat_difference = pm.Deterministic(
+        "Treatment Difference (A-B)", pat_treatment_a - pat_treatment_b
+    )
 
     trace = pm.sample(800, tune=300, cores=3)
 
+    # checking traceplots separately for population and patients
     pm.traceplot(
         trace,
         [
-            "treatment1",
-            "treatment2",
-            "sigma",
-            "trend",
-            "pop_treatment1_mean",
-            "pop_treatment1_sd",
-            "pop_treatment2_mean",
-            "pop_treatment2_sd",
-            "pop_measurement_error_beta",
-            "pop_trend_mean",
-            "pop_trend_sd",
+            "Population Treatment A Mean",
+            "Population Treatment A Sd",
+            "Population Treatment B Mean",
+            "Population Treatment B Sd",
+            "Population Trend Mean",
+            "Population Trend SD",
+            "Population Gamma",
         ],
+    )
+    plt.show()
+    pm.traceplot(
+        trace, ["Treatment A", "Treatment B", "Trend", "Gamma"],
     )
     plt.show()
     pm.summary(trace)
 
-    pm.plot_posterior(trace)
+    # plotting selected posteriors
+    pm.plot_posterior(
+        trace,
+        [
+            "Population Treatment A Mean",
+            "Population Treatment B Mean",
+            "Population Trend Mean",
+            "Population Gamma",
+            "Population Treatment Difference (A-B)",
+        ],
+    )
     plt.show()
 
 
@@ -2235,27 +2350,23 @@ draw_posterior_checks(
 \subsubsection{Defining the Population Level Priors}
 \bigskip
 \begin{pyverbatim}
-
-patient_idx = measurements_df["patient_idx"]
-
 with pm.Model() as hierarchical_model:
 
-    # population priors
-    pop_treatment1_mean_prior = pm.Normal(
-        "pop_treatment1_mean", mu=10, sigma=10
+    pop_treatment_a_mean = pm.Normal(
+        "Population Treatment A Mean", mu=10, sigma=1
     )
-    pop_treatment1_sd_prior = pm.HalfCauchy("pop_treatment1_sd", beta=10)
+    pop_treatment_a_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
 
-    pop_treatment2_mean_prior = pm.Normal(
-        "pop_treatment2_mean", mu=10, sigma=10
+    pop_treatment_b_mean = pm.Normal(
+        "Population Treatment B Mean", mu=10, sigma=1
     )
-    pop_treatment2_sd_prior = pm.HalfCauchy("pop_treatment2_sd", beta=10)
+    pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
 
-    pop_trend_mean_prior = pm.Normal("pop_trend_mean", mu=0.1, sigma=0.3)
-    pop_trend_sd_prior = pm.HalfCauchy("pop_trend_sd", beta=2)
+    pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.3)
+    pop_trend_sd = pm.HalfCauchy("Population Trend Sd", beta=2)
 
-    pop_measurement_error_beta_prior = pm.HalfCauchy(
-        "pop_measurement_error_beta", beta=10
+    pop_gamma = pm.HalfCauchy(
+        "Population Gamma", beta=10
     )
 \end{pyverbatim}
 \bigskip
@@ -2272,25 +2383,25 @@ inbuilt in PyMC3, so now complex procedures are needed here.
 
 \bigskip
 \begin{pyverbatim}
-    pat_treatment1 = pm.Normal(
-        "treatment1",
-        mu=pop_treatment1_mean_prior,
-        sigma=pop_treatment1_sd_prior,
+    pat_treatment_a = pm.Normal(
+        "Treatment A",
+        mu=pop_treatment_a_mean,
+        sigma=pop_treatment_a_sd,
         shape=6,
     )
-    pat_treatment2 = pm.Normal(
-        "treatment2",
-        mu=pop_treatment2_mean_prior,
-        sigma=pop_treatment2_sd_prior,
+    pat_treatment_b = pm.Normal(
+        "Treatment B",
+        mu=pop_treatment_b_mean,
+        sigma=pop_treatment_b_sd,
         shape=6,
     )
-    pat_sigma = pm.HalfCauchy(
-        "sigma", beta=pop_measurement_error_beta_prior, shape=6,
+    pat_gamma = pm.HalfCauchy(
+        "Gamma", beta=pop_gamma, shape=6,
     )
     pat_trend = pm.Normal(
         "trend",
-        mu=pop_trend_mean_prior,
-        sigma=pop_trend_sd_prior,
+        mu=pop_trend_mean,
+        sigma=pop_trend_sd,
         shape=6,
     )
 \end{pyverbatim}
@@ -2312,16 +2423,16 @@ for the distributions we get from the population distributions.
 \bigskip
 \begin{pyverbatim}
     measurement_means = (
-        pat_treatment1[patient_idx] * measurements_df["treatment1"]
-        + pat_treatment2[patient_idx] * measurements_df["treatment2"]
-        + pat_trend[patient_idx] * measurements_df["measurement_idx"]
+        pat_treatment_a[patient_idx] * measurements_df["treatment_a"]
+        + pat_treatment_b[patient_idx] * measurements_df["treatment_b"]
+        + pat_trend[patient_idx] * measurements_df["measurement"]
     )
 
     likelihood = pm.Normal(
         "y",
         measurement_means,
-        sigma=patients_sigma[patient_idx],
-        observed=measurements_df["measurement"],
+        sigma=pat_gamma[patient_idx],
+        observed=measurements_df["value"],
     )
 \end{pyverbatim}
 \bigskip
@@ -2356,28 +2467,20 @@ population parameters, adding 7 more dimensions.
     pm.traceplot(
         trace,
         [
-            "pop_treatment1_mean",
-            "pop_treatment1_sd",
-            "pop_treatment2_mean",
-            "pop_treatment2_sd",
-            "pop_measurement_error_beta",
-            "pop_trend_mean",
-            "pop_trend_sd",
+            "Population Treatment A Mean",
+            "Population Treatment A Sd",
+            "Population Treatment B Mean",
+            "Population Treatment B Sd",
+            "Population Trend Mean",
+            "Population Trend SD",
+            "Population Gamma",
         ],
     )
     plt.show()
-
     pm.traceplot(
-        trace,
-        [
-            "treatment1",
-            "treatment2",
-            "sigma",
-            "trend",
-        ],
+        trace, ["Treatment A", "Treatment B", "Trend", "Gamma"],
     )
     plt.show()
-
     pm.summary(trace)
 \end{pyverbatim}
 \bigskip
@@ -2434,13 +2537,27 @@ metrics\ \ref{hierarchicalmodeldiagnosticmeasures}. These also look good.
 
 \bigskip
 \begin{pyverbatim}
+    pm.plot_posterior(
+        trace,
+        [
+            "Population Treatment A Mean",
+            "Population Treatment B Mean",
+            "Population Trend Mean",
+            "Population Gamma",
+            "Population Treatment Difference (A-B)",
+        ],
+    )
+    plt.show()
+    pm.plot_posterior(
+        trace, ["Treatment A", "Treatment B", "Trend", "Treatment Difference (A-B)"]
+    )
     pm.plot_posterior(trace)
     plt.show()
 \end{pyverbatim}
 \bigskip
 
 After checking the diagnostics, now its the time to see our results. As the there are
-now so many parameter we will only focus on the interesting ones. It is always of
+now so many parameters we will only focus on the interesting ones. It is always of
 course advisable to check every parameter to make sure that the results seem realistic,
 but we skip this here for sake of brevity and clarity.
 
@@ -2470,7 +2587,6 @@ Next the patient level
 
 \bigskip
 \begin{pyverbatim}
-# posterior sampling
 with hierarchical_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)
     predictions = post_pred["y"]
@@ -2502,7 +2618,7 @@ Checking the posterior sampling\ \ref{hierarchicalmodelposteriorsampling}.
 Lets compare the results that we got with the hierarchical model with the results we got
 from the single patient model for patient 1.
 
-% TODO comparison plot
+% TODO add comparison plot for the posterior estimates for patient 1 for the 2 models
 
 \chapter{Conclusion}
 

@@ -198,11 +198,85 @@
 \def\PYGdefaultZlb{[}
 \def\PYGdefaultZrb{]}
 \makeatother
+\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@0}
+\PYG{c+c1}{\PYGZsh{} load in needed packages}
+\PYG{k+kn}{import} \PYG{n+nn}{pymc3} \PYG{k}{as} \PYG{n+nn}{pm}
+\PYG{k+kn}{import} \PYG{n+nn}{pandas} \PYG{k}{as} \PYG{n+nn}{pd}
+
+\PYG{c+c1}{\PYGZsh{} load measurement data and true parameter values}
+\PYG{n}{measurements\PYGZus{}df} \PYG{o}{=} \PYG{n}{pd}\PYG{o}{.}\PYG{n}{read\PYGZus{}csv}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient\PYGZus{}measurements.csv}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{parameters\PYGZus{}df} \PYG{o}{=} \PYG{n}{pd}\PYG{o}{.}\PYG{n}{read\PYGZus{}csv}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient\PYGZus{}parameters.csv}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} convenience variable for easier indexing}
+\PYG{n}{patient\PYGZus{}idx} \PYG{o}{=} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+
+\PYG{c+c1}{\PYGZsh{} define the model}
+\PYG{k}{with} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Model}\PYG{p}{(}\PYG{p}{)} \PYG{k}{as} \PYG{n}{single\PYGZus{}patient\PYGZus{}no\PYGZus{}trend\PYGZus{}model}\PYG{p}{:}
+
+    \PYG{c+c1}{\PYGZsh{} defing our prior beliefs of the distributions of parameters}
+    \PYG{n}{treatment\PYGZus{}a} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment A}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
+    \PYG{n}{treatment\PYGZus{}b} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment B}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
+    \PYG{n}{trend} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+    \PYG{n}{gamma} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} creating a vector definig the expected means of the observations}
+    \PYG{n}{measurement\PYGZus{}means} \PYG{o}{=} \PYG{p}{(}
+        \PYG{n}{treatment\PYGZus{}a} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment\PYGZus{}a}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+        \PYG{o}{+} \PYG{n}{treatment\PYGZus{}b} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment\PYGZus{}b}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+        \PYG{o}{+} \PYG{n}{trend} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{measurement}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+    \PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} likelihood is normal distribution with the same amount of dimensions}
+    \PYG{c+c1}{\PYGZsh{} as the patient has measurements and and the means are defined by one of the}
+    \PYG{c+c1}{\PYGZsh{} treatment priors + trend with always the same variance}
+    \PYG{n}{likelihood} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{y}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+        \PYG{n}{measurement\PYGZus{}means}\PYG{p}{,}
+        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{gamma}\PYG{p}{,}
+        \PYG{n}{observed}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{value}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{,}
+    \PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} adding the comparison between the treatments}
+    \PYG{n}{difference} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Deterministic}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment Difference (A\PYGZhy{}B)}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{treatment\PYGZus{}a} \PYG{o}{\PYGZhy{}} \PYG{n}{treatment\PYGZus{}b}
+    \PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} running the model}
+    \PYG{n}{trace} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{l+m+mi}{800}\PYG{p}{,} \PYG{n}{tune}\PYG{o}{=}\PYG{l+m+mi}{500}\PYG{p}{,} \PYG{n}{cores}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} Checking diagnostic describing how the MCMC method performed}
+    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{traceplot}\PYG{p}{(}
+        \PYG{n}{trace}\PYG{p}{,} \PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment A}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment B}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{,} \PYG{n}{divergences}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{top}\PYG{l+s+s2}{\PYGZdq{}}
+    \PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
+    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{summary}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} checking the posterior distributions}
+    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{plot\PYGZus{}posterior}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
+
+
+\PYG{c+c1}{\PYGZsh{} posterior sampling}
+\PYG{k}{with} \PYG{n}{single\PYGZus{}patient\PYGZus{}no\PYGZus{}trend\PYGZus{}model} \PYG{k}{as} \PYG{n}{model}\PYG{p}{:}
+    \PYG{n}{post\PYGZus{}pred} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample\PYGZus{}posterior\PYGZus{}predictive}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{,} \PYG{n}{samples}\PYG{o}{=}\PYG{l+m+mi}{500}\PYG{p}{)}
+    \PYG{n}{predictions} \PYG{o}{=} \PYG{n}{post\PYGZus{}pred}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{y}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+
+\PYG{c+c1}{\PYGZsh{} visualizing posterior samples to check model match with reality}
+\PYG{n}{draw\PYGZus{}posterior\PYGZus{}checks}\PYG{p}{(}
+    \PYG{n}{predictions}\PYG{o}{=}\PYG{n}{predictions}\PYG{p}{,}
+    \PYG{n}{measurements\PYGZus{}df}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{,}
+    \PYG{n}{parameters\PYGZus{}df}\PYG{o}{=}\PYG{n}{parameters\PYGZus{}df}\PYG{p}{[}\PYG{n}{parameters\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{,}
+\PYG{p}{)}
+\end{pytx@SaveVerbatim}
+
 \begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@1}
 \PYG{k+kn}{import} \PYG{n+nn}{pymc3} \PYG{k}{as} \PYG{n+nn}{pm}
-\PYG{k+kn}{import} \PYG{n+nn}{pandas}
+\PYG{k+kn}{import} \PYG{n+nn}{pandas} \PYG{k}{as} \PYG{n+nn}{pd}
 
 \PYG{n}{measurements\PYGZus{}df} \PYG{o}{=} \PYG{n}{pd}\PYG{o}{.}\PYG{n}{read\PYGZus{}csv}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient\PYGZus{}measurements.csv}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{parameters\PYGZus{}df} \PYG{o}{=} \PYG{n}{pd}\PYG{o}{.}\PYG{n}{read\PYGZus{}csv}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient\PYGZus{}parameters.csv}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+
+\PYG{n}{patient\PYGZus{}idx} \PYG{o}{=} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
 \end{pytx@SaveVerbatim}
 
 \begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@2}
@@ -210,32 +284,34 @@
 \end{pytx@SaveVerbatim}
 
 \begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@3}
-\PYG{n}{treatment1\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
-\PYG{n}{treatment2\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
-\PYG{n}{trend\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
-\PYG{n}{gamma\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
+\PYG{n}{treatment\PYGZus{}a} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment A}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
+\PYG{n}{treatment\PYGZus{}b} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment B}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
+\PYG{n}{trend} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+\PYG{n}{gamma} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
 \end{pytx@SaveVerbatim}
 
 \begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@4}
 \PYG{n}{measurement\PYGZus{}means} \PYG{o}{=} \PYG{p}{(}
-    \PYG{n}{treatment1\PYGZus{}prior}
-    \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
-    \PYG{o}{+} \PYG{n}{treatment2\PYGZus{}prior}
-    \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
-    \PYG{o}{+} \PYG{n}{trend\PYGZus{}prior}
-    \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{measurement}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+    \PYG{n}{treatment\PYGZus{}a}
+    \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment\PYGZus{}a}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+    \PYG{o}{+} \PYG{n}{treatment\PYGZus{}b}
+    \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment\PYGZus{}b}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+    \PYG{o}{+} \PYG{n}{trend}
+    \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{measurement}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
 \PYG{p}{)}
 
 \PYG{n}{likelihood} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
     \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{y}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
     \PYG{n}{measurement\PYGZus{}means}\PYG{p}{,}
-    \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{gamma\PYGZus{}prior}\PYG{p}{,}
-    \PYG{n}{observed}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{value}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{,}
+    \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{gamma}\PYG{p}{,}
+    \PYG{n}{observed}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{value}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{,}
 \PYG{p}{)}
 \end{pytx@SaveVerbatim}
 
 \begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@5}
-    \PYG{n}{difference} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Deterministic}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{difference}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{treatment1\PYGZus{}prior} \PYG{o}{\PYGZhy{}} \PYG{n}{treatment2\PYGZus{}prior}\PYG{p}{)}
+    \PYG{n}{difference} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Deterministic}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment Difference (A\PYGZhy{}B)}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{treatment\PYGZus{}a} \PYG{o}{\PYGZhy{}} \PYG{n}{treatment\PYGZus{}b}
+    \PYG{p}{)}
 \end{pytx@SaveVerbatim}
 
 \begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@6}
@@ -244,7 +320,9 @@
 
 \begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@7}
 \PYG{c+c1}{\PYGZsh{} Checking diagnostic describing how the MCMC method performed}
-\PYG{n}{pm}\PYG{o}{.}\PYG{n}{traceplot}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{,} \PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{)}
+\PYG{n}{pm}\PYG{o}{.}\PYG{n}{traceplot}\PYG{p}{(}
+        \PYG{n}{trace}\PYG{p}{,} \PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment A}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment B}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{,} \PYG{n}{divergences}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{top}\PYG{l+s+s2}{\PYGZdq{}}
+    \PYG{p}{)}
 \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
 \PYG{n}{pm}\PYG{o}{.}\PYG{n}{summary}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
 \end{pytx@SaveVerbatim}
@@ -261,94 +339,9 @@
 
 \PYG{n}{draw\PYGZus{}posterior\PYGZus{}checks}\PYG{p}{(}
     \PYG{n}{predictions}\PYG{o}{=}\PYG{n}{predictions}\PYG{p}{,}
-    \PYG{n}{measurements\PYGZus{}df}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}index} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{,}
-    \PYG{n}{parameters\PYGZus{}df}\PYG{o}{=}\PYG{n}{parameters\PYGZus{}df}\PYG{p}{[}\PYG{n}{parameters\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient\PYGZus{}index}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{,}
-    \PYG{n}{plot\PYGZus{}name}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{single\PYGZus{}patient\PYGZus{}no\PYGZus{}trend\PYGZus{}posterior\PYGZus{}sampling}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-\PYG{p}{)}
-\end{pytx@SaveVerbatim}
-
-\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@14}
-    \PYG{n}{trace} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{l+m+mi}{800}\PYG{p}{,} \PYG{n}{tune}\PYG{o}{=}\PYG{l+m+mi}{300}\PYG{p}{,} \PYG{n}{cores}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
-\end{pytx@SaveVerbatim}
-
-\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@16}
-    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{plot\PYGZus{}posterior}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
-    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
-\end{pytx@SaveVerbatim}
-
-\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@17}
-\PYG{c+c1}{\PYGZsh{} posterior sampling}
-\PYG{k}{with} \PYG{n}{hierarchical\PYGZus{}model} \PYG{k}{as} \PYG{n}{model}\PYG{p}{:}
-    \PYG{n}{post\PYGZus{}pred} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample\PYGZus{}posterior\PYGZus{}predictive}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{,} \PYG{n}{samples}\PYG{o}{=}\PYG{l+m+mi}{500}\PYG{p}{)}
-    \PYG{n}{predictions} \PYG{o}{=} \PYG{n}{post\PYGZus{}pred}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{y}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
-
-\PYG{n}{draw\PYGZus{}posterior\PYGZus{}checks}\PYG{p}{(}
-    \PYG{n}{predictions}\PYG{o}{=}\PYG{n}{predictions}\PYG{p}{,}
-    \PYG{n}{measurements\PYGZus{}df}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{,}
-    \PYG{n}{parameters\PYGZus{}df}\PYG{o}{=}\PYG{n}{parameters\PYGZus{}df}\PYG{p}{,}
-    \PYG{n}{plot\PYGZus{}name}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{hierarchical\PYGZus{}model\PYGZus{}posterior\PYGZus{}sampling}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-\PYG{p}{)}
-\end{pytx@SaveVerbatim}
-
-\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@0}
-\PYG{k+kn}{import} \PYG{n+nn}{pymc3} \PYG{k}{as} \PYG{n+nn}{pm}
-\PYG{k+kn}{import} \PYG{n+nn}{pandas} \PYG{k}{as} \PYG{n+nn}{pd}
-
-\PYG{n}{measurements\PYGZus{}df} \PYG{o}{=} \PYG{n}{pd}\PYG{o}{.}\PYG{n}{read\PYGZus{}csv}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient\PYGZus{}measurements.csv}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
-
-\PYG{k}{with} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Model}\PYG{p}{(}\PYG{p}{)} \PYG{k}{as} \PYG{n}{single\PYGZus{}patient\PYGZus{}no\PYGZus{}trend\PYGZus{}model}\PYG{p}{:}
-
-    \PYG{c+c1}{\PYGZsh{} separate priors for each treatment}
-    \PYG{n}{treatment1\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
-    \PYG{n}{treatment2\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
-    \PYG{n}{trend\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
-    \PYG{c+c1}{\PYGZsh{} common variance parameter defining the error}
-    \PYG{n}{gamma\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
-
-    \PYG{c+c1}{\PYGZsh{} means are created from both priors, with a indicator setting the}
-    \PYG{c+c1}{\PYGZsh{} values to 0 if the particular treatment is not applied at the observation}
-    \PYG{c+c1}{\PYGZsh{} adding in the effect of the trend at the particular observation}
-    \PYG{n}{measurement\PYGZus{}means} \PYG{o}{=} \PYG{p}{(}
-        \PYG{n}{treatment1\PYGZus{}prior} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1\PYGZus{}idx}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
-        \PYG{o}{+} \PYG{n}{treatment2\PYGZus{}prior} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2\PYGZus{}idx}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
-        \PYG{o}{+} \PYG{n}{trend\PYGZus{}prior} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{measurement\PYGZus{}idx}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
-    \PYG{p}{)}
-
-    \PYG{c+c1}{\PYGZsh{} likelihood is normal distribution with the same amount of dimensions}
-    \PYG{c+c1}{\PYGZsh{} as the patient has measurements and and the mean is defined by one of the}
-    \PYG{c+c1}{\PYGZsh{} treatment priors + trend at that that measurement with always the same variance}
-    \PYG{n}{likelihood} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
-        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{y}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-        \PYG{n}{measurement\PYGZus{}means}\PYG{p}{,}
-        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{gamma\PYGZus{}prior}\PYG{p}{,}
-        \PYG{n}{observed}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{value}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{,}
-    \PYG{p}{)}
-
-    \PYG{c+c1}{\PYGZsh{} adding the comparison between the treatments}
-    \PYG{n}{difference} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Deterministic}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{difference}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{treatment1\PYGZus{}prior} \PYG{o}{\PYGZhy{}} \PYG{n}{treatment2\PYGZus{}prior}\PYG{p}{)}
-
-    \PYG{c+c1}{\PYGZsh{} running the model}
-    \PYG{n}{trace} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{l+m+mi}{800}\PYG{p}{,} \PYG{n}{tune}\PYG{o}{=}\PYG{l+m+mi}{500}\PYG{p}{,} \PYG{n}{cores}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
-
-    \PYG{c+c1}{\PYGZsh{} Checking diagnostic describing how the MCMC method performed}
-    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{traceplot}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{,} \PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{)}
-    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
-    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{summary}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
-
-    \PYG{c+c1}{\PYGZsh{} checking the posterior distributions}
-    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{plot\PYGZus{}posterior}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
-    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
-
-
-\PYG{c+c1}{\PYGZsh{} posterior sampling}
-\PYG{k}{with} \PYG{n}{single\PYGZus{}patient\PYGZus{}no\PYGZus{}trend\PYGZus{}model} \PYG{k}{as} \PYG{n}{model}\PYG{p}{:}
-    \PYG{n}{post\PYGZus{}pred} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample\PYGZus{}posterior\PYGZus{}predictive}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{,} \PYG{n}{samples}\PYG{o}{=}\PYG{l+m+mi}{500}\PYG{p}{)}
-    \PYG{n}{predictions} \PYG{o}{=} \PYG{n}{post\PYGZus{}pred}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{y}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
-
-\PYG{n}{draw\PYGZus{}posterior\PYGZus{}checks}\PYG{p}{(}
-    \PYG{n}{predictions}\PYG{o}{=}\PYG{n}{predictions}\PYG{p}{,}
-    \PYG{n}{measurements\PYGZus{}df}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{,}
+    \PYG{n}{measurements\PYGZus{}df}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{,}
     \PYG{n}{parameters\PYGZus{}df}\PYG{o}{=}\PYG{n}{parameters\PYGZus{}df}\PYG{p}{[}\PYG{n}{parameters\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient\PYGZus{}idx}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]}\PYG{p}{,}
+    \PYG{n}{plot\PYGZus{}name}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{single\PYGZus{}patient\PYGZus{}no\PYGZus{}trend\PYGZus{}posterior\PYGZus{}sampling}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
 \PYG{p}{)}
 \end{pytx@SaveVerbatim}
 
@@ -358,84 +351,101 @@
 \PYG{k}{with} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Model}\PYG{p}{(}\PYG{p}{)} \PYG{k}{as} \PYG{n}{hierarchical\PYGZus{}model}\PYG{p}{:}
 
     \PYG{c+c1}{\PYGZsh{} population priors}
-    \PYG{n}{pop\PYGZus{}treatment1\PYGZus{}mean\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
-        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment1\PYGZus{}mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{10}
+    \PYG{n}{pop\PYGZus{}treatment\PYGZus{}a\PYGZus{}mean} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment A Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{1}
     \PYG{p}{)}
-    \PYG{n}{pop\PYGZus{}treatment1\PYGZus{}sd\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment1\PYGZus{}sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
+    \PYG{n}{pop\PYGZus{}treatment\PYGZus{}a\PYGZus{}sd} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment B Sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
 
-    \PYG{n}{pop\PYGZus{}treatment2\PYGZus{}mean\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
-        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment2\PYGZus{}mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{10}
+    \PYG{n}{pop\PYGZus{}treatment\PYGZus{}b\PYGZus{}mean} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment B Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{1}
     \PYG{p}{)}
-    \PYG{n}{pop\PYGZus{}treatment2\PYGZus{}sd\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment2\PYGZus{}sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
+    \PYG{n}{pop\PYGZus{}treatment\PYGZus{}b\PYGZus{}sd} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment B Sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
 
-    \PYG{n}{pop\PYGZus{}trend\PYGZus{}mean\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}trend\PYGZus{}mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
-    \PYG{n}{pop\PYGZus{}trend\PYGZus{}sd\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}trend\PYGZus{}sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{)}
+    \PYG{n}{pop\PYGZus{}trend\PYGZus{}mean} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Trend Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+    \PYG{n}{pop\PYGZus{}trend\PYGZus{}sd} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Trend Sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{)}
 
-    \PYG{n}{pop\PYGZus{}measurement\PYGZus{}error\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}
-        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}measurement\PYGZus{}error}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{10}
+    \PYG{n}{pop\PYGZus{}gamma} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{10}
     \PYG{p}{)}
 
     \PYG{c+c1}{\PYGZsh{} separate parameter for each patient}
-    \PYG{n}{pat\PYGZus{}treatment1} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
-        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-        \PYG{n}{mu}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment1\PYGZus{}mean\PYGZus{}prior}\PYG{p}{,}
-        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment1\PYGZus{}sd\PYGZus{}prior}\PYG{p}{,}
-        \PYG{n}{shape}\PYG{o}{=}\PYG{n}{patients\PYGZus{}n}\PYG{p}{,}
+    \PYG{n}{pat\PYGZus{}treatment\PYGZus{}a} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment A}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+        \PYG{n}{mu}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment\PYGZus{}a\PYGZus{}mean}\PYG{p}{,}
+        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment\PYGZus{}a\PYGZus{}sd}\PYG{p}{,}
+        \PYG{n}{shape}\PYG{o}{=}\PYG{l+m+mi}{6}\PYG{p}{,}
     \PYG{p}{)}
-    \PYG{n}{pat\PYGZus{}treatment2} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
-        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-        \PYG{n}{mu}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment2\PYGZus{}mean\PYGZus{}prior}\PYG{p}{,}
-        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment2\PYGZus{}sd\PYGZus{}prior}\PYG{p}{,}
-        \PYG{n}{shape}\PYG{o}{=}\PYG{n}{patients\PYGZus{}n}\PYG{p}{,}
+    \PYG{n}{pat\PYGZus{}treatment\PYGZus{}b} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment B}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+        \PYG{n}{mu}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment\PYGZus{}b\PYGZus{}mean}\PYG{p}{,}
+        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment\PYGZus{}b\PYGZus{}sd}\PYG{p}{,}
+        \PYG{n}{shape}\PYG{o}{=}\PYG{l+m+mi}{6}\PYG{p}{,}
     \PYG{p}{)}
-    \PYG{n}{pat\PYGZus{}sigma} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}
-        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{sigma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{n}{pop\PYGZus{}measurement\PYGZus{}error\PYGZus{}beta\PYGZus{}prior}\PYG{p}{,} \PYG{n}{shape}\PYG{o}{=}\PYG{n}{patients\PYGZus{}n}\PYG{p}{,}
+    \PYG{n}{pat\PYGZus{}gamma} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{n}{pop\PYGZus{}gamma}\PYG{p}{,} \PYG{n}{shape}\PYG{o}{=}\PYG{l+m+mi}{6}\PYG{p}{,}
     \PYG{p}{)}
     \PYG{n}{pat\PYGZus{}trend} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
         \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-        \PYG{n}{mu}\PYG{o}{=}\PYG{n}{pop\PYGZus{}trend\PYGZus{}mean\PYGZus{}prior}\PYG{p}{,}
-        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{pop\PYGZus{}trend\PYGZus{}sd\PYGZus{}prior}\PYG{p}{,}
-        \PYG{n}{shape}\PYG{o}{=}\PYG{n}{patients\PYGZus{}n}\PYG{p}{,}
+        \PYG{n}{mu}\PYG{o}{=}\PYG{n}{pop\PYGZus{}trend\PYGZus{}mean}\PYG{p}{,}
+        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{pop\PYGZus{}trend\PYGZus{}sd}\PYG{p}{,}
+        \PYG{n}{shape}\PYG{o}{=}\PYG{l+m+mi}{6}\PYG{p}{,}
     \PYG{p}{)}
 
     \PYG{n}{measurement\PYGZus{}means} \PYG{o}{=} \PYG{p}{(}
-        \PYG{n}{pat\PYGZus{}treatment1}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1\PYGZus{}idx}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
-        \PYG{o}{+} \PYG{n}{pat\PYGZus{}treatment2}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2\PYGZus{}idx}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
-        \PYG{o}{+} \PYG{n}{pat\PYGZus{}trend}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{measurement\PYGZus{}idx}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+        \PYG{n}{pat\PYGZus{}treatment\PYGZus{}a}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment\PYGZus{}a}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+        \PYG{o}{+} \PYG{n}{pat\PYGZus{}treatment\PYGZus{}b}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment\PYGZus{}a}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+        \PYG{o}{+} \PYG{n}{pat\PYGZus{}trend}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{measurement}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
     \PYG{p}{)}
 
     \PYG{n}{likelihood} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
         \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{y}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
         \PYG{n}{measurement\PYGZus{}means}\PYG{p}{,}
-        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{patients\PYGZus{}sigma}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]}\PYG{p}{,}
+        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{pat\PYGZus{}gamma}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]}\PYG{p}{,}
         \PYG{n}{observed}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{value}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{,}
     \PYG{p}{)}
 
     \PYG{c+c1}{\PYGZsh{} adding the comparison between the treatments}
-    \PYG{n}{difference} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Deterministic}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+s1}{difference}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{pat\PYGZus{}treatment1} \PYG{o}{\PYGZhy{}} \PYG{n}{pat\PYGZus{}treatment2}\PYG{p}{)}
+    \PYG{n}{pop\PYGZus{}difference} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Deterministic}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment Difference (A\PYGZhy{}B)}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+        \PYG{n}{pop\PYGZus{}treatment\PYGZus{}a\PYGZus{}mean} \PYG{o}{\PYGZhy{}} \PYG{n}{pop\PYGZus{}treatment\PYGZus{}b\PYGZus{}mean}\PYG{p}{,}
+    \PYG{p}{)}
+    \PYG{n}{pat\PYGZus{}difference} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Deterministic}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment Difference (A\PYGZhy{}B)}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{pat\PYGZus{}treatment\PYGZus{}a} \PYG{o}{\PYGZhy{}} \PYG{n}{pat\PYGZus{}treatment\PYGZus{}b}
+    \PYG{p}{)}
 
     \PYG{n}{trace} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{l+m+mi}{800}\PYG{p}{,} \PYG{n}{tune}\PYG{o}{=}\PYG{l+m+mi}{300}\PYG{p}{,} \PYG{n}{cores}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
 
+    \PYG{c+c1}{\PYGZsh{} checking traceplots separately for population and patients}
     \PYG{n}{pm}\PYG{o}{.}\PYG{n}{traceplot}\PYG{p}{(}
         \PYG{n}{trace}\PYG{p}{,}
         \PYG{p}{[}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{sigma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment1\PYGZus{}mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment1\PYGZus{}sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment2\PYGZus{}mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment2\PYGZus{}sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}measurement\PYGZus{}error\PYGZus{}beta}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}trend\PYGZus{}mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}trend\PYGZus{}sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment A Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment A Sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment B Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment B Sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Trend Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Trend SD}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
         \PYG{p}{]}\PYG{p}{,}
+    \PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
+    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{traceplot}\PYG{p}{(}
+        \PYG{n}{trace}\PYG{p}{,} \PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment A}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment B}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{,}
     \PYG{p}{)}
     \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
     \PYG{n}{pm}\PYG{o}{.}\PYG{n}{summary}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
 
-    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{plot\PYGZus{}posterior}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} plotting selected posteriors}
+    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{plot\PYGZus{}posterior}\PYG{p}{(}
+        \PYG{n}{trace}\PYG{p}{,}
+        \PYG{p}{[}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment A Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment B Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Trend Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment Difference (A\PYGZhy{}B)}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+        \PYG{p}{]}\PYG{p}{,}
+    \PYG{p}{)}
     \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
 
 
@@ -453,94 +463,119 @@
 \end{pytx@SaveVerbatim}
 
 \begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@11}
-\PYG{n}{patient\PYGZus{}idx} \PYG{o}{=} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{patient\PYGZus{}idx}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
-
 \PYG{k}{with} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Model}\PYG{p}{(}\PYG{p}{)} \PYG{k}{as} \PYG{n}{hierarchical\PYGZus{}model}\PYG{p}{:}
 
-    \PYG{c+c1}{\PYGZsh{} population priors}
-    \PYG{n}{pop\PYGZus{}treatment1\PYGZus{}mean\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
-        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment1\PYGZus{}mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{10}
+    \PYG{n}{pop\PYGZus{}treatment\PYGZus{}a\PYGZus{}mean} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment A Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{1}
     \PYG{p}{)}
-    \PYG{n}{pop\PYGZus{}treatment1\PYGZus{}sd\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment1\PYGZus{}sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
+    \PYG{n}{pop\PYGZus{}treatment\PYGZus{}a\PYGZus{}sd} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment B Sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
 
-    \PYG{n}{pop\PYGZus{}treatment2\PYGZus{}mean\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
-        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment2\PYGZus{}mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{10}
+    \PYG{n}{pop\PYGZus{}treatment\PYGZus{}b\PYGZus{}mean} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment B Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mi}{1}
     \PYG{p}{)}
-    \PYG{n}{pop\PYGZus{}treatment2\PYGZus{}sd\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment2\PYGZus{}sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
+    \PYG{n}{pop\PYGZus{}treatment\PYGZus{}b\PYGZus{}sd} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment B Sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
 
-    \PYG{n}{pop\PYGZus{}trend\PYGZus{}mean\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}trend\PYGZus{}mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
-    \PYG{n}{pop\PYGZus{}trend\PYGZus{}sd\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}trend\PYGZus{}sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{)}
+    \PYG{n}{pop\PYGZus{}trend\PYGZus{}mean} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Trend Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{mu}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{,} \PYG{n}{sigma}\PYG{o}{=}\PYG{l+m+mf}{0.3}\PYG{p}{)}
+    \PYG{n}{pop\PYGZus{}trend\PYGZus{}sd} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Trend Sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{)}
 
-    \PYG{n}{pop\PYGZus{}measurement\PYGZus{}error\PYGZus{}beta\PYGZus{}prior} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}
-        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}measurement\PYGZus{}error\PYGZus{}beta}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{10}
+    \PYG{n}{pop\PYGZus{}gamma} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{10}
     \PYG{p}{)}
 \end{pytx@SaveVerbatim}
 
 \begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@12}
-    \PYG{n}{pat\PYGZus{}treatment1} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
-        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-        \PYG{n}{mu}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment1\PYGZus{}mean\PYGZus{}prior}\PYG{p}{,}
-        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment1\PYGZus{}sd\PYGZus{}prior}\PYG{p}{,}
+    \PYG{n}{pat\PYGZus{}treatment\PYGZus{}a} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment A}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+        \PYG{n}{mu}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment\PYGZus{}a\PYGZus{}mean}\PYG{p}{,}
+        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment\PYGZus{}a\PYGZus{}sd}\PYG{p}{,}
         \PYG{n}{shape}\PYG{o}{=}\PYG{l+m+mi}{6}\PYG{p}{,}
     \PYG{p}{)}
-    \PYG{n}{pat\PYGZus{}treatment2} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
-        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-        \PYG{n}{mu}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment2\PYGZus{}mean\PYGZus{}prior}\PYG{p}{,}
-        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment2\PYGZus{}sd\PYGZus{}prior}\PYG{p}{,}
+    \PYG{n}{pat\PYGZus{}treatment\PYGZus{}b} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment B}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+        \PYG{n}{mu}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment\PYGZus{}b\PYGZus{}mean}\PYG{p}{,}
+        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{pop\PYGZus{}treatment\PYGZus{}b\PYGZus{}sd}\PYG{p}{,}
         \PYG{n}{shape}\PYG{o}{=}\PYG{l+m+mi}{6}\PYG{p}{,}
     \PYG{p}{)}
-    \PYG{n}{pat\PYGZus{}sigma} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}
-        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{sigma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{n}{pop\PYGZus{}measurement\PYGZus{}error\PYGZus{}beta\PYGZus{}prior}\PYG{p}{,} \PYG{n}{shape}\PYG{o}{=}\PYG{l+m+mi}{6}\PYG{p}{,}
+    \PYG{n}{pat\PYGZus{}gamma} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{HalfCauchy}\PYG{p}{(}
+        \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{n}{pop\PYGZus{}gamma}\PYG{p}{,} \PYG{n}{shape}\PYG{o}{=}\PYG{l+m+mi}{6}\PYG{p}{,}
     \PYG{p}{)}
     \PYG{n}{pat\PYGZus{}trend} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
         \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-        \PYG{n}{mu}\PYG{o}{=}\PYG{n}{pop\PYGZus{}trend\PYGZus{}mean\PYGZus{}prior}\PYG{p}{,}
-        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{pop\PYGZus{}trend\PYGZus{}sd\PYGZus{}prior}\PYG{p}{,}
+        \PYG{n}{mu}\PYG{o}{=}\PYG{n}{pop\PYGZus{}trend\PYGZus{}mean}\PYG{p}{,}
+        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{pop\PYGZus{}trend\PYGZus{}sd}\PYG{p}{,}
         \PYG{n}{shape}\PYG{o}{=}\PYG{l+m+mi}{6}\PYG{p}{,}
     \PYG{p}{)}
 \end{pytx@SaveVerbatim}
 
 \begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@13}
     \PYG{n}{measurement\PYGZus{}means} \PYG{o}{=} \PYG{p}{(}
-        \PYG{n}{pat\PYGZus{}treatment1}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
-        \PYG{o}{+} \PYG{n}{pat\PYGZus{}treatment2}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
-        \PYG{o}{+} \PYG{n}{pat\PYGZus{}trend}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{measurement\PYGZus{}idx}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+        \PYG{n}{pat\PYGZus{}treatment\PYGZus{}a}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment\PYGZus{}a}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+        \PYG{o}{+} \PYG{n}{pat\PYGZus{}treatment\PYGZus{}b}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment\PYGZus{}b}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+        \PYG{o}{+} \PYG{n}{pat\PYGZus{}trend}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]} \PYG{o}{*} \PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{measurement}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
     \PYG{p}{)}
 
     \PYG{n}{likelihood} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{Normal}\PYG{p}{(}
         \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{y}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
         \PYG{n}{measurement\PYGZus{}means}\PYG{p}{,}
-        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{patients\PYGZus{}sigma}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]}\PYG{p}{,}
-        \PYG{n}{observed}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{measurement}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{,}
+        \PYG{n}{sigma}\PYG{o}{=}\PYG{n}{pat\PYGZus{}gamma}\PYG{p}{[}\PYG{n}{patient\PYGZus{}idx}\PYG{p}{]}\PYG{p}{,}
+        \PYG{n}{observed}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{value}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{,}
     \PYG{p}{)}
+\end{pytx@SaveVerbatim}
+
+\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@14}
+    \PYG{n}{trace} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{l+m+mi}{800}\PYG{p}{,} \PYG{n}{tune}\PYG{o}{=}\PYG{l+m+mi}{300}\PYG{p}{,} \PYG{n}{cores}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
 \end{pytx@SaveVerbatim}
 
 \begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@15}
     \PYG{n}{pm}\PYG{o}{.}\PYG{n}{traceplot}\PYG{p}{(}
         \PYG{n}{trace}\PYG{p}{,}
         \PYG{p}{[}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment1\PYGZus{}mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment1\PYGZus{}sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment2\PYGZus{}mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}treatment2\PYGZus{}sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}measurement\PYGZus{}error\PYGZus{}beta}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}trend\PYGZus{}mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{pop\PYGZus{}trend\PYGZus{}sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment A Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment A Sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment B Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment B Sd}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Trend Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Trend SD}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
         \PYG{p}{]}\PYG{p}{,}
     \PYG{p}{)}
     \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
-
     \PYG{n}{pm}\PYG{o}{.}\PYG{n}{traceplot}\PYG{p}{(}
+        \PYG{n}{trace}\PYG{p}{,} \PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment A}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment B}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{p}{,}
+    \PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
+    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{summary}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
+\end{pytx@SaveVerbatim}
+
+\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@16}
+    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{plot\PYGZus{}posterior}\PYG{p}{(}
         \PYG{n}{trace}\PYG{p}{,}
         \PYG{p}{[}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment1}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{treatment2}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{sigma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
-            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment A Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment B Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Trend Mean}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Gamma}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+            \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Population Treatment Difference (A\PYGZhy{}B)}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
         \PYG{p}{]}\PYG{p}{,}
     \PYG{p}{)}
     \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
+    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{plot\PYGZus{}posterior}\PYG{p}{(}
+        \PYG{n}{trace}\PYG{p}{,} \PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment A}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment B}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Trend}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Treatment Difference (A\PYGZhy{}B)}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+    \PYG{p}{)}
+    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{plot\PYGZus{}posterior}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
+\end{pytx@SaveVerbatim}
 
-    \PYG{n}{pm}\PYG{o}{.}\PYG{n}{summary}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{)}
+\begin{pytx@SaveVerbatim}[commandchars=\\\{\}]{pytx@py@default@defaultverb@17}
+\PYG{k}{with} \PYG{n}{hierarchical\PYGZus{}model} \PYG{k}{as} \PYG{n}{model}\PYG{p}{:}
+    \PYG{n}{post\PYGZus{}pred} \PYG{o}{=} \PYG{n}{pm}\PYG{o}{.}\PYG{n}{sample\PYGZus{}posterior\PYGZus{}predictive}\PYG{p}{(}\PYG{n}{trace}\PYG{p}{,} \PYG{n}{samples}\PYG{o}{=}\PYG{l+m+mi}{500}\PYG{p}{)}
+    \PYG{n}{predictions} \PYG{o}{=} \PYG{n}{post\PYGZus{}pred}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{y}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+
+\PYG{n}{draw\PYGZus{}posterior\PYGZus{}checks}\PYG{p}{(}
+    \PYG{n}{predictions}\PYG{o}{=}\PYG{n}{predictions}\PYG{p}{,}
+    \PYG{n}{measurements\PYGZus{}df}\PYG{o}{=}\PYG{n}{measurements\PYGZus{}df}\PYG{p}{,}
+    \PYG{n}{parameters\PYGZus{}df}\PYG{o}{=}\PYG{n}{parameters\PYGZus{}df}\PYG{p}{,}
+    \PYG{n}{plot\PYGZus{}name}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{hierarchical\PYGZus{}model\PYGZus{}posterior\PYGZus{}sampling}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}
+\PYG{p}{)}
 \end{pytx@SaveVerbatim}
 
