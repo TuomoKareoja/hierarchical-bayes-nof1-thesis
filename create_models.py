@@ -98,17 +98,12 @@ with pm.Model() as single_patient_no_trend_model:
         bbox_inches="tight",
     )
     plt.show()
-    summary_metrics_df = pd.DataFrame(pm.summary(trace))
+    summary_metrics_df = pd.DataFrame(pm.summary(trace, kind="diagnostics"))
     print(summary_metrics_df)
-    # TODO only keep the most important metrics to have the table with the page
     with open(
         os.path.join(visualization_path, "single_patient_diag_metrics.tex"), "w",
     ) as file:
-        file.write(
-            summary_metrics_df.drop(
-                ["mean", "sd", "hpd_3%", "hpd_97%"], axis=1
-            ).to_latex()
-        )
+        file.write(summary_metrics_df.to_latex())
 
     # posteriors should look reasonable
     pm.plot_posterior(trace)
@@ -131,6 +126,52 @@ draw_posterior_checks(
     parameters_df=parameters_df[parameters_df["patient_index"] == 0],
     plot_name="single_patient_posterior_sampling",
 )
+
+# %%
+
+# TIMELINE
+fig, ax = plt.subplots(figsize=(8, 4))
+
+for sample in post_pred.get("y"):
+
+    ax.plot(
+        range(len(sample)),
+        sample,
+        linestyle="solid",
+        linewidth=1,
+        color="grey",
+        alpha=0.05,
+    )
+
+
+ax.plot(
+    measurements_df[patient_index == 0]["measurement_index"],
+    measurements_df[patient_index == 0]["measurement"],
+    color="red",
+    linestyle="solid",
+    linewidth=1,
+    label="Patient 1",
+)
+
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+plt.ylabel("Measurement Value")
+plt.xlabel("Time Index")
+plt.legend(
+    loc="upper left",
+    ncol=2,
+    handletextpad=0.5,
+    borderpad=1,
+    columnspacing=1,
+    labelspacing=1,
+)
+
+plt.tight_layout()
+plt.savefig(
+    os.path.join(visualization_path, "posterior_sample_timeline_single_patient.pdf"),
+    bbox_inches="tight",
+)
+plt.show()
 
 # %%
 
@@ -226,17 +267,13 @@ with pm.Model() as hierarchical_with_trend_model:
 
     pm.summary(trace)
 
-    summary_metrics_df = pd.DataFrame(pm.summary(trace))
+    summary_metrics_df = pd.DataFrame(pm.summary(trace, kind="diagnostics"))
     print(summary_metrics_df)
     # TODO only keep the most important metrics to have the table with the page
     with open(
         os.path.join(visualization_path, "hierarchical_model_diag_metrics.tex"), "w",
     ) as file:
-        file.write(
-            summary_metrics_df.drop(
-                ["mean", "sd", "hpd_3%", "hpd_97%"], axis=1
-            ).to_latex()
-        )
+        file.write(summary_metrics_df.to_latex())
 
     pm.plot_posterior(
         trace,
@@ -275,7 +312,7 @@ with hierarchical_with_trend_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)
     predictions = post_pred["y"]
 
-# TODO the picture has to be smaller to fit in one page
+# TODO why the picture is too small?
 draw_posterior_checks(
     predictions=predictions,
     measurements_df=measurements_df,
@@ -284,3 +321,100 @@ draw_posterior_checks(
 )
 
 # %%
+
+# TIMELINE
+
+patient_colors = ["red", "green", "blue", "orange", "brown", "black"]
+
+fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(14, 8))
+
+for patient, color, ax in zip(
+    measurements_df["patient_index"].unique(), patient_colors, axs.ravel()
+):
+
+    patient_samples = post_pred["y"][:, measurements_df["patient_index"] == patient]
+
+    for sample in patient_samples:
+
+        ax.plot(
+            range(len(sample)),
+            sample,
+            linestyle="solid",
+            linewidth=1,
+            color="grey",
+            alpha=0.03,
+        )
+
+    ax.plot(
+        measurements_df[measurements_df["patient_index"] == patient][
+            "measurement_index"
+        ],
+        measurements_df[measurements_df["patient_index"] == patient]["measurement"],
+        color=color,
+        linestyle="solid",
+        linewidth=1,
+        label="Patient {}".format(patient + 1),
+    )
+    ax.legend(
+        loc="upper left",
+        ncol=2,
+        handletextpad=0.5,
+        borderpad=1,
+        columnspacing=1,
+        labelspacing=1,
+    )
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+axs[0, 0].set_ylabel("Measurement Value")
+axs[2, 0].set_xlabel("Time Index")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        visualization_path, "posterior_sample_timeline_hierarchical_model.pdf"
+    ),
+    bbox_inches="tight",
+)
+plt.show()
+
+
+# %%
+
+# Comparing posterior results between the models
+
+# hier_a = hierarchical_trace["a"][500:].mean(axis=0)
+# hier_b = hierarchical_trace["b"][500:].mean(axis=0)
+# indv_a = [
+#     unpooled_trace["a"][500:, np.where(county_names == c)[0][0]].mean()
+#     for c in county_names
+# ]
+# indv_b = [
+#     unpooled_trace["b"][500:, np.where(county_names == c)[0][0]].mean()
+#     for c in county_names
+# ]
+
+# fig = plt.figure(figsize=(10, 10))
+# ax = fig.add_subplot(
+#     111,
+#     xlabel="Treatment A",
+#     ylabel="Treatment B",
+#     title="Hierarchical vs. Non-hierarchical Bayes",
+# )
+
+# ax.scatter(indv_a, indv_b, s=26, alpha=0.4, label="non-hierarchical")
+# ax.scatter(hier_a, hier_b, c="red", s=26, alpha=0.4, label="hierarchical")
+# for i in range(len(indv_b)):
+#     ax.arrow(
+#         indv_a[i],
+#         indv_b[i],
+#         hier_a[i] - indv_a[i],
+#         hier_b[i] - indv_b[i],
+#         fc="k",
+#         ec="k",
+#         length_includes_head=True,
+#         alpha=0.4,
+#         head_width=0.04,
+#     )
+# ax.legend()
+

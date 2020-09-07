@@ -867,8 +867,6 @@ samples from this distribution we could approximate the posterior distribution
 with the probability distribution of the values of the samples. The general
 method to get this kind of sample is the following:
 
-% TODO Need to mention how this work in case of multiple parameters
-
 \begin{enumerate}
     \item Pick a set of values for our parameters as our starting position in
           the parameter space. The starting location has to be a plausible set
@@ -1824,7 +1822,7 @@ that we are using here are widely used, we can find functions implementing
 them already built-in PyMC3. It is also possible to define completely custom
 distributions, but unfortunately this is quite complex, as you don't just have to worry
 about the math part, but also all you have to implement all the methods that PyMC3
-relies on when making the calculations\footnote{This complexity is a reason why the author would recommend using the Stan package for very complex models with lots of weird
+relies on when making the calculations\footnote{Because of this complexity the author would recommend using the Stan package for very complex models with lots of weird
 distributions. Although Stan requires to you to write model definition with its own
 language, this hurdle is worth in some cases as you just have
 worry about the math and there is no need to consider implementing any helper functions}.
@@ -1971,7 +1969,7 @@ just the steps used for the posterior estimation and don't include the tuning st
 chain is portrayed with a different color. What we want to see here is that the timeseries
 looks like noise with no obvious patterns \footnote{With this model it is hard to
 demonstrate this problem effectively in PyMC3 as not having enough tuning and and
-calculation steps often just leads the model to fail outright without any results}. If we would see any patterns, like the chains
+calculation steps just leads the model to fail outright without any results}. If we would see any patterns, like the chains
 moving values moving systematically up and down, it would mean that the
 chains had problems moving trough the posterior and ended up taking biased samples.
 These effects should be most pronounced at the beginning steps and if we would see
@@ -1993,23 +1991,31 @@ diagnostic metrics. PyMC3 has an inbuilt method for printing the common metrics
     \caption{Single Patient Traceplots}
     \label{singlepatientdiagnosticmetrics}
     \bigskip
-    \input{../figures/single_patient_no_trend_diag_metrics.tex}
+    \input{../figures/single_patient_diag_metrics.tex}
 \end{figure}
 \bigskip
 
-% TODO how to use the diagnostic metrics
-% TODO explain how PyMC3 automatically checks these metrics
+The most important metrics here to keep an eye out is \(\hat{R}\) (r\_hat), that is short for potential scale
+reduction statistic). This metrics tells us if
+chains have converged to the equilibrium distribution. The metrics is calculated by
+taking the variance of the drawn values for each chain,
+then calculating the variance of drawn values for all chains combined and then taking the
+ratio of average of the per chain variance compared to the pooled variance. If the
+chains have converged to a common distribution the value of this metric will be one. If
+the value is higher than one, this indicates that the chains have not converged. Small
+divergences between the chains are not critical and \(\hat{R}\) values less than 1.1 should
+not give cause for concern\ \cite{rhatrule}. In our case \(\hat{R}\) values are 1.0 for
+all chains so everything seems to be in order.
 
-If increasing the tuning steps does not seem to help we have to consider two things: the
+If we find problems in the traceplots and diagnostic metrics and increasing the tuning
+steps does not seem to help, we have to consider two things: the
 MCMC algorithm chosen by PyMC3 is not a good match for our model or our model might not
 be properly defined. The first thing is try to manually choose a different algorithm than
-PyMC3 automatically chose (can be seen from the model computation printout) and seeing
-if we get better results. If this does not seem to work, we have to over our model and
-think if the model is in some way improperly defined.
-
-% TODO what does an improperly defined model mean
-% simple mistake in defining the model
-% improper posterior that is caused by using improper priors
+PyMC3 automatically chose (this can be seen from the model computation printout) and seeing
+if we get better results. If this does not seem to work, we have to go over our model and
+think if the model is in some way improperly defined. This could mean a simple mistake
+in model definition or something more complex like the distributions that we chose for
+our parameters not working well together or not fitting with the data.
 
 One thing that we should not here is that we only looked at diagnostic values for our
 parameters, but not the difference between the treatment means, that we are actually the
@@ -2047,8 +2053,6 @@ that the mean is positive and the HPD does not include zero, we can quite certai
 treatment A is a worse option for this patient than treatment B, with the likely values of
 the difference falling between 0.71 and 0.94.
 
-% TODO comparison to the actual difference between the parameters
-
 \subsubsection{Checking Model Fit with Posterior Sampling}
 
 \bigskip
@@ -2067,7 +2071,14 @@ draw_posterior_checks(
 \end{pyverbatim}
 \bigskip
 
-% TODO add timeseries plots, showing that the data looks very much like our experiment
+\bigskip
+\begin{figure}[H]
+    \caption{Single Patient Posterior Sample Timeline}
+    \label{singlepatientposteriors}
+    \bigskip
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{posterior_sample_timeline_single_patient.pdf}
+\end{figure}
+\bigskip
 
 Even though we already checked that the estimation seems to be working correctly and saw
 that the posterior estimates clearly favor treatment option B for this patient, there is
@@ -2502,6 +2513,7 @@ seems to be in order.
 \end{figure}
 \bigskip
 
+
 Next we check the traceplots of the patient level parameters (figure\
 \ref{hierarchicalmodelpatienttraceplots}). These look bit different now as the patient
 level parameters are multidimensional as every patient has their own
@@ -2600,6 +2612,15 @@ draw_posterior_checks(
 \end{pyverbatim}
 \bigskip
 
+\bigskip
+\begin{figure}[H]
+    \caption{Hierarchical Model Posterior Sample Timeline}
+    \label{singlepatientposteriors}
+    \bigskip
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{posterior_sample_timeline_hierarchical_model.pdf}
+\end{figure}
+\bigskip
+
 Checking the posterior sampling\ \ref{hierarchicalmodelposteriorsampling}.
 
 % TODO why is this so small
@@ -2688,11 +2709,14 @@ No model testing and now trial and error with the amount of steps.
 
     \bibitem{github}
     Tuomo Kareoja: https://github.com/TuomoKareoja/hierarchical-bayes-nof1-thesis,
-    GitHub repository, 2020
+    GitHub repository, 2020.
 
     \bibitem{variancepriors}
     Andrew Gelman: Prior distributions for variance parameters in hierarchical models
     (comment on article by Browne and Draper). Bayesian analysis 1.3, 2006;515-534.
+
+    \bibitem{rhatrule}
+    Jonah Gabry, Ben Goodrich: https://cran.r-project.org/web/packages/rstanarm/vignettes/rstanarm.html, 2020.
 
 \end{thebibliography}
 \end{document}
