@@ -1609,7 +1609,7 @@ positive without the patient being a huge outlier. For the scale of the half-Cau
 distribution we go with a non-informative prior as the error also depends on if on
 properly the measurement is performed (remember that the measurements are taken by the
 patients) and this is very hard to estimate so we set the value \(\gamma \) value to 1
-for an non-informative prior. The set prior values can be seen in table\ \ref{singlelpatientmodelpriorvalues}.
+for an non-informative prior. The set prior values can be seen in table\ \ref{singlelpatientpriorvalues}.
 
 \begin{table}
     \caption{Single Patient Model Prior Values}
@@ -2066,7 +2066,7 @@ draw_posterior_checks(
     predictions=predictions,
     measurements_df=measurements_df[patient_idx == 0],
     parameters_df=parameters_df[parameters_df["patient_idx"] == 0],
-    plot_name="single_patient_no_trend_posterior_sampling",
+    plot_name="single_patient_posterior_sampling",
 )
 \end{pyverbatim}
 \bigskip
@@ -2074,7 +2074,7 @@ draw_posterior_checks(
 \bigskip
 \begin{figure}[H]
     \caption{Single Patient Posterior Sample Timeline}
-    \label{singlepatientposteriors}
+    \label{singlepatientposteriortimeline}
     \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{posterior_sample_timeline_single_patient.pdf}
 \end{figure}
@@ -2124,7 +2124,7 @@ true parameter difference.
 
 \subsection{Final Results}
 
-After going trough the steps of:
+We have now completed the single patient analysis after going trough all the modelling steps:
 
 \begin{enumerate}
     \item Defining the model
@@ -2135,12 +2135,14 @@ After going trough the steps of:
     \item Making sure that our model is an accurate enough description of reality
 \end{enumerate}
 
-We can say that for this patient treatment B is recommended over treatment A with
-treatment B giving 0.82 points lower measurements. We can also easily communicate
+Based on our results we can say that for this patient treatment B is recommended over treatment A with
+treatment B with the most probable difference being 0.82 measurement points in favor of treatment B. We can also easily communicate
 the uncertainty in our estimation by with the HPD by saying that the true difference of
-the treatments is with 95 \% probability between 0.71 and 0.94.
-
-% TODO what can we infer and how should we communicate our results
+the treatments is with 95 \% probability between 0.71 and 0.94. As we have the full
+posterior difference distribution we can also visually show these results with a graph,
+which is the clinical setting probably the most advisable solution. The important thing
+to underline here is that we are talking about actual probabilities and not likelihoods,
+circumventing complicate definitions and having intuitively understandable results.
 
 \section{Analyzing Multiple Trials With Hierarchical Models}\label{pooling}
 
@@ -2170,11 +2172,14 @@ To make this model hierarchical we now add the population level distributions wh
 the patient-level parameters are drawn from and the prior distributions for the
 parameters defining the population level distribution:
 
+% TODO should we use estimates from the data for the variance?
+
 \bigskip
 \begin{tikzpicture}
 
     \matrix[matrix of math nodes, column sep=-35pt, row sep=30pt] (mat)
     {
+        \ & \mu_{\theta}, \sigma_{\theta}, \mu_{\eta},\sigma_{\eta}, \mu_{\beta}, \sigma_{\beta}, \gamma_{\tau} & \ \\
         \ & \mu_{\theta}, \sigma_{\theta}, \mu_{\eta},\sigma_{\eta}, \mu_{\beta}, \sigma_{\beta}, \gamma_{\tau} & \ \\
         \ \\
         \ \\
@@ -2184,47 +2189,68 @@ parameters defining the population level distribution:
         y_{1,1}, \ldots, y_{28, 1} & \ldots & y_{1,6}, \ldots, y_{28, 6} \\
     };
 
-    \draw[->,>=latex] (mat-1-2) -- (mat-5-2);
-    \draw[->,>=latex] (mat-5-2) -- (mat-7-1);
-    \draw[->,>=latex] (mat-5-2) -- (mat-7-3);
+    \draw[->,>=latex] (mat-1-2) -- (mat-2-2);
+    \draw[->,>=latex] (mat-2-2) -- (mat-6-2);
+    \draw[->,>=latex] (mat-6-2) -- (mat-8-1);
+    \draw[->,>=latex] (mat-6-2) -- (mat-8-3);
 
-    \node[anchor=east] at ([xshift = 0pt]mat-1-1)
+    \node[anchor=east] at ([xshift = 0pt]mat-2-1)
     {$
         \mu_{\theta} \sim \mathcal{N}(10, 10),
         \sigma_{\theta} \sim HalfCauchy(0, 10),
     $};
-    \node[anchor=east] at ([xshift = 0pt]mat-2-1)
+    \node[anchor=east] at ([xshift = 0pt]mat-3-1)
     {$
         \mu_{\eta} \sim \mathcal{N}(10, 10),
         \sigma_{\eta} \sim HalfCauchy(0, 10),
     $};
-    \node[anchor=east] at ([xshift = 0pt]mat-3-1)
+    \node[anchor=east] at ([xshift = 0pt]mat-4-1)
     {$
         \mu_{\beta} \sim \mathcal{N}(0.01, 0.3),
         \sigma_{\beta} \sim HalfCauchy(0, 2),
     $};
-    \node[anchor=east] at ([xshift = 0pt]mat-4-1)
+    \node[anchor=east] at ([xshift = 0pt]mat-5-1)
     {$
         \gamma_{\tau} \sim HalfCauchy(0, 10)
     $};
-    \node[anchor=east] at ([xshift = 0pt]mat-5-1)
+    \node[anchor=east] at ([xshift = 0pt]mat-6-1)
     {$
         \theta_{j} \sim \mathcal{N}(\mu_{\theta},\sigma_{\theta}^2),
         \eta_{j} \sim \mathcal{N}(\mu_{\eta},\sigma_{\eta}^2),
         \beta_{j} \sim \mathcal{N}(\mu_{\beta},\sigma_{\beta}^2),
     $};
-    \node[anchor=east] at ([xshift = 0pt]mat-6-1)
+    \node[anchor=east] at ([xshift = 0pt]mat-7-1)
     {$
         \tau_{j} \sim HalfCauchy(0, \gamma_{\tau}),
     $};
-    \node[anchor=east] at ([xshift = -35pt]mat-7-1)
+    \node[anchor=east] at ([xshift = -35pt]mat-8-1)
     {$
         y_{tj} = Z_{tj}\theta_{j} + W_{tj}\eta_{j} + t\beta_{j} + \epsilon_{tj}
     $};
 \end{tikzpicture}
 
 As the priors are defined on the population level we have to think about defining the
-parameters of these distributions in a bit different way
+parameters of these distributions in a bit different way as we are now talking about
+different level of analysis. The nice thing with population level priors is that of the
+existing literature that you are relying on is performed in group level and thus if you
+can find meta-analyses of phenomenon you are researching, you can often find reasonable
+prior values straight from these papers. The chosen priors values for our hierarchical
+model are summarized in table\ \ref{hierarchicalmodelpriorvalues}.
+
+\begin{table}[H]
+    \caption{Hierarchical Model Prior Values}
+    \label{hierarchicalmodelpriorvalues}
+    \begin{align}\label{}
+        \text{population treatment A mean prior: } & \mu_{\theta} = 10 \nonumber \\
+        \text{population treatment A standard deviance prior: } & \sigma_{\theta} = 1 \nonumber \\
+        \text{population treatment B mean prior: } & \mu_{\eta} = 10 \nonumber \\
+        \text{population treatment B standard deviance prior: } & \sigma_{\eta} = 1 \nonumber \\
+        \text{population trend mean prior: } & \mu_{\beta} = 0.1 \nonumber \\
+        \text{population trend standard deviance prior: } & \sigma_{\beta} = 0.3 \nonumber \\
+        \text{population measurement error scale prior: } & \gamma_{\tau} = 1 \nonumber
+    \end{align}
+\end{table}
+
 
 % TODO what is the logic of defining the priors
 % TODO should the priors be defined bit tighter as we are now talking about population?
@@ -2450,7 +2476,7 @@ for the distributions we get from the population distributions.
 
 Defining the likelihood is done very similarly as we did with the single patient model,
 but now we have to use indices to get separate values for each patient. The measurement
-means now becomes a 6X28 size matrix, where every patient get her own row with
+means now becomes a 6x28 size matrix, where every patient get her own row with
 measurement means varying by the treatment given. For sigma we use a vector that is
 indexed the same way as the treatment means. This vector has one value for each patient
 and all the 28 observations of the patient will use this same value.
@@ -2516,7 +2542,7 @@ seems to be in order.
 
 Next we check the traceplots of the patient level parameters (figure\
 \ref{hierarchicalmodelpatienttraceplots}). These look bit different now as the patient
-level parameters are multidimensional as every patient has their own
+level parameters are multidimensional with every patient having their own
 parameter. This make the right side of the plot hard to interpret, but left side is
 still intelligible and see wee that the posteriors of the three chain align. It is
 possible to plot the traceplots for single patients by passing the indices of parameters

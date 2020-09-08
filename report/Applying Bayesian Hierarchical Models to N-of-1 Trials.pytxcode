@@ -141,9 +141,9 @@ draw_posterior_checks(
     predictions=predictions,
     measurements_df=measurements_df[patient_idx == 0],
     parameters_df=parameters_df[parameters_df["patient_idx"] == 0],
-    plot_name="single_patient_no_trend_posterior_sampling",
+    plot_name="single_patient_posterior_sampling",
 )
-=>PYTHONTEX#py#default#defaultverb#10#verbatim#####2242#
+=>PYTHONTEX#py#default#defaultverb#10#verbatim#####2268#
 
 patient_idx = measurements_df["patient_idx"]
 
@@ -259,7 +259,7 @@ draw_posterior_checks(
     parameters_df=parameters_df,
     plot_name="hierarchical_model_posterior_sampling",
 )
-=>PYTHONTEX#py#default#defaultverb#11#verbatim#####2363#
+=>PYTHONTEX#py#default#defaultverb#11#verbatim#####2389#
 with pm.Model() as hierarchical_model:
 
     pop_treatment_a_mean = pm.Normal(
@@ -278,7 +278,7 @@ with pm.Model() as hierarchical_model:
     pop_gamma = pm.HalfCauchy(
         "Population Gamma", beta=10
     )
-=>PYTHONTEX#py#default#defaultverb#12#verbatim#####2396#
+=>PYTHONTEX#py#default#defaultverb#12#verbatim#####2422#
     pat_treatment_a = pm.Normal(
         "Treatment A",
         mu=pop_treatment_a_mean,
@@ -300,7 +300,7 @@ with pm.Model() as hierarchical_model:
         sigma=pop_trend_sd,
         shape=6,
     )
-=>PYTHONTEX#py#default#defaultverb#13#verbatim#####2435#
+=>PYTHONTEX#py#default#defaultverb#13#verbatim#####2461#
     measurement_means = (
         pat_treatment_a[patient_idx] * measurements_df["treatment_a"]
         + pat_treatment_b[patient_idx] * measurements_df["treatment_b"]
@@ -313,9 +313,9 @@ with pm.Model() as hierarchical_model:
         sigma=pat_gamma[patient_idx],
         observed=measurements_df["value"],
     )
-=>PYTHONTEX#py#default#defaultverb#14#verbatim#####2463#
+=>PYTHONTEX#py#default#defaultverb#14#verbatim#####2489#
     trace = pm.sample(800, tune=300, cores=3)
-=>PYTHONTEX#py#default#defaultverb#15#verbatim#####2477#
+=>PYTHONTEX#py#default#defaultverb#15#verbatim#####2503#
     pm.traceplot(
         trace,
         [
@@ -334,7 +334,7 @@ with pm.Model() as hierarchical_model:
     )
     plt.show()
     pm.summary(trace)
-=>PYTHONTEX#py#default#defaultverb#16#verbatim#####2551#
+=>PYTHONTEX#py#default#defaultverb#16#verbatim#####2577#
     pm.plot_posterior(
         trace,
         [
@@ -351,7 +351,7 @@ with pm.Model() as hierarchical_model:
     )
     pm.plot_posterior(trace)
     plt.show()
-=>PYTHONTEX#py#default#defaultverb#17#verbatim#####2601#
+=>PYTHONTEX#py#default#defaultverb#17#verbatim#####2627#
 with hierarchical_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)
     predictions = post_pred["y"]
