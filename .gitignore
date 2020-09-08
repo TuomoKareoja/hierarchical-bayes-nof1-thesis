@@ -87,7 +87,7 @@ target/
 .Rproj.user
 
 # pdf-articles (some not freely available)
-/docs/
+/docs/*
 !/docs/.gitkeep
 
 # LaTeX auxialiary files
@@ -98,7 +98,26 @@ target/
 *.gz
 *.toc
 
+# pythontex
+*.pytxmcr
+*.pytxcode
+*.pytxpyg
+*.stdout
+*.pkl
+
+# compliled LaTeX pdf
+/report/*.pdf
+
 # simulated datasets
 /data/*
 !/data/.gitkeep
 
+# generated plots and tables
+/figures/*
+!/figures/design_for_simulated_experiments.eps
+!/figures/design_for_simulated_experiments.pdf
+!/figures/design_for_simulated_experiments.svg
+!/figures/n-of-1_schema.eps
+!/figures/n-of-1_schema.pdf
+!/figures/n-of-1_schema.svg
+!/figures/n-of-1_schema.svg
