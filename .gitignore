@@ -114,9 +114,9 @@ target/
 
 # generated plots and tables
 /figures/*
-!/figures/design_for_simulated_experiments.eps
-!/figures/design_for_simulated_experiments.pdf
-!/figures/design_for_simulated_experiments.svg
+!/figures/design_for_simulated_experiment.eps
+!/figures/design_for_simulated_experiment.pdf
+!/figures/design_for_simulated_experiment.svg
 !/figures/n-of-1_schema.eps
 !/figures/n-of-1_schema.pdf
 !/figures/n-of-1_schema.svg
