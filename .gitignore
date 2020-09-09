@@ -107,7 +107,6 @@ target/
 
 # compliled LaTeX pdf
 /report/*.pdf
-!/report/*.tex
 
 # simulated datasets
 /data/*
