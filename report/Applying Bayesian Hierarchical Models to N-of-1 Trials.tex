@@ -2173,13 +2173,20 @@ the patient-level parameters are drawn from and the prior distributions for the
 parameters defining the population level distribution:
 
 % TODO should we use estimates from the data for the variance?
+% Are we talking about variance or standard deviation
 
 \bigskip
 \begin{tikzpicture}
 
     \matrix[matrix of math nodes, column sep=-35pt, row sep=30pt] (mat)
     {
-        \ & \mu_{\theta}, \sigma_{\theta}, \mu_{\eta},\sigma_{\eta}, \mu_{\beta}, \sigma_{\beta}, \gamma_{\tau} & \ \\
+        \ & \mu_{\mu_{\theta}}, \sigma_{\mu_{\theta}},
+        \gamma_{\sigma_{\theta}},
+        \mu_{\mu_{\eta}}, \sigma_{\mu_{\eta}},
+        \gamma_{\sigma_{\eta}},
+        \mu_{\mu_{\beta}}, \sigma_{\mu_{\beta}},
+        \gamma_{\sigma_{\beta}},
+        \gamma_{\gamma_{\tau}} \\
         \ & \mu_{\theta}, \sigma_{\theta}, \mu_{\eta},\sigma_{\eta}, \mu_{\beta}, \sigma_{\beta}, \gamma_{\tau} & \ \\
         \ \\
         \ \\
@@ -2196,22 +2203,22 @@ parameters defining the population level distribution:
 
     \node[anchor=east] at ([xshift = 0pt]mat-2-1)
     {$
-        \mu_{\theta} \sim \mathcal{N}(10, 10),
-        \sigma_{\theta} \sim HalfCauchy(0, 10),
+        \mu_{\theta} \sim \mathcal{N}(\mu_{\mu_{\theta}}, \sigma_{\mu_{\theta}}),
+        \sigma_{\theta} \sim HalfCauchy(0, \gamma_{\sigma_{\theta}}),
     $};
     \node[anchor=east] at ([xshift = 0pt]mat-3-1)
     {$
-        \mu_{\eta} \sim \mathcal{N}(10, 10),
-        \sigma_{\eta} \sim HalfCauchy(0, 10),
+        \mu_{\eta} \sim \mathcal{N}(\mu_{\mu_{\eta}}, \sigma_{\mu_{\eta}}),
+        \sigma_{\eta} \sim HalfCauchy(0, \gamma_{\sigma_{\eta}}),
     $};
     \node[anchor=east] at ([xshift = 0pt]mat-4-1)
     {$
-        \mu_{\beta} \sim \mathcal{N}(0.01, 0.3),
-        \sigma_{\beta} \sim HalfCauchy(0, 2),
+        \mu_{\beta} \sim \mathcal{N}(\mu_{\mu_{\beta}}, \sigma_{\mu_{\beta}}),
+        \sigma_{\beta} \sim HalfCauchy(0, \gamma_{\sigma_{\beta}}),
     $};
     \node[anchor=east] at ([xshift = 0pt]mat-5-1)
     {$
-        \gamma_{\tau} \sim HalfCauchy(0, 10)
+        \gamma_{\tau} \sim HalfCauchy(0, \gamma_{\gamma_{\tau}})
     $};
     \node[anchor=east] at ([xshift = 0pt]mat-6-1)
     {$
@@ -2241,16 +2248,18 @@ model are summarized in table\ \ref{hierarchicalmodelpriorvalues}.
     \caption{Hierarchical Model Prior Values}
     \label{hierarchicalmodelpriorvalues}
     \begin{align}\label{}
-        \text{population treatment A mean prior: } & \mu_{\theta} = 10 \nonumber \\
-        \text{population treatment A standard deviance prior: } & \sigma_{\theta} = 1 \nonumber \\
-        \text{population treatment B mean prior: } & \mu_{\eta} = 10 \nonumber \\
-        \text{population treatment B standard deviance prior: } & \sigma_{\eta} = 1 \nonumber \\
-        \text{population trend mean prior: } & \mu_{\beta} = 0.1 \nonumber \\
-        \text{population trend standard deviance prior: } & \sigma_{\beta} = 0.3 \nonumber \\
-        \text{population measurement error scale prior: } & \gamma_{\tau} = 1 \nonumber
+        \text{population treatment A mean mean prior: } & \mu_{\mu_{\theta}} = 10 \nonumber \\
+        \text{population treatment A mean standard deviance prior: } & \sigma_{\mu_{\theta}} = 10 \nonumber \\
+        \text{population treatment A standard deviance prior: } & \gamma_{\sigma_{\theta}} = 1 \nonumber \\
+        \text{population treatment B mean mean prior: } & \mu_{\mu_{\eta}} = 10 \nonumber \\
+        \text{population treatment B mean standard deviance prior: } & \sigma_{\mu_{\eta}} = 10 \nonumber \\
+        \text{population treatment B standard deviance prior: } & \gamma_{\sigma_{\eta}} = 1 \nonumber \\
+        \text{population trend mean mean prior: } & \mu_{\mu_{\beta}} = 0.1 \nonumber \\
+        \text{population trend mean standard deviance prior: } & \sigma_{\mu_{\beta}} = 0.1 \nonumber \\
+        \text{population trend standard deviance prior: } & \gamma_{\sigma_{\beta}} = 0.3 \nonumber \\
+        \text{population measurement error scale prior: } & \gamma_{\gamma_{\tau}} = 1 \nonumber
     \end{align}
 \end{table}
-
 
 % TODO what is the logic of defining the priors
 % TODO should the priors be defined bit tighter as we are now talking about population?
