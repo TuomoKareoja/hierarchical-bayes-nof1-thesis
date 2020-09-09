@@ -2236,7 +2236,6 @@ parameters defining the population level distribution:
     $};
 \end{tikzpicture}
 
-
 As the priors are defined on the population level we have to think about defining the
 parameters of these distributions in a bit different way as we are now talking about
 different level of analysis. The nice thing with population level priors is that of the
@@ -2268,16 +2267,11 @@ model are summarized in table\ \ref{hierarchicalmodelpriorvalues}.
 \subsection{Implementing the Model in PyMC3}
 
 Next we move to implementing our hierarchical model in PyMC3. As by now we are already
-familiar with basics of PyMC3, we can now skip explaining the whole code and just focus
+familiar with the basics of PyMC3, we can now skip explaining the whole code and just focus
 on the difference from the single patient model.
-
-
-% TODO add code and explanation for patient numbers and patient indices
 
 \bigskip
 \begin{pyverbatim}
-
-patient_idx = measurements_df["patient_idx"]
 
 with pm.Model() as hierarchical_model:
 
