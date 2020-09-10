@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pymc3 as pm
+import seaborn as sns
 from dotenv import load_dotenv
 
 from src.draw_posterior_checks import draw_posterior_checks
@@ -394,7 +395,58 @@ plt.show()
 
 # %%
 
-# Comparing posterior results between the models
+# COMPARING POSTERIOR RESULTS BETWEEN THE MODELS
+
+fig, ax = plt.subplots(figsize=(8, 8))
+
+sns.kdeplot(
+    data=single_patient_trace["Treatment Difference (A-B)"],
+    ax=ax,
+    color="blue",
+    label="Non-hierarchical",
+)
+sns.kdeplot(
+    data=hierarchical_trace["Treatment Difference (A-B)"][:, 0],
+    ax=ax,
+    color="red",
+    label="Hierarchical",
+)
+
+plt.axvline(
+    x=single_patient_trace["Treatment Difference (A-B)"].mean(),
+    color="blue",
+    linestyle="--",
+    label="mean {}".format(single_patient_trace["Treatment Difference (A-B)"].mean().round(3)),
+)
+plt.axvline(
+    x=hierarchical_trace["Treatment Difference (A-B)"][:, 0].mean(),
+    color="red",
+    linestyle="--",
+    label="mean {}".format(
+        hierarchical_trace["Treatment Difference (A-B)"][:, 0].mean().round(3)
+    ),
+)
+
+ax.set_yticklabels([])
+
+plt.legend()
+plt.tight_layout()
+plt.savefig(
+    os.path.join(visualization_path, "model_comparison_patient.pdf"),
+    bbox_inches="tight",
+)
+plt.show()
+
+# %%
+
+tips = sns.load_dataset("tips")
+
+# %%
+
+tips.head()
+
+
+# %%
 
 # Unpooled model with all patients
 
@@ -445,9 +497,7 @@ with pm.Model() as non_hierarchical_model:
 
 # NOTE chains don't include the tuning steps
 non_hierarchical_treatment_a = non_hierarchical_trace["Treatment A"].mean(axis=0)
-non_hierarchical_treatment_b = non_hierarchical_trace["Treatment B"].mean(
-    axis=0
-)
+non_hierarchical_treatment_b = non_hierarchical_trace["Treatment B"].mean(axis=0)
 
 hierarchical_treatment_a = hierarchical_trace["Treatment A"].mean(axis=0)
 hierarchical_treatment_b = hierarchical_trace["Treatment B"].mean(axis=0)
@@ -455,30 +505,26 @@ hierarchical_treatment_b = hierarchical_trace["Treatment B"].mean(axis=0)
 # %%
 
 fig = plt.figure(figsize=(10, 10))
-ax = fig.add_subplot(
-    111,
-    xlabel="Treatment A",
-    ylabel="Treatment B",
-)
+ax = fig.add_subplot(111, xlabel="Treatment A", ylabel="Treatment B",)
 
 for patient in range(patients_n):
 
     ax.scatter(
         non_hierarchical_treatment_a[patient],
         non_hierarchical_treatment_b[patient],
-        marker='o',
+        marker="o",
         c=patient_colors[patient],
         s=60,
-        label='Patient {} non-hierarchical'.format(patient+1)
+        label="Patient {} non-hierarchical".format(patient + 1),
     )
 
     ax.scatter(
         hierarchical_treatment_a[patient],
         hierarchical_treatment_b[patient],
-        marker='x',
+        marker="x",
         c=patient_colors[patient],
         s=60,
-        label='Patient {} hierarchical'.format(patient+1)
+        label="Patient {} hierarchical".format(patient + 1),
     )
 
     ax.arrow(
@@ -493,12 +539,10 @@ for patient in range(patients_n):
         head_width=0.005,
     )
 ax.legend()
+plt.grid()
 plt.tight_layout()
 plt.savefig(
-    os.path.join(
-        visualization_path, "posterior_shrinkage.pdf"
-    ),
-    bbox_inches="tight",
+    os.path.join(visualization_path, "posterior_shrinkage.pdf"), bbox_inches="tight",
 )
 plt.show()
 
