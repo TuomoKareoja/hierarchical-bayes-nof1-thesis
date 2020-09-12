@@ -1594,22 +1594,21 @@ a half-Cauchy distribution as this is a common recommendation for the prior of v
 Now that we have our model defined we should think about what kind of values we should
 give to our prior parameters. Lets say that for treatment A and B we know from existing
 literature that the typical measurements taken under these treatments are around 10. We
-can just slot this value in for the mean prior parameter values. The case for the
-standard deviance is harder as now we have to codify the strength of our belief in the
-treatment means. As we have actual (imagined) information available we can use the
-standard deviance of the means from different studies as our guidelines. Lets say that this value is
-0.5, so that it is rare to values above 11 or under 9. We can tone down this certainty
+can just slot this value in for the mean prior parameter values. Same thing can be
+easily applied to standard deviance as we can just slot in standard deviance for the
+patient treatment effect taken from other studies. Lets say that this value is
+0.5, so that it is rare to values above 11.5 or under 8.5. We can tone down this certainty
 as we are not very sure that the patients on which the previous studies where conducted
-are that similar to our patients, so we double the standard deviance prior to 1 for both
+are that similar to our patients. We do this by doubling the standard deviance prior to 1 for both
 treatment options. For the trend we are not so certain, but we assume that it should be
 increasing slightly, so we set the mean to 0.1. Because of our uncertain we set the
-standard deviance
-to 0.3, giving this value a lot of flexibility and allowing the trend to be also
+standard deviance to 0.3, giving this value a lot of flexibility and allowing the trend to be also
 positive without the patient being a huge outlier. For the scale of the half-Cauchy
 distribution we go with a non-informative prior as the error also depends on if on
 properly the measurement is performed (remember that the measurements are taken by the
 patients) and this is very hard to estimate so we set the value \(\gamma \) value to 1
-for an non-informative prior. The set prior values can be seen in table\ \ref{singlelpatientpriorvalues}.
+that should be fairly non-informative considering the value range we are dealing with.
+The set prior values can be seen in table\ \ref{singlelpatientpriorvalues}.
 
 \begin{table}
     \caption{Single Patient Model Prior Values}
@@ -1621,7 +1620,7 @@ for an non-informative prior. The set prior values can be seen in table\ \ref{si
         \text{treatment B standard deviance prior: } & \sigma_{\eta} = 1 \nonumber \\
         \text{trend mean prior: } & \mu_{\beta} = 0.1 \nonumber \\
         \text{trend standard deviance prior: } & \sigma_{\beta} = 0.3 \nonumber \\
-        \text{measurement error scale prior: } & \gamma_{\tau} = 1 \nonumber
+        \text{measurement error scale prior: } & \gamma_{\tau} = 10 \nonumber
     \end{align}
 \end{table}
 
@@ -2071,6 +2070,26 @@ draw_posterior_checks(
 \end{pyverbatim}
 \bigskip
 
+Even though we already checked that the estimation seems to be working correctly and saw
+that the posterior estimates clearly favor treatment option B for this patient, there is
+still one important thing that we should check before announcing our results. We should
+make sure that our model is actually a good fit for our data. We could have precise
+results, but if our model does a poor job at reflecting the
+reality, we should not be very excited about these.
+
+Checking model fit for Bayesian models can be done with posterior sampling where we generate samples from
+the posterior distributions and for each of these samples we create a simulated dataset based
+on the chosen parameter values. Then we compare these simulated datasets to the actual
+data. What we want to see is that actual data looks like a typical case for a simulated
+dataset e.g. if our model where the exact way that the data was created, we would not be
+surprised to see the data that we got from the experiment.
+
+PyMC3 has an inbuilt method for taking the posterior samples, and we can use each of
+these samples to recreate the time of measurements and see how well the simulated
+timelines match with the real timeline. This can be seen from figure\
+\ref{singlepatientposteriortimeline}. All 500 samples are drawn as grey lines and the
+actual measurement with a red line. We can see that the results line up quite nicely.
+
 \bigskip
 \begin{figure}[H]
     \caption{Single Patient Posterior Sample Timeline}
@@ -2080,31 +2099,17 @@ draw_posterior_checks(
 \end{figure}
 \bigskip
 
-Even though we already checked that the estimation seems to be working correctly and saw
-that the posterior estimates clearly favor treatment option B for this patient, there is
-still one important thing that we should check before announcing our results. We should
-make sure that our model is actually a good fit for our data. We could have clear
-results with good estimation, but if our model does a poor job at reflecting the
-reality, we should not be very excited about our results.
-
-Checking model fit for Bayesian models can be done with posterior sampling where we generate samples from
-the posterior distributions and for each of these samples we create a simulated dataset based
-on the chosen parameter values. Then we compare these simulated datasets to the actual
-data. What we want to see is that actual data looks like a typical case for a simulated
-dataset e.g. if our model where the exact way that the data was created, we would not be
-surprised to see the data that we got from the experiment.
-
-PyMC3 has an inbuilt method for taking the posterior samples, but for comparing these
-samples to the real dataset we have to create our own function. We have written a special function
-called ``draw posteriors'' for this purpose. We don't go over the code of this function,
+For more precise comparison we have written a special function
+called ``draw posteriors''. We don't go over the code of this function,
 but what it does is to use the datasets created by the PyMC3 inbuilt method and
 calculates the mean of the measurements under each treatment and difference between
-these means. It then plots these means as distribution against the mean treatment
-measures and the difference of these means between the treatment calculated from the
+these means from each posterior sample. It then plots these means as a distribution against the mean treatment
+measures and their difference calculated from the
 original data. For the difference between the means it also adds in the actual
 difference of the true parameters. Normally we would not know
 this true value, but in this case we do as we generated the data ourselves. This
-makes it possible to see how accurate the model actually is.
+makes it possible to see how accurate the model actually is. The graphs created by this
+function can be seen in figure\ \ref{singlepatientposteriorsampling}.
 
 \bigskip
 \begin{figure}[H]
@@ -2115,7 +2120,6 @@ makes it possible to see how accurate the model actually is.
 \end{figure}
 \bigskip
 
-In figure\ \ref{singlepatientposteriorsampling} we can see the plots generated by our function.
 We see that the distribution of mean treatment effectiveness calculated from the
 generated datasets matches nicely with the actual mean of the data. This means that our
 model seems to be good enough approximation of reality. Also when we look at the difference in the treatment effectiveness,
@@ -2178,7 +2182,7 @@ parameters defining the population level distribution:
 \bigskip
 \begin{tikzpicture}
 
-    \matrix[matrix of math nodes, column sep=-35pt, row sep=30pt] (mat)
+    \matrix[matrix of math nodes, column sep=-75pt, row sep=30pt] (mat)
     {
         \ & \mu_{\mu_{\theta}}, \sigma_{\mu_{\theta}},
         \gamma_{\sigma_{\theta}},
@@ -2238,10 +2242,34 @@ parameters defining the population level distribution:
 
 As the priors are defined on the population level we have to think about defining the
 parameters of these distributions in a bit different way as we are now talking about
-different level of analysis. The nice thing with population level priors is that of the
-existing literature that you are relying on is performed in group level and thus if you
-can find meta-analyses of phenomenon you are researching, you can often find reasonable
-prior values straight from these papers. The chosen priors values for our hierarchical
+a different level of analysis. Once again we should turn to prior studies (once again
+fictional). The best way to get the priors is if we can find a suitable meta-analyses that
+pulls in relevant studies and list the average treatment effects observed. From this list
+we could take the average and plug it into our population treatment effect mean and the
+standard deviation of the values to the population treatment effect standard deviation.
+Note that for standard deviation this is not mathematically entirely accurate (the means
+observed from the studies are not true values from the population of the population mean, but and estimate
+maximum likelihood estimate of it), but for our purposes this is fine as we just want a
+rough estimate, that we can then tone down because of the uncertainty about the
+applicability of the prior results. We pick mean values of 10 for both of the of
+population treatment means and a standard deviation of 0.3. These are fairly informative
+priors, but as we assume that these actually are based on prior studies this is okay.
+
+For the standard deviances of the population-level treatment effect we can get an
+estimate by looking at the distribution of the treatment effect standard deviations
+across the studies.
+
+% TODO Why can we slot in a variance from measures in hierarchical models?
+
+For the mean of the population level trend we stick with a mean of 0.1 and a standard
+deviation of 0.01. This means that we think it is very certain that generally patients
+get worse over time and this rate on average very close to 0.1. Where we have more
+uncertainty is how much this trends varies within the population. We stick with fairly
+non-informative 1 here.
+
+% TODO population error variance?
+
+The chosen priors values for our hierarchical
 model are summarized in table\ \ref{hierarchicalmodelpriorvalues}.
 
 \begin{table}[H]
@@ -2249,20 +2277,17 @@ model are summarized in table\ \ref{hierarchicalmodelpriorvalues}.
     \label{hierarchicalmodelpriorvalues}
     \begin{align}\label{}
         \text{population treatment A mean mean prior: } & \mu_{\mu_{\theta}} = 10 \nonumber \\
-        \text{population treatment A mean standard deviance prior: } & \sigma_{\mu_{\theta}} = 10 \nonumber \\
+        \text{population treatment A mean standard deviance prior: } & \sigma_{\mu_{\theta}} = 0.3 \nonumber \\
         \text{population treatment A standard deviance prior: } & \gamma_{\sigma_{\theta}} = 1 \nonumber \\
         \text{population treatment B mean mean prior: } & \mu_{\mu_{\eta}} = 10 \nonumber \\
-        \text{population treatment B mean standard deviance prior: } & \sigma_{\mu_{\eta}} = 10 \nonumber \\
+        \text{population treatment B mean standard deviance prior: } & \sigma_{\mu_{\eta}} = 0.3 \nonumber \\
         \text{population treatment B standard deviance prior: } & \gamma_{\sigma_{\eta}} = 1 \nonumber \\
         \text{population trend mean mean prior: } & \mu_{\mu_{\beta}} = 0.1 \nonumber \\
-        \text{population trend mean standard deviance prior: } & \sigma_{\mu_{\beta}} = 0.1 \nonumber \\
-        \text{population trend standard deviance prior: } & \gamma_{\sigma_{\beta}} = 0.3 \nonumber \\
+        \text{population trend mean standard deviance prior: } & \sigma_{\mu_{\beta}} = 0.01 \nonumber \\
+        \text{population trend standard deviance prior: } & \gamma_{\sigma_{\beta}} = 0.1 \nonumber \\
         \text{population measurement error scale prior: } & \gamma_{\gamma_{\tau}} = 1 \nonumber
     \end{align}
 \end{table}
-
-% TODO what is the logic of defining the priors
-% TODO should the priors be defined bit tighter as we are now talking about population?
 
 \subsection{Implementing the Model in PyMC3}
 
@@ -2478,28 +2503,43 @@ for the distributions we get from the population distributions.
 \end{pyverbatim}
 \bigskip
 
-Defining the likelihood is done very similarly as we did with the single patient model,
-but now we have to use indices to get separate values for each patient. The measurement
-means now becomes a 6x28 size matrix, where every patient get her own row with
-measurement means varying by the treatment given. For sigma we use a vector that is
-indexed the same way as the treatment means. This vector has one value for each patient
-and all the 28 observations of the patient will use this same value.
+% TODO Make this clearer
 
-% TODO understand how the indexing is actually happening
+Defining the likelihood is done in the same way as we did with the single patient model,
+with imaging the data as one sample from a multidimensional distribution. In this case the
+distribution will have 168 dimensions (we have 28 measurements from each of the 6 patients). We
+create the means of this distribution by turning the treatment and trend means from
+a vector of length 6 (one value for each patient) to a vector of length 168 with the
+patient\_idx vector. This vector has a length 168 and its values are the indices of the
+patients with the first 28 values being
+zero representing the measurements of patient 1, next 28 values being 1 representing
+patient 2 and so on. By indexing the treatment mean and trend vectors with this vector the end
+product is a vector of length 168, with each patient being represented 28 times
+in a row. We then combine these vectors to a single treatment mean vector by multiplying
+the treatment mean parts with the treatment indicators and the trend with the
+measurement index (0-27) and then sum these together. The end result is a
+vector of length 128 with each patient being represented with 28 sequential values that
+combine the mean of treatment taken at that time point and the trend. The standard
+deviation of the distribution is also turned into a similar type vector with the
+patient\_idx vector. Note that unlike in the single patient case where we could used a single
+standard deviation value even though we had multiple means, in this case we have to
+provide a vector with a length that matches the length of the vector of the means as we
+want to use different standard deviations for the different patients.
 
 \subsubsection{Running the Model}
 
 \bigskip
 \begin{pyverbatim}
-    trace = pm.sample(800, tune=300, cores=3)
+    trace = pm.sample(draw=1000, tune=700, cores=3)
 \end{pyverbatim}
 \bigskip
 
-As our model is now much more complex than with the with the single patient model with
-more parameters, we need to use more tuning and calculation steps compared to our single
-patient model. Otherwise nothing changes. We still use 3 chains and now this chains take
+As our model is now much more complex than with the single patient model with much
+more parameters, we need to use more tuning and calculation steps.
+We bump the tuning steps from 500 to 700 and the calculation steps from 800 to 1000.
+Otherwise nothing changes. We still use 3 chains and now these chains take
 steps in the multidimensional posterior defined not just by patient parameters, but also
-population parameters, adding 7 more dimensions.
+population parameters.
 
 \subsubsection{Checking Algorithm Diagnostics}
 
@@ -2543,7 +2583,6 @@ seems to be in order.
 \end{figure}
 \bigskip
 
-
 Next we check the traceplots of the patient level parameters (figure\
 \ref{hierarchicalmodelpatienttraceplots}). These look bit different now as the patient
 level parameters are multidimensional with every patient having their own
@@ -2563,15 +2602,19 @@ problems. In this case everything looks okay, so we skip this.
 \end{figure}
 \bigskip
 
-Even if the graphs look good, it always a good idea to also check the diagnostic
-metrics\ \ref{hierarchicalmodeldiagnosticmeasures}. These also look good.
+Even if the graphs look good, it always a good idea to also check the values of the
+\(\hat{R}\) (r\_hat) diagnostic metric\ \ref{hierarchicalmodeldiagnosticmeasures}. As
+the value for all parameters is 1.0 we can be confident that the chain have converged to
+the equilibrium distribution.
 
-\bigskip
 \begin{figure}[H]
     \caption{Hierarchical Model Diagnostic Metrics}
     \label{hierarchicalmodeldiagnosticmeasures}
     \bigskip
+    % TODO after everything else make sure that table fits the page nicely
+    \resizebox{!}{3.2in}{%
     \input{../figures/hierarchical_model_diag_metrics.tex}
+    }
 \end{figure}
 \bigskip
 
@@ -2584,26 +2627,45 @@ metrics\ \ref{hierarchicalmodeldiagnosticmeasures}. These also look good.
         [
             "Population Treatment A Mean",
             "Population Treatment B Mean",
-            "Population Trend Mean",
-            "Population Gamma",
             "Population Treatment Difference (A-B)",
+            "Population Trend Mean",
         ],
     )
     plt.show()
     pm.plot_posterior(
-        trace, ["Treatment A", "Treatment B", "Trend", "Treatment Difference (A-B)"]
+        trace, ["Treatment Difference (A-B)"]
     )
     pm.plot_posterior(trace)
     plt.show()
 \end{pyverbatim}
 \bigskip
 
-After checking the diagnostics, now its the time to see our results. As the there are
+After checking the diagnostics, now its the time to see our results. As there are
 now so many parameters we will only focus on the interesting ones. It is always of
 course advisable to check every parameter to make sure that the results seem realistic,
 but we skip this here for sake of brevity and clarity.
 
-We start with the population level
+We start with the population level posterior that can be seen in figure\
+\ref{hierarchicalmodelpopulationposteriors}. For both of the treatment effect means the
+distribution means is exactly the same value that we used for simulating the data (10
+for treatment A and 9.7 for treatment B). This gives us lots of confidence that our
+model is working as intended. If we look at the distribution for treatment B we can see
+that is has a thicker right tail. This is caused by the fact that our prior was set to
+10, and then the data modified out estimate lower, leaving the tail bigger on the side
+where our prior was. We compare this to treatment A, which has nearly identical
+tails, and where the posterior mean is the same as the prior mean so the data caused no
+shift. With the difference between the treatments, it is interesting to note that the
+posterior mean of the population level treatment effects is not exactly the difference
+between the posterior means 0.3, but 0.38. This is caused by the correlations between
+the treatment mean posteriors. We also see that posterior 94 \% HPD does not include 0
+so for this patient population it seems that we can quite certain that treatment B
+generally works better. Note though that this does not mean that we can say that the it is highly
+unlikely to see patients where treatment A is better, because we are just looking at the
+distribution of mean and not the standard deviance. To understand how likely our model
+would say it is to find a patient with better efficiency with treatment A, we would need
+to create an average distribution based on the mean and standard deviation posteriors.
+
+% TODO should I create the estimated population distribution?
 
 \bigskip
 \begin{figure}[H]
@@ -2614,7 +2676,19 @@ We start with the population level
 \end{figure}
 \bigskip
 
-Next the patient level
+Next we turn to the patient level (figure\ \ref{hierarchicalmodelpatientposteriors}). As
+there are so many parameter estimates to look on the patient side we just focus on
+posterior estimates of the differences of the treatments as these numbers are our
+primary reason for conducting the study. We can that for all patients except patient 3
+the mean value is over 0 and also 0 is not included in the 95 \% HPD, meaning that for
+all these patient treatment B can be reliably recommended. For patient 3 the mean is
+negative that distribution is more on the negative side, but 0 is still included in the
+95 \% HPD. For this patient we cannot be that sure about which treatment is better. We
+should recommend treatment B, but we would have to underline that this recommendation is
+not very certain. As a follow-up, we could recommend that this patient continues the
+study to get more precise results. After the new measurements we can just repeat the
+analysis without any major adjustments as with bayesian framework, this kind of
+``peeking at the data'' does not break any statistical assumptions.
 
 \bigskip
 \begin{figure}[H]
@@ -2642,38 +2716,62 @@ draw_posterior_checks(
 \end{pyverbatim}
 \bigskip
 
+After seeing the results, it still necessary to do reality check with how well the
+models match the actual data. We start by once again comparing the measurements timeline
+of the posterior samples to the actual measurement timeline (figure\ \ref{hierarhicalmodelposteriortimeline})
+
 \bigskip
 \begin{figure}[H]
     \caption{Hierarchical Model Posterior Sample Timeline}
-    \label{singlepatientposteriors}
+    \label{hierarhicalmodelposteriortimeline}
     \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{posterior_sample_timeline_hierarchical_model.pdf}
 \end{figure}
 \bigskip
 
-Checking the posterior sampling\ \ref{hierarchicalmodelposteriorsampling}.
+% TODO make a heuristic observation about how the original observations have to fit in
+% the samples
 
-% TODO why is this so small
+For all patients the actual measurements lineup nicely with the samples, so our model
+looks good. We also get a nice visual representation of how the size of the measurement errors of the
+original measurements affects the posterior. For patient 6 the measurement errors are
+very small and this the posterior estimates are tight and so is are samples created from
+them.
 
-\bigskip
+To get more precision lets use our draw\_posterior\_checks function that we
+used in single patient model. Even though the posterior predictions that we now get from
+from the PyMC3 inbuilt sample\_posterior\_predictive function, our function is written
+so that it can handle this new format and draw plots for each patient separately. The
+resulting graphs can be seen in figure\ \ref{hierarchicalmodelposteriorsampling}.
+
 \begin{figure}[H]
     \caption{Hierarchical Model Posterior Sample}
     \label{hierarchicalmodelposteriorsampling}
     \bigskip
-    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{hierarchical_model_posterior_sampling.pdf}
+    \centering
+    \includegraphics[width=\textwidth,height=7.6in,keepaspectratio]{hierarchical_model_posterior_sampling.pdf}
 \end{figure}
-\bigskip
 
 \subsection{Final Results}
 
-Lets compare the results that we got with the hierarchical model with the results we got
-from the single patient model for patient 1.
+We have now completed the hierarchical analysis. Based on the posterior estimates we can
+recommend treatment A over treatment B for all patients except patient 3 where it is
+uncertain which treatment is better as the posterior 95 \% HPD includes the value 0.
 
-In figure\ \ref{modelcomparisonpatient}.
+Based on the single patient analysis we recommended treatment B for patient 1 and the
+hierarchical analysis did not change that recommendation. But even if the recommendation
+did not change, how did the posterior estimates differ? As this is such an important
+question, lets compare the posterior estimates for treatment difference between the
+single patient model and the hierarchical model, for all patients (separate analysis was
+run for each patient).
 
-In figure\ \ref{posteriorshrinkage}
+In figure\ \ref{modelcomparisonpatient} we can see the posterior
+treatment difference distribution for both model types. The differences are very slight
+except for patient 2, where the results of the hierarchical model make the difference
+between treatment noticeably smaller, and tightened the distribution. When looking at
+just our main outcome of interest it seems, that the hierarchical model did not make a
+big difference, but this is not the whole story.
 
-% TODO add comparison plot for the posterior estimates for patient 1 for the 2 models
 
 \bigskip
 \begin{figure}[H]
@@ -2684,20 +2782,61 @@ In figure\ \ref{posteriorshrinkage}
 \end{figure}
 \bigskip
 
+If instead looking at the estimated difference of the treatments, we look at estimates
+for both of the treatments separately, we get a clearer picture of the effect of
+hierarchy. In figure\ \ref{posteriorshrinkage} we have plotted the estimated mean of
+treatment efficacy for both of the treatment for both model types. From this graph it is
+easy to see the effect of the hierarchical model: the estimates of the patients are drawn
+towards each other. This is what ``shrinkage'' refers to. The reason why the changes are
+hard to see from just looking at the treatment difference, is that the estimates of both
+treatments tend to move toward the same direction and also the same amount. The
+interesting question is what determines how much the estimates change. It is clear that
+the model is not just drawing the estimates that are farthest from other observations
+more towards each other, because we can see that estimates for patient 6 did not almost
+move at all even though the single patient model estimates for this patient where quite
+similar to patient 2, where we see a big move. The reason for this is that, yes, outlier
+observations will get drawn more strongly towards others, but this is not the only
+factor in play. The other significant thing is how strong the estimates for single
+patient are.
+
 \bigskip
 \begin{figure}[H]
     \caption{Hierarchical Model Posterior Sample}
     \label{posteriorshrinkage}
     \bigskip
-    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{posterior_shrinkage.pdf}
+    \centering
+    \includegraphics[width=4.5in,height=4.5in,keepaspectratio]{posterior_shrinkage.pdf}
+\end{figure}
+\bigskip
+
+In figure\ \ref{modeltightness} we have plotted the posterior estimates for the
+treatment difference from the single-patient models. We can see that besides the
+difference in means, there are also clear differences in how ``tight'' the estimates
+are. Patients 2 and 6 stick out here, with patient 6 having significantly tighter
+distribution than other patient and the patient 2 having a very wide distribution. This
+is due to the fact that patient 6 had the smallest measurement error and patient 2 the
+largest.
+
+% TODO why does this have an effect?
+
+\bigskip
+\begin{figure}[H]
+    \caption{Single Patient Model Posterior Estimate Distribution}
+    \label{modeltightness}
+    \bigskip
+    \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{posterior_tightness.pdf}
 \end{figure}
 \bigskip
 
 \chapter{Conclusion}
 
+% TODO list most important points based on chapters
+
 We did not go over all the usual steps when building the models.
 
 No model testing and now trial and error with the amount of steps.
+
+% TODO what did we not cover
 
 % \addcontentsline{toc}{chapter}{Bibliography}
 

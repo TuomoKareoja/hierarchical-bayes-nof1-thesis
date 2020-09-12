@@ -10,7 +10,7 @@ def draw_posterior_checks(
     predictions, measurements_df, parameters_df, plot_name,
 ):
     _, axes = plt.subplots(
-        nrows=len(parameters_df), ncols=3, figsize=(12, 4 * len(parameters_df))
+        nrows=len(parameters_df), ncols=3, figsize=(12, 3 * len(parameters_df))
     )
 
     for patient in parameters_df["patient_index"]:
@@ -65,6 +65,8 @@ def draw_posterior_checks(
             # verticalalignement="center",
             transform=ax1.transAxes
         )
+        ax1.spines["top"].set_visible(False)
+        ax1.spines["right"].set_visible(False)
 
         # Treatment 2
         sns.distplot(
@@ -81,6 +83,8 @@ def draw_posterior_checks(
             color="red",
             label="Mean in Data",
         )
+        ax2.spines["top"].set_visible(False)
+        ax2.spines["right"].set_visible(False)
 
         # Treatment difference
         sns.distplot(
@@ -108,6 +112,8 @@ def draw_posterior_checks(
             color="green",
             label="Real Parameter Value",
         )
+        ax3.spines["top"].set_visible(False)
+        ax3.spines["right"].set_visible(False)
 
     if len(parameters_df) == 1:
         ax1 = axes[0]

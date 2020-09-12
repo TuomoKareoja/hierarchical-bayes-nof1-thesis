@@ -8,6 +8,7 @@ import pandas as pd
 import pymc3 as pm
 import seaborn as sns
 from dotenv import load_dotenv
+from matplotlib.lines import Line2D
 
 from src.draw_posterior_checks import draw_posterior_checks
 
@@ -51,7 +52,7 @@ measurements_df = pd.read_csv(measurements_path)
 parameters_df = pd.read_csv(parameters_path)
 # used for subsetting measurements
 patient_index = measurements_df["patient_index"]
-patient_colors = ["red", "green", "blue", "orange", "brown", "black"]
+patient_colors = ["red", "green", "cyan", "orange", "brown", "black"]
 
 # %%
 
@@ -89,7 +90,7 @@ with pm.Model() as single_patient_no_trend_model:
 
     # running the model
     single_patient_trace = pm.sample(
-        draws=800, tune=700, cores=3, random_seed=[seed, seed + 1, seed + 2]
+        draws=800, tune=500, cores=3, random_seed=[seed, seed + 1, seed + 2]
     )
 
     pm.traceplot(
@@ -109,7 +110,7 @@ with pm.Model() as single_patient_no_trend_model:
     with open(
         os.path.join(visualization_path, "single_patient_diag_metrics.tex"), "w",
     ) as file:
-        file.write(summary_metrics_df.to_latex())
+        file.write(summary_metrics_df[["r_hat"]].to_latex())
 
     # posteriors should look reasonable
     pm.plot_posterior(single_patient_trace)
@@ -188,16 +189,16 @@ plt.show()
 with pm.Model() as hierarchical_with_trend_model:
 
     # population priors
-    pop_treatment_a_mean = pm.Normal("Population Treatment A Mean", mu=10, sigma=10)
-    pop_treatment_a_sd = pm.HalfCauchy("Population Treatment A Sd", beta=10)
+    pop_treatment_a_mean = pm.Normal("Population Treatment A Mean", mu=10, sigma=0.3)
+    pop_treatment_a_sd = pm.HalfCauchy("Population Treatment A Sd", beta=1)
 
-    pop_treatment_b_mean = pm.Normal("Population Treatment B Mean", mu=10, sigma=10)
-    pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=10)
+    pop_treatment_b_mean = pm.Normal("Population Treatment B Mean", mu=10, sigma=0.3)
+    pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
 
-    pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.3)
-    pop_trend_sd = pm.HalfCauchy("Population Trend SD", beta=2)
+    pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.01)
+    pop_trend_sd = pm.HalfCauchy("Population Trend SD", beta=1)
 
-    pop_gamma = pm.HalfCauchy("Population Gamma", beta=10)
+    pop_gamma = pm.HalfCauchy("Population Gamma", beta=1)
 
     # separate parameter for each patient
     pat_treatment_a = pm.Normal(
@@ -241,7 +242,7 @@ with pm.Model() as hierarchical_with_trend_model:
     )
 
     hierarchical_trace = pm.sample(
-        800, tune=500, cores=3, random_seed=[seed, seed + 1, seed + 2]
+        1000, tune=700, cores=3, random_seed=[seed, seed + 1, seed + 2]
     )
 
     pm.traceplot(
@@ -283,16 +284,15 @@ with pm.Model() as hierarchical_with_trend_model:
     with open(
         os.path.join(visualization_path, "hierarchical_model_diag_metrics.tex"), "w",
     ) as file:
-        file.write(summary_metrics_df.to_latex())
+        file.write(summary_metrics_df[["r_hat"]].to_latex())
 
     pm.plot_posterior(
         hierarchical_trace,
         [
             "Population Treatment A Mean",
             "Population Treatment B Mean",
-            "Population Trend Mean",
-            "Population Gamma",
             "Population Treatment Difference (A-B)",
+            "Population Trend Mean",
         ],
     )
     plt.savefig(
@@ -304,8 +304,7 @@ with pm.Model() as hierarchical_with_trend_model:
     plt.show()
 
     pm.plot_posterior(
-        hierarchical_trace,
-        ["Treatment A", "Treatment B", "Trend", "Treatment Difference (A-B)"],
+        hierarchical_trace, ["Treatment Difference (A-B)"],
     )
     plt.savefig(
         os.path.join(
@@ -338,7 +337,7 @@ draw_posterior_checks(
 # TIMELINE
 
 
-fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(14, 8))
+fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(10, 6))
 
 for patient, color, ax in zip(
     measurements_df["patient_index"].unique(), patient_colors, axs.ravel()
@@ -397,57 +396,6 @@ plt.show()
 
 # COMPARING POSTERIOR RESULTS BETWEEN THE MODELS
 
-fig, ax = plt.subplots(figsize=(8, 8))
-
-sns.kdeplot(
-    data=single_patient_trace["Treatment Difference (A-B)"],
-    ax=ax,
-    color="blue",
-    label="Non-hierarchical",
-)
-sns.kdeplot(
-    data=hierarchical_trace["Treatment Difference (A-B)"][:, 0],
-    ax=ax,
-    color="red",
-    label="Hierarchical",
-)
-
-plt.axvline(
-    x=single_patient_trace["Treatment Difference (A-B)"].mean(),
-    color="blue",
-    linestyle="--",
-    label="mean {}".format(single_patient_trace["Treatment Difference (A-B)"].mean().round(3)),
-)
-plt.axvline(
-    x=hierarchical_trace["Treatment Difference (A-B)"][:, 0].mean(),
-    color="red",
-    linestyle="--",
-    label="mean {}".format(
-        hierarchical_trace["Treatment Difference (A-B)"][:, 0].mean().round(3)
-    ),
-)
-
-ax.set_yticklabels([])
-
-plt.legend()
-plt.tight_layout()
-plt.savefig(
-    os.path.join(visualization_path, "model_comparison_patient.pdf"),
-    bbox_inches="tight",
-)
-plt.show()
-
-# %%
-
-tips = sns.load_dataset("tips")
-
-# %%
-
-tips.head()
-
-
-# %%
-
 # Unpooled model with all patients
 
 with pm.Model() as non_hierarchical_model:
@@ -479,7 +427,7 @@ with pm.Model() as non_hierarchical_model:
 
     # running the model
     non_hierarchical_trace = pm.sample(
-        draws=800, tune=700, cores=3, random_seed=[seed, seed + 1, seed + 2]
+        draws=800, tune=500, cores=3, random_seed=[seed, seed + 1, seed + 2]
     )
 
     pm.traceplot(
@@ -504,19 +452,10 @@ hierarchical_treatment_b = hierarchical_trace["Treatment B"].mean(axis=0)
 
 # %%
 
-fig = plt.figure(figsize=(10, 10))
+fig = plt.figure(figsize=(5.5, 5.5))
 ax = fig.add_subplot(111, xlabel="Treatment A", ylabel="Treatment B",)
 
 for patient in range(patients_n):
-
-    ax.scatter(
-        non_hierarchical_treatment_a[patient],
-        non_hierarchical_treatment_b[patient],
-        marker="o",
-        c=patient_colors[patient],
-        s=60,
-        label="Patient {} non-hierarchical".format(patient + 1),
-    )
 
     ax.scatter(
         hierarchical_treatment_a[patient],
@@ -524,7 +463,16 @@ for patient in range(patients_n):
         marker="x",
         c=patient_colors[patient],
         s=60,
-        label="Patient {} hierarchical".format(patient + 1),
+        # label="Patient {} hierarchical".format(patient + 1),
+    )
+
+    ax.scatter(
+        non_hierarchical_treatment_a[patient],
+        non_hierarchical_treatment_b[patient],
+        marker="o",
+        c=patient_colors[patient],
+        s=60,
+        # label="Patient {} single patient".format(patient + 1),
     )
 
     ax.arrow(
@@ -538,11 +486,121 @@ for patient in range(patients_n):
         alpha=0.2,
         head_width=0.005,
     )
-ax.legend()
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    ax.annotate(
+        "Patient {}".format(patient + 1),
+        (non_hierarchical_treatment_a[patient], non_hierarchical_treatment_b[patient]),
+        xytext=(10, -3),
+        textcoords="offset pixels",
+    )
+
+
+legend_elements = [
+    Line2D(
+        [0],
+        [0],
+        marker="o",
+        color="w",
+        label="single patient",
+        markerfacecolor="darkgrey",
+        markersize=10,
+    ),
+    Line2D(
+        [0],
+        [0],
+        marker="X",
+        color="w",
+        label="hierarchical",
+        markerfacecolor="darkgrey",
+        markersize=10,
+    ),
+]
+
+plt.legend(handles=legend_elements, loc="upper right")
+plt.axis("square")
 plt.grid()
 plt.tight_layout()
 plt.savefig(
     os.path.join(visualization_path, "posterior_shrinkage.pdf"), bbox_inches="tight",
+)
+plt.show()
+
+
+# %%
+
+
+fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(11, 7))
+
+ax = ax.ravel()
+
+for patient in range(patients_n):
+
+    sns.kdeplot(
+        data=hierarchical_trace["Treatment Difference (A-B)"][:, patient],
+        ax=ax[patient],
+        color=patient_colors[patient],
+        linestyle="-",
+        label="hierarchical",
+    )
+
+    sns.kdeplot(
+        data=non_hierarchical_trace["Treatment Difference (A-B)"][:, patient],
+        ax=ax[patient],
+        color=patient_colors[patient],
+        linestyle="--",
+        label="single patient",
+    )
+
+    ax[patient].set_yticklabels([])
+    ax[patient].spines["top"].set_visible(False)
+    ax[patient].spines["right"].set_visible(False)
+    ax[patient].spines["left"].set_visible(False)
+    ax[patient].text(
+        0.2,
+        0.85,
+        "Patient {}".format(patient + 1),
+        horizontalalignment="center",
+        verticalalignment="center",
+        transform=ax[patient].transAxes,
+    )
+
+    if patient != 2:
+        ax[patient].get_legend().remove()
+    else:
+        ax[patient].legend(loc="upper right")
+
+plt.tight_layout()
+plt.savefig(
+    os.path.join(visualization_path, "model_comparison_patient.pdf"),
+    bbox_inches="tight",
+)
+plt.show()
+
+# %%
+
+fig, ax = plt.subplots(figsize=(8, 5))
+
+for patient in range(patients_n):
+
+    sns.kdeplot(
+        data=non_hierarchical_trace["Treatment Difference (A-B)"][:, patient],
+        ax=ax,
+        color=patient_colors[patient],
+        linestyle="-",
+        label="Patient {}".format(patient + 1),
+    )
+
+ax.set_yticklabels([])
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+ax.spines["left"].set_visible(False)
+
+plt.legend()
+plt.tight_layout()
+plt.savefig(
+    os.path.join(visualization_path, "posterior_tightness.pdf"), bbox_inches="tight",
 )
 plt.show()
 
