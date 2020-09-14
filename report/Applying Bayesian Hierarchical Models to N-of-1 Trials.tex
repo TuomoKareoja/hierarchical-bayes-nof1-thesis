@@ -1180,44 +1180,41 @@ that are themselves affected by new higher level prior values. This new level of
 ``uncertain priors'' can be interpreted in this context as the population-level
 distribution of the treatment effectiveness:
 
-hierarchical
-
 \bigskip
 \begin{equation}\label{hierarhicalmodelexampletree}
 \begin{tikzpicture}
 
-    \matrix[matrix of math nodes, column sep=-18pt, row sep=30pt] (mat)
+    \matrix[matrix of math nodes, column sep=0pt, row sep=30pt] (mat)
     {
-        \ & \theta_{\mu}, \sigma_{\mu}, \gamma_{\sigma}, \gamma_{\beta} & \ \\
-        \ & \mu, \sigma, \gamma & \ \\
+        \ & \mu_{\mu}, \sigma_{\mu}, \gamma_{\sigma} & \ \\
+        \ & \mu, \sigma & \gamma_{\tau} \\
         \theta_1, \tau_1 & \ldots & \theta_j, \tau_j \\
         y_{1,1}, \ldots, y_{n, 1} & \ldots & y_{1, p}, \ldots, y_{n, p} \\
     };
 
     \draw[->,>=latex] (mat-1-2) -- (mat-2-2);
-
     \draw[->,>=latex] (mat-2-2) -- (mat-3-1);
     \draw[->,>=latex] (mat-2-2) -- (mat-3-3);
-
+    \draw[->,>=latex] (mat-2-3) -- (mat-3-1);
+    \draw[->,>=latex] (mat-2-3) -- (mat-3-3);
     \draw[->,>=latex] (mat-3-1) -- (mat-4-1);
     \draw[->,>=latex] (mat-3-3) -- (mat-4-3);
 
-    \node[anchor=east] at ([xshift = -35pt]mat-1-1)
-    {};
-
-    \node[anchor=east] at ([xshift = -35pt]mat-2-2)
-    {$\mu \sim \text{N}(\theta_{\mu}, \sigma_{\mu}^2), \sigma \sim
-    \text{HalfCauchy}(0, \gamma_{\sigma}), \gamma \sim \text{HalfCauchy}(0, \gamma_{\gamma})$};
+    \node[anchor=east] at ([xshift = -40pt]mat-2-2)
+    {$\mu \sim \text{N}(\mu_{\mu}, \sigma_{\mu}^2), \sigma \sim
+    \text{HalfCauchy}(0, \gamma_{\sigma})$};
    
-    \node[anchor=east] at ([xshift = -35pt]mat-3-1)
-    {$\theta_j \sim \text{N}(\mu, \sigma^2), \tau_j \sim \text{HalfCauchy}(0, \gamma)$};
+    \node[anchor=east] at ([xshift = -40pt]mat-3-1)
+    {$\theta_j \sim \text{N}(\mu, \sigma^2), \tau_j \sim \text{HalfCauchy}(0, \gamma_{\tau})$};
 
-    \node[anchor=east] at ([xshift = -35pt]mat-4-1)
+    \node[anchor=east] at ([xshift = -40pt]mat-4-1)
     {$y_{ij} \sim \text{N}(\theta_j, \tau_j^2)$};
 
 \end{tikzpicture}
 \end{equation}
 \bigskip
+
+% TODO explain why the patient standard error is not made hierarchical
 
 Now instead of drawing the patient level parameters straight from distributions defined
 by the priors, these are drawn from the population-level distributions. The parameters
@@ -1289,27 +1286,27 @@ distributions for clarity.
 
 \begin{equation*}\label{}
     \begin{aligned}\label{conjugatebayesrule}
-        posterior &= \frac{P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma,\beta| Y)}{P(Y)} \\
+        posterior &= \frac{P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma| Y)}{P(Y)} \\
         &\text{(dropping the constant term)} \nonumber \\
-        &\propto P(Y|\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma,\beta)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma,\beta) \nonumber \\
+        &\propto P(Y|\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma) \nonumber \\
         &\text{(using rule of independence as data Y depends only on parameters $\theta$ and $\tau$)} \nonumber \\
-        &= P(Y|\theta_1,\tau_1, \theta_2, \tau_2)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma,\beta) \nonumber \\
+        &= P(Y|\theta_1,\tau_1, \theta_2, \tau_2)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma) \nonumber \\
         &\text{(using rule of independence to separate the two patients)} \nonumber \\
-        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1, \mu,\sigma,\beta)P(\theta_2,\tau_2,\mu,\sigma,\beta) \nonumber \\
+        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1, \mu,\sigma)P(\theta_2,\tau_2,\mu,\sigma) \nonumber \\
         &\text{(using the chain rule separate the patient and population parameters)} \nonumber \\
-        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1|\mu,\sigma,\beta)P(\theta_2,\tau_2|\mu,\sigma,\beta)P(\mu,\sigma,\beta)^2 \nonumber \\
+        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1|\mu,\sigma)P(\theta_2,\tau_2|\mu,\sigma)P(\mu,\sigma)^2 \nonumber \\
         &\text{(population parameters are independent of each other)} \nonumber \\
-        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1|\mu,\sigma,\beta)P(\theta_2,\tau_2|\mu,\sigma,\beta)P(\mu)^2P(\sigma)^2P(\beta)^2 \nonumber \\
-        &\text{($\theta$ and $\tau$ are independent on each other and are dependent on different} \nonumber \\
+        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1|\mu,\sigma)P(\theta_2,\tau_2|\mu,\sigma)P(\mu)^2P(\sigma)^2 \nonumber \\
+        &\text{($\theta$ and $\tau$ are independent on each other and $\tau$ is not dependent on} \nonumber \\
         & \text{population level parameters)} \nonumber \\
-        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1|\mu,\sigma)P(\tau_1|\beta)P(\theta_2|\mu,\sigma)P(\tau_2|\beta)P(\mu)^2P(\sigma)^2P(\beta)^2 \nonumber
+        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1|\mu,\sigma)P(\tau_1)P(\theta_2|\mu,\sigma)P(\tau_2)P(\mu)^2P(\sigma)^2 \nonumber
     \end{aligned}
 \end{equation*}
 
 We can see that the measurements of each patient \(Y_1, Y_2\) depend only on the patient
 level parameters \(\theta_1, \theta_2, \tau_1, \tau_2\), so that if these values are set, then the
-measurements are independent of all other parameters. Similarly, the patient level parameters depend conditionally only
-on the population level parameters \(\mu, \sigma, \beta \). So we have now successfully
+measurements are independent of all other parameters. Similarly, \(\theta_1, \theta_2 \) depend conditionally only
+on the population level parameters \(\mu, \sigma \), while \(\tau \) is independent of them. So we have now successfully
 expressed our hierarchical model in the Bayes formula. We could continue by writing the
 formula out by adding in the prior terms and replacing the abstract probability
 markings with the actual probability density functions given by our chosen
@@ -2174,10 +2171,10 @@ condition. \(\epsilon_{tj} \sim N(0,\tau_j^2) \) is the error term at \(t\) and
 
 To make this model hierarchical we now add the population level distributions which
 the patient-level parameters are drawn from and the prior distributions for the
-parameters defining the population level distribution:
-
-% TODO should we use estimates from the data for the variance?
-% Are we talking about variance or standard deviation
+parameters defining the population level distribution. We add hierarchy for all the
+parameters except patient the variance of the patient-level measurement error, as this
+we are not really interested in the population-level of this parameter and adding it
+would make the model unnecessarily complex.
 
 \bigskip
 \begin{tikzpicture}
@@ -2189,21 +2186,22 @@ parameters defining the population level distribution:
         \mu_{\mu_{\eta}}, \sigma_{\mu_{\eta}},
         \gamma_{\sigma_{\eta}},
         \mu_{\mu_{\beta}}, \sigma_{\mu_{\beta}},
-        \gamma_{\sigma_{\beta}},
-        \gamma_{\gamma_{\tau}} \\
+        \gamma_{\sigma_{\beta}} \\
         \ & \mu_{\theta}, \sigma_{\theta}, \mu_{\eta},\sigma_{\eta}, \mu_{\beta}, \sigma_{\beta}, \gamma_{\tau} & \ \\
         \ \\
-        \ \\
-        \ \\
-        \ & \theta_j, \eta_j, \beta_j, \tau_j & \\\
+        \ & \ & \gamma_{\tau} \\
+        \ & \theta_j, \eta_j, \beta_j & \tau_j & \\\
         \ \\
         y_{1,1}, \ldots, y_{28, 1} & \ldots & y_{1,6}, \ldots, y_{28, 6} \\
     };
 
     \draw[->,>=latex] (mat-1-2) -- (mat-2-2);
-    \draw[->,>=latex] (mat-2-2) -- (mat-6-2);
-    \draw[->,>=latex] (mat-6-2) -- (mat-8-1);
-    \draw[->,>=latex] (mat-6-2) -- (mat-8-3);
+    \draw[->,>=latex] (mat-2-2) -- (mat-5-2);
+    \draw[->,>=latex] (mat-4-3) -- (mat-5-3);
+    \draw[->,>=latex] (mat-5-2) -- (mat-7-1);
+    \draw[->,>=latex] (mat-5-2) -- (mat-7-3);
+    \draw[->,>=latex] (mat-5-3) -- (mat-7-1);
+    \draw[->,>=latex] (mat-5-3) -- (mat-7-3);
 
     \node[anchor=east] at ([xshift = 0pt]mat-2-1)
     {$
@@ -2218,23 +2216,19 @@ parameters defining the population level distribution:
     \node[anchor=east] at ([xshift = 0pt]mat-4-1)
     {$
         \mu_{\beta} \sim \mathcal{N}(\mu_{\mu_{\beta}}, \sigma_{\mu_{\beta}}),
-        \sigma_{\beta} \sim HalfCauchy(0, \gamma_{\sigma_{\beta}}),
+        \sigma_{\beta} \sim HalfCauchy(0, \gamma_{\sigma_{\beta}})
     $};
     \node[anchor=east] at ([xshift = 0pt]mat-5-1)
-    {$
-        \gamma_{\tau} \sim HalfCauchy(0, \gamma_{\gamma_{\tau}})
-    $};
-    \node[anchor=east] at ([xshift = 0pt]mat-6-1)
     {$
         \theta_{j} \sim \mathcal{N}(\mu_{\theta},\sigma_{\theta}^2),
         \eta_{j} \sim \mathcal{N}(\mu_{\eta},\sigma_{\eta}^2),
         \beta_{j} \sim \mathcal{N}(\mu_{\beta},\sigma_{\beta}^2),
     $};
-    \node[anchor=east] at ([xshift = 0pt]mat-7-1)
+    \node[anchor=east] at ([xshift = 0pt]mat-6-1)
     {$
-        \tau_{j} \sim HalfCauchy(0, \gamma_{\tau}),
+        \tau_{j} \sim HalfCauchy(0, \gamma_{\tau})
     $};
-    \node[anchor=east] at ([xshift = -35pt]mat-8-1)
+    \node[anchor=east] at ([xshift = -35pt]mat-7-1)
     {$
         y_{tj} = Z_{tj}\theta_{j} + W_{tj}\eta_{j} + t\beta_{j} + \epsilon_{tj}
     $};
@@ -2259,15 +2253,13 @@ For the standard deviances of the population-level treatment effect we can get a
 estimate by looking at the distribution of the treatment effect standard deviations
 across the studies.
 
-% TODO Why can we slot in a variance from measures in hierarchical models?
+% TODO Why variance is often defined as known in hierarchical models?
 
 For the mean of the population level trend we stick with a mean of 0.1 and a standard
 deviation of 0.01. This means that we think it is very certain that generally patients
 get worse over time and this rate on average very close to 0.1. Where we have more
 uncertainty is how much this trends varies within the population. We stick with fairly
 non-informative 1 here.
-
-% TODO population error variance?
 
 The chosen priors values for our hierarchical
 model are summarized in table\ \ref{hierarchicalmodelpriorvalues}.
@@ -2285,7 +2277,7 @@ model are summarized in table\ \ref{hierarchicalmodelpriorvalues}.
         \text{population trend mean mean prior: } & \mu_{\mu_{\beta}} = 0.1 \nonumber \\
         \text{population trend mean standard deviance prior: } & \sigma_{\mu_{\beta}} = 0.01 \nonumber \\
         \text{population trend standard deviance prior: } & \gamma_{\sigma_{\beta}} = 0.1 \nonumber \\
-        \text{population measurement error scale prior: } & \gamma_{\gamma_{\tau}} = 1 \nonumber
+        \text{measurement error scale prior: } & \gamma_{\tau} = 1 \nonumber
     \end{align}
 \end{table}
 
@@ -2305,18 +2297,12 @@ with pm.Model() as hierarchical_model:
         "Population Treatment A Mean", mu=10, sigma=1
     )
     pop_treatment_a_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
-
     pop_treatment_b_mean = pm.Normal(
         "Population Treatment B Mean", mu=10, sigma=1
     )
     pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
-
     pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.3)
     pop_trend_sd = pm.HalfCauchy("Population Trend Sd", beta=2)
-
-    pop_gamma = pm.HalfCauchy(
-        "Population Gamma", beta=10
-    )
 
     # separate parameter for each patient
     pat_treatment_a = pm.Normal(
@@ -2331,14 +2317,15 @@ with pm.Model() as hierarchical_model:
         sigma=pop_treatment_b_sd,
         shape=6,
     )
-    pat_gamma = pm.HalfCauchy(
-        "Gamma", beta=pop_gamma, shape=6,
-    )
     pat_trend = pm.Normal(
         "trend",
         mu=pop_trend_mean,
         sigma=pop_trend_sd,
         shape=6,
+    )
+    # not hierarchical
+    pat_gamma = pm.HalfCauchy(
+        "Gamma", beta=1, shape=6,
     )
 
     measurement_means = (
@@ -2392,7 +2379,6 @@ with pm.Model() as hierarchical_model:
             "Population Treatment A Mean",
             "Population Treatment B Mean",
             "Population Trend Mean",
-            "Population Gamma",
             "Population Treatment Difference (A-B)",
         ],
     )
@@ -2428,18 +2414,13 @@ with pm.Model() as hierarchical_model:
         "Population Treatment A Mean", mu=10, sigma=1
     )
     pop_treatment_a_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
-
     pop_treatment_b_mean = pm.Normal(
         "Population Treatment B Mean", mu=10, sigma=1
     )
     pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
-
     pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.3)
     pop_trend_sd = pm.HalfCauchy("Population Trend Sd", beta=2)
 
-    pop_gamma = pm.HalfCauchy(
-        "Population Gamma", beta=10
-    )
 \end{pyverbatim}
 \bigskip
 
@@ -2467,14 +2448,14 @@ inbuilt in PyMC3, so now complex procedures are needed here.
         sigma=pop_treatment_b_sd,
         shape=6,
     )
-    pat_gamma = pm.HalfCauchy(
-        "Gamma", beta=pop_gamma, shape=6,
-    )
     pat_trend = pm.Normal(
         "trend",
         mu=pop_trend_mean,
         sigma=pop_trend_sd,
         shape=6,
+    )
+    pat_gamma = pm.HalfCauchy(
+        "Gamma", beta=1, shape=6,
     )
 \end{pyverbatim}
 \bigskip
@@ -2560,7 +2541,6 @@ population parameters.
             "Population Treatment B Sd",
             "Population Trend Mean",
             "Population Trend SD",
-            "Population Gamma",
         ],
     )
     plt.show()
@@ -2764,20 +2744,19 @@ We have now completed the hierarchical analysis. Based on the posterior estimate
 recommend treatment A over treatment B for all patients except patient 3 where it is
 uncertain which treatment is better as the posterior 95 \% HPD includes the value 0.
 
-Based on the single patient analysis we recommended treatment B for patient 1 and the
+Based on the single patient analysis, we recommended treatment B for patient 1 and the
 hierarchical analysis did not change that recommendation. But even if the recommendation
 did not change, how did the posterior estimates differ? As this is such an important
 question, lets compare the posterior estimates for treatment difference between the
-single patient model and the hierarchical model, for all patients (separate analysis was
-run for each patient).
+single patient model and the hierarchical model for all patients (repeat the same
+single patient model we fitted for patient 1 for all the patients).
 
 In figure\ \ref{modelcomparisonpatient} we can see the posterior
 treatment difference distribution for both model types. The differences are very slight
 except for patient 2, where the results of the hierarchical model make the difference
-between treatment noticeably smaller, and tightened the distribution. When looking at
-just our main outcome of interest it seems, that the hierarchical model did not make a
+between treatment noticeably smaller, and tightened the distribution. This looks a bit
+underwhelming as it that, at least for out main outcome of interest, the hierarchical model did not make a
 big difference, but this is not the whole story.
-
 
 \bigskip
 \begin{figure}[H]
@@ -2790,20 +2769,13 @@ big difference, but this is not the whole story.
 
 If instead looking at the estimated difference of the treatments, we look at estimates
 for both of the treatments separately, we get a clearer picture of the effect of
-hierarchy. In figure\ \ref{posteriorshrinkage} we have plotted the estimated mean of
+hierarchical model. In figure\ \ref{posteriorshrinkage} we have plotted the estimated mean of
 treatment efficacy for both of the treatment for both model types. From this graph it is
 easy to see the effect of the hierarchical model: the estimates of the patients are drawn
 towards each other. This is what ``shrinkage'' refers to. The reason why the changes are
 hard to see from just looking at the treatment difference, is that the estimates of both
-treatments tend to move toward the same direction and also the same amount. The
-interesting question is what determines how much the estimates change. It is clear that
-the model is not just drawing the estimates that are farthest from other observations
-more towards each other, because we can see that estimates for patient 6 did not almost
-move at all even though the single patient model estimates for this patient where quite
-similar to patient 2, where we see a big move. The reason for this is that, yes, outlier
-observations will get drawn more strongly towards others, but this is not the only
-factor in play. The other significant thing is how strong the estimates for single
-patient are.
+treatments tend to move toward the same direction with both parameter estimates either
+increasing or decreasing. 
 
 \bigskip
 \begin{figure}[H]
@@ -2815,11 +2787,21 @@ patient are.
 \end{figure}
 \bigskip
 
-In figure\ \ref{modeltightness} we have plotted the posterior estimates for the
+The interesting question here is what determines how much the
+estimates change. It is clear that the model is not just drawing the estimates that are farthest from other observations
+more towards each other, because we can see that estimates for patient 6 did not almost
+move at all even though the single patient model estimates for this patient where quite
+similar to patient 2, where we see a big move. The reason for this is that, yes, outlier
+observations will get drawn more strongly towards others, but the other significant
+factor determining the amount of this pull is how strong the estimates for single
+patient are.
+
+In figure\ \ref{modeltightness} we have plotted the posterior estimates distributions for the
 treatment difference from the single-patient models. We can see that besides the
 difference in means, there are also clear differences in how ``tight'' the estimates
-are. Patients 2 and 6 stick out here, with patient 6 having significantly tighter
-distribution than other patient and the patient 2 having a very wide distribution. This
+are. Patients 2 and 6 are the outliers here, with patient 2 having a very wide
+distribution and patient 6 having significantly tighter
+distribution than other patient and n. This
 is due to the fact that patient 6 had the smallest measurement error and patient 2 the
 largest.
 
@@ -2836,15 +2818,33 @@ largest.
 
 \chapter{Conclusion}
 
-% TODO list most important points based on chapters
 
-We did not go over all the usual steps when building the models.
+% TODO list most important points based in the chapters
 
-No model testing and now trial and error with the amount of steps.
+What are N-of-1 designs and why we would want to use them
+
+What are the challenges of modelling N-of-1 trials
+
+What is bayesian inference and why it is so suitable to N-of-1 studies
+% TODO is are model really safe for peaking?
+
+How bayesian hierarchical models make it possible to intelligently pool data from
+multiple studies
+
+How is this pooling different from just a doing a group level analysis
+
+Implementing N-of-1 bayesian modelling with Python and PyMC3
 
 % TODO what did we not cover
 
-% \addcontentsline{toc}{chapter}{Bibliography}
+Data exploration
+
+Model model comparison. With real data we should test multiple model starting from the
+simplest possible.
+
+Where to find information about model comparison?
+
+\addcontentsline{toc}{chapter}{Bibliography}
 
 \begin{thebibliography}{4}
 
@@ -2904,16 +2904,17 @@ No model testing and now trial and error with the amount of steps.
     John Salvatier, Thomas Wiecki, Christopher Fonnesbeck: Probabilistic Programming in Python Using PyMC3, PeerJ Computer
     Science, 2016, 2:e55
 
-    \bibitem{github}
-    Tuomo Kareoja: https://github.com/TuomoKareoja/hierarchical-bayes-nof1-thesis,
-    GitHub repository, 2020.
-
     \bibitem{variancepriors}
     Andrew Gelman: Prior distributions for variance parameters in hierarchical models
     (comment on article by Browne and Draper). Bayesian analysis 1.3, 2006;515-534.
 
     \bibitem{rhatrule}
-    Jonah Gabry, Ben Goodrich: https://cran.r-project.org/web/packages/rstanarm/vignettes/rstanarm.html, 2020.
+    Jonah Gabry, Ben Goodrich:
+    https://cran.r-project.org/web/packages/rstanarm/vignettes/rstanarm.html, 2020.
+
+    \bibitem{github}
+    Tuomo Kareoja: https://github.com/TuomoKareoja/hierarchical-bayes-nof1-thesis,
+    GitHub repository, 2020.
 
 \end{thebibliography}
 \end{document}

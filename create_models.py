@@ -198,8 +198,6 @@ with pm.Model() as hierarchical_with_trend_model:
     pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.01)
     pop_trend_sd = pm.HalfCauchy("Population Trend SD", beta=1)
 
-    pop_gamma = pm.HalfCauchy("Population Gamma", beta=1)
-
     # separate parameter for each patient
     pat_treatment_a = pm.Normal(
         "Treatment A",
@@ -213,11 +211,11 @@ with pm.Model() as hierarchical_with_trend_model:
         sigma=pop_treatment_b_sd,
         shape=patients_n,
     )
-    # TODO check what is the parameter implemented in PyMC3
-    pat_gamma = pm.HalfCauchy("Gamma", beta=pop_gamma, shape=patients_n,)
     pat_trend = pm.Normal(
         "Trend", mu=pop_trend_mean, sigma=pop_trend_sd, shape=patients_n,
     )
+    # variance is not hierarchical
+    pat_gamma = pm.HalfCauchy("Gamma", beta=5, shape=patients_n,)
 
     measurement_means = (
         pat_treatment_a[patient_index] * measurements_df["treatment1_indicator"]
@@ -254,7 +252,6 @@ with pm.Model() as hierarchical_with_trend_model:
             "Population Treatment B Sd",
             "Population Trend Mean",
             "Population Trend SD",
-            "Population Gamma",
         ],
     )
     plt.savefig(
