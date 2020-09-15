@@ -1108,15 +1108,28 @@ individual variation in their effectiveness. Running these experiments separatel
 fine, but one might wonder if these separate trials could somehow be combined. Of course, we could pool the data and run a group-based
 analysis about what treatments seems to be the best in general, but there is a better
 way that keeps true to the goal of N-of-1 experiments of finding the best treatment for
-each \emph{individual patient}.
+each \emph{individual patient} by using hierarchical models. In these models the
+individual parameters are connected by imaging them as coming from a higher level
+distribution. In the case of N-of-1 studies we can think of a population-level distribution
+where the patient-level parameters are drawn from. This makes lots of sense as it is
+clear that, for example in case of drug effectiveness, different people have different
+effect, but these effects follow a distribution so that very high or very low values are
+uncommon. In a sense having a common prior for
+all patient-level parameters can already be thought as defining this population level distribution, but the difference is that the prior
+is set in stone, but when we make the model hierarchical, the population-level distribution works just like the patient-level
+parameters with uncertainty included and thus it is possible that our beliefs (posterior
+estimates) about this distribution will be changed by the data. Just like in the case of
+shared prior, the estimates of this population level distribution can draw the
+patient-level estimates closer together, but here the as the distribution is itself
+estimated from the data, this happens only if the data seem to suggest commonalities
+between the patients.
 
 \section{How to Make a Model Hierarchical?}
 
-In the Bayesian framework we can pool information by making our models hierarchical.
-This means that instead of defining priors for our model variables, each model parameter is imagined to come from a ``higher'' distributions
-that is controlled by its own parameters. In the case of N-of-1 studies the individual lower-level parameters represent the
-individual patients, and the distribution where these parameters are taken from could represent
-the population which the patients are drawn. Priors are only defined for the higher-level distribution. Lets take a simple example where we have $p$ patients with $n$
+The practicalities of hierarchical models are easier to explain if we conceptualize our
+models as a trees. In the top of the tree we have prior values that define the shape of
+prior distribution next level down, from these distributions come the parameters that
+define the data creation process at the bottom of the tree. Lets take a simple example where we have $p$ patients with $n$
 measurements and, to make things simple just one treatment option. We can model this by
 a simple two-parameter model:
 
@@ -1126,7 +1139,7 @@ a simple two-parameter model:
     \end{equation}
 \end{def}where $\theta_j$ represents the effect of the treatment for patient $j$ and
 \(\epsilon_{tj} \sim N(0,\tau_j^2)\) is the error term for patient $j$ at observation
-taken on time $t$. We can visualize this model as a tree:
+taken on time $t$. Now lets look at this model as a tree graph:
 
 \bigskip
 \begin{equation}\label{unpooledmodelexampletree}
@@ -1171,14 +1184,17 @@ normal distribution. The variance parameters is more difficult and there are mul
 reasonable distributions to choose, but half-Cauchy distribution is generally
 recommended for reasons we don't have space to go into here\ \cite{variancepriors}.
 
-Even though each patient shares the same prior parameters, the estimates of the patient-level parameters
-are only affected by the data of the other patients as the shared prior parameter values are set
-beforehand and are not affected by the data. To change this we need to introduce
+Even though in this model each patient shares the same prior parameters, the estimates of the patient-level parameters
+are only affected by the data of the patient in question as the shared prior parameter values are set
+beforehand and are not affected by the data. You can think this as a model where we have
+perfect knowledge of the population-level distribution and we describe this by the shape
+of our priors. To change this we need to introduce
 some parameter that is shared by all patients and that is also being estimated based on
-the data. We can accomplish this by changing the priors from set values to distributions
-that are themselves affected by new higher level prior values. This new level of
-``uncertain priors'' can be interpreted in this context as the population-level
-distribution of the treatment effectiveness:
+the data. We can accomplish this by changing the priors from set of values to distributions
+that are themselves defined by new higher level prior values. This new level of
+``uncertain priors'' are be interpreted in this context as the population-level
+distribution of the treatment effectiveness, where we are uncertain about the shape of
+this distribution and express this uncertainty with new higher level priors:
 
 \bigskip
 \begin{equation}\label{hierarhicalmodelexampletree}
@@ -1214,22 +1230,21 @@ distribution of the treatment effectiveness:
 \end{equation}
 \bigskip
 
-% TODO explain why the patient standard error is not made hierarchical
-
 Now instead of drawing the patient level parameters straight from distributions defined
 by the priors, these are drawn from the population-level distributions. The parameters
 population-level distributions themselves are taken from set distributions defined by
-the prior values. With the addition of this new layer, something very important happens:
-As the population-level parameters are not predefined, they are part of our estimation
-and as they are shared between the patients, they are informed by all the data we
-gather, and as estimated patient-level parameters are affected by the estimated shape of the
-population-level distribution, data from one patient can influence the estimated
-parameters for another patient trough this new higher level parameter layer. The
-elegance of this method comes from the fact that, even though we now have
-population-level parameters we still keep the individual patient-level parameters that can vary
-between the patients and the amount of effect that the data from one patient has on the
-other patients is itself influences by the data as the effects works trough the posteriors estimates we get for
-the population-level parameters.
+the prior values. The exception here is the error term \(\tau \). We also make this
+parameter hierarchical, but this is not commonly done in hierarchical models. There are
+two reasons for this. Firstly this term is already the ``extra'' in the model describing
+the variance of the values after the more interesting parameters. Compared to the actual
+treatment effect this makes it less interesting and adding hierarchical layers for this
+parameters can be thought of as unnecessary complexity. The second reason is that with a
+reasonable amount of observations, the error term can be estimated very accurately. This
+means that adding the hierarchy should not have much effect on this estimate as the
+patient-level estimates are likely too strong to be swayed by the population-level
+estimates.
+
+% TODO add reference
 
 \section{Benefits of Hierarchical Models}
 
@@ -1241,8 +1256,9 @@ a mathematical curiosity, but it has a meaningful interpretation and the estimat
 get for the population-level parameters are interesting by themselves. Second, because
 of the dependencies across parameters, all the data can now jointly inform all the
 parameter estimates. As there is now more data used for the lower-level estimates trough
-intelligent pooling there is usually some reduction in the variance of these estimates.
-This reduction of variance is generally referred by the term ``shrinkage''. In general,
+intelligent pooling there is usually some reduction in the variance of these estimates
+and especially between them. This reduction of variance between the estimates is
+generally referred by the term ``shrinkage''. In general,
 shrinkage in hierarchical models causes lower-level parameters to shift toward the modes
 of the higher-level distribution. This does not mean that
 estimates are always just pulled closer together, because if the higher-level
@@ -1253,12 +1269,12 @@ is, that as we don't explicitly set the parameter values of the higher-level
 distributions, the amount of shrinkage is informed by the data so that
 similar observed data points from lower-level distributions lead to ``tighter''
 estimates for the higher-level distributions and in this in turn leads to
-greater shrinkage (e.g.\ posterior estimates of the patient level parameters being more
-tightly clustered together). This means that using a hierarchical model in the case where the
+greater shrinkage. This means that using a hierarchical model in the case where the
 patients are actually are very different, does not force the estimates together as
-widely spread measurements leads to the estimates of the population level-distributions to
+widely spread measurement values leads to the estimates of the population level-distributions to
 have a large variance and thus to have little impact on the patient level estimates. So
-instead forcing similarity, the model ``makes the decisions'' if this is appropriate informed by the data.
+instead forcing similarity, the model ``makes the decisions'' if this is appropriate
+based on the data.
 
 \section{Applying the Bayes Formula to Hierarchical Models}
 
@@ -1280,25 +1296,25 @@ probability of $A$ on condition $B$ is just the probability of $A$ if $A$ and $B
 
 Now lets see what happens when we apply write are our previously defined hierarchical
 model\ \ref{hierarhicalmodelexampletree} in the Bayes formula\
-\ref{bayeswithparams} and apply these rules. For simplicity I assume that we only have
-two patients and leave out the prior parameters defining the shape of the population
-distributions for clarity.
+\ref{bayeswithparams} and apply these rules:
 
+% TODO add in the prior parameter values
 \begin{equation*}\label{}
     \begin{aligned}\label{conjugatebayesrule}
-        posterior &= \frac{P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma| Y)}{P(Y)} \\
-        &\text{(dropping the constant term)} \nonumber \\
-        &\propto P(Y|\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma) \nonumber \\
-        &\text{(using rule of independence as data Y depends only on parameters $\theta$ and $\tau$)} \nonumber \\
-        &= P(Y|\theta_1,\tau_1, \theta_2, \tau_2)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma) \nonumber \\
-        &\text{(using rule of independence to separate the two patients)} \nonumber \\
-        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1, \mu,\sigma)P(\theta_2,\tau_2,\mu,\sigma) \nonumber \\
-        &\text{(using the chain rule separate the patient and population parameters)} \nonumber \\
-        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1|\mu,\sigma)P(\theta_2,\tau_2|\mu,\sigma)P(\mu,\sigma)^2 \nonumber \\
+        &P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma, \mu_{\mu}, \sigma_{\mu}, \gamma_{\tau}| Y) \\
+        &= \frac{P(Y | \theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma, \mu_{\mu}, \sigma_{\mu}, \gamma_{\tau})P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma, \mu_{\mu}, \sigma_{\mu}, \gamma_{\tau})}{P(Y)} \\
+        &\text{(dropping the constant term)} \\
+        &\propto P(Y | \theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma, \mu_{\mu}, \sigma_{\mu}, \gamma_{\tau})P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma, \mu_{\mu}, \sigma_{\mu}, \gamma_{\tau}) \\
+        &\text{(using rule of independence as data Y depends only on parameters $\theta$ and $\tau$)} \\
+        &= P(Y | \theta_1,\tau_1,\theta_2,\tau_2)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma, \mu_{\mu}, \sigma_{\mu}, \gamma_{\tau}) \\
+        &\text{(using rule of independence to separate the two patients)} \\
+        &= P(Y_1 | \theta_1,\tau_1)P(Y_2 | \theta_2,\tau_2)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma, \mu_{\mu}, \sigma_{\mu}, \gamma_{\tau}) \\
+        &\text{(using the chain rule separate the patient and population parameters)} \\
+        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1|\mu,\sigma)P(\theta_2,\tau_2|\mu,\sigma)P(\mu,\sigma)^2 \\
         &\text{(population parameters are independent of each other)} \nonumber \\
-        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1|\mu,\sigma)P(\theta_2,\tau_2|\mu,\sigma)P(\mu)^2P(\sigma)^2 \nonumber \\
-        &\text{($\theta$ and $\tau$ are independent on each other and $\tau$ is not dependent on} \nonumber \\
-        & \text{population level parameters)} \nonumber \\
+        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1|\mu,\sigma)P(\theta_2,\tau_2|\mu,\sigma)P(\mu)^2P(\sigma)^2 \\
+        &\text{($\theta$ and $\tau$ are independent on each other and $\tau$ is not dependent on} \\
+        & \text{population level parameters)} \\
         &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1|\mu,\sigma)P(\tau_1)P(\theta_2|\mu,\sigma)P(\tau_2)P(\mu)^2P(\sigma)^2 \nonumber
     \end{aligned}
 \end{equation*}
