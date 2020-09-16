@@ -144,17 +144,15 @@ and the person administering the treatment don't know which treatment is current
 treatment, where one of the treatments only resembles treatment, but does not
 contain any active ingredient (pharmacological or otherwise).
 
-Below is a schema of a more complex N-of-1 trial with three treatments A, B and C,
+In figure\ \ref{examplenof1schema} is a schema of a more complex N-of-1 trial with three treatments A, B and C,
 random assignment of treatments within blocks, three measurements within each
 treatment period and washout periods between treatments:
 
-\bigskip
-{
+\begin{figure}[H]
     \centering
+    \caption{Example of a N-of-1 Experiment Design}\label{examplenof1schema}
     \includegraphics{n-of-1_schema.pdf}
-    \par
-}
-\bigskip
+\end{figure}
 
 The stated aim of N-of-1 trials is quite different from RCT:s: where the latter
 tries to generalize results to population and find which treatment is best in
@@ -899,6 +897,8 @@ method to get this kind of sample is the following:
 
 \end{enumerate}
 
+% TODO add illustration with two parameters
+
 This method takes us on a random walk on the distribution with the steps defined
 by the likelihood times prior, but as this is distribution has an identical shape
 with the posterior function we indirectly end up with a representative sample of
@@ -1298,19 +1298,18 @@ Now lets see what happens when we apply write are our previously defined hierarc
 model\ \ref{hierarhicalmodelexampletree} in the Bayes formula\
 \ref{bayeswithparams} and apply these rules:
 
-% TODO add in the prior parameter values
 \begin{equation*}\label{}
     \begin{aligned}\label{conjugatebayesrule}
-        &P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma, \mu_{\mu}, \sigma_{\mu}, \gamma_{\tau}| Y) \\
-        &= \frac{P(Y | \theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma, \mu_{\mu}, \sigma_{\mu}, \gamma_{\tau})P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma, \mu_{\mu}, \sigma_{\mu}, \gamma_{\tau})}{P(Y)} \\
+        &P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma | Y) \\
+        &= \frac{P(Y | \theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma)}{P(Y)} \\
         &\text{(dropping the constant term)} \\
-        &\propto P(Y | \theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma, \mu_{\mu}, \sigma_{\mu}, \gamma_{\tau})P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma, \mu_{\mu}, \sigma_{\mu}, \gamma_{\tau}) \\
+        &\propto P(Y | \theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma) \\
         &\text{(using rule of independence as data Y depends only on parameters $\theta$ and $\tau$)} \\
-        &= P(Y | \theta_1,\tau_1,\theta_2,\tau_2)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma, \mu_{\mu}, \sigma_{\mu}, \gamma_{\tau}) \\
+        &= P(Y | \theta_1,\tau_1,\theta_2,\tau_2)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma) \\
         &\text{(using rule of independence to separate the two patients)} \\
-        &= P(Y_1 | \theta_1,\tau_1)P(Y_2 | \theta_2,\tau_2)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma, \mu_{\mu}, \sigma_{\mu}, \gamma_{\tau}) \\
-        &\text{(using the chain rule separate the patient and population parameters)} \\
-        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1|\mu,\sigma)P(\theta_2,\tau_2|\mu,\sigma)P(\mu,\sigma)^2 \\
+        &= P(Y_1 | \theta_1,\tau_1)P(Y_2 | \theta_2,\tau_2)P(\theta_1,\tau_1,\theta_2,\tau_2,\mu,\sigma) \\
+        &\text{(using the chain rule to separate the patient and population parameters)} \\
+        &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1|\mu,\sigma)P(\theta_2,\tau_2|\mu,\sigma)P(\mu, \sigma)^2 \\
         &\text{(population parameters are independent of each other)} \nonumber \\
         &= P(Y_1|\theta_1,\tau_1)(Y_2|\theta_2, \tau_2)P(\theta_1,\tau_1|\mu,\sigma)P(\theta_2,\tau_2|\mu,\sigma)P(\mu)^2P(\sigma)^2 \\
         &\text{($\theta$ and $\tau$ are independent on each other and $\tau$ is not dependent on} \\
@@ -1327,13 +1326,14 @@ expressed our hierarchical model in the Bayes formula. We could continue by writ
 formula out by adding in the prior terms and replacing the abstract probability
 markings with the actual probability density functions given by our chosen
 distributions, but this gets messy and, in this case, no nice analytical solution can be
-found anyway, so we will leave it at this. It is also notable that we could add even
+found anyway, so we will leave it at this. It is notable that we could add even
 more layers to the model and just apply the same rules we used here to write the formula
 out. Bayes formula makes no limitations on how complex and deep our hierarchical model
 can be.
 
-\chapter{Example of a Hierarchical Bayesian Analysis Using Simulated
-  Data}\label{example}
+% TODO what else do I need to add to this chapter?
+
+\chapter{Example of a Hierarchical Bayesian Analysis Using Simulated Data}
 
 To put everything we learned into practice, lets go over an example Bayesian
 analysis of multiple N-of-1 trials, where we first analyze one trial separately and then
@@ -1345,11 +1345,17 @@ full code, it is available from a GitHub repository\ \cite{github} with instruct
 to run it.
 
 As we now jump from theoretical and analytical considerations to practical consideration
-when doing this kind of analysis, we will need revisit the concept that we went over
+when doing this kind of analysis, we will need revisit the concepts that we went over
 while talking about the problems of dealing with marginal likelihood\
 \ref{marginallikehoodproblems} and introduce some new concepts related to how
 PyMC3 deals with this problem and what do we need to pay attention to
-make sure that the algorithmically derived results we get are actually reliable.
+make sure that the algorithmically derived results we get are reliable. We also have to
+consider how we can make sure that our model is ``good enough'' description of reality.
+Almost any kind of model can be fitted to the data and most of these can be even
+estimated correctly, but only few models describe the data generating process in an
+accurate enough manner. To answer this question we need to introduce totally new concepts
+relating posterior predictive checks, where we create new data based on the estimated
+posteriors and see if this data looks like our original dataset.
 
 \section{Defining the Experiment}
 
@@ -1362,7 +1368,7 @@ very fast and that there are no known problems with interaction effects between 
 The state of the condition can also be easily measured at home so no visits to
 a hospital are needed to take the measurements. Higher measurements mean worse condition
 so we would like to find the treatment that gives the lowest measurements for each patient. The condition is usually steadily
-worsening with or without the treatment as the treatment is more for managing the
+worsening with or without the treatment and the treatment is more for slowing down the
 disease and not curing it. Based on this information we come up with the following experiment design:
 
 \begin{itemize}
@@ -1381,7 +1387,7 @@ disease and not curing it. Based on this information we come up with the followi
 
 \begin{figure}[H]
     \centering
-    \caption{Example of the Experiment Design for a Single Patient}
+    \caption{Experiment Design for a Single Patient}\label{singlepatientexperimentdesign}
     \includegraphics{design_for_simulated_experiment.pdf}
 \end{figure}
 
@@ -1391,9 +1397,9 @@ Next we simulate the data that we could get from our defined experiment with Pyt
 As there should not be any interaction effects between the treatments, the treatment
 effect onset is immediate and there is no washout period, this is a fairly simple
 task. The benefit of having a relatively simple data generating process, is that it is
-easier to compare the results from out models with the actual parameters. We will not go
-over the code that creates the data in detail, but just look at
-the mathematical models used for it. The full code can be found in the GitHub repository
+easier to compare the estimated results from our models with the actual parameters. We will not go
+over the code that creates the data in detail, but concentrate on
+the mathematical model that it is based on. The full code can be found in the GitHub repository
 \cite{github}. For simulating each observation at time \(t\) for patient \(j\) we use the following model:
 
 \begin{def}\label{simulationmodel}
@@ -1452,16 +1458,26 @@ that define the distribution from which the patient-level parameters are drawn f
 
 \end{tikzpicture}
 
-One noteworthy here is that we pick a beta distribution for the population
-autocorrelation as it is a natural choice as it limits the values nicely between 0 and 1.
+For the treatment effects and mean a normal distribution for the population level makes
+intuitive sense as these values can be both positive and negative and should be affected
+by multiple independent factors, leading to them to follow a normal distribution
+according to the central limit theorem. The choice for the distribution of
+autocorrelation is also very clear as a beta distribution is a natural choice as it
+limits the values nicely between 0 and 1. The choice for the variance distribution is
+more difficult as there are multiple possible realistic candidates. Besides half-Cauchy
+distribution we could have used inverse-gamma or half-t-distribution. These all limit
+the standard deviation to positive numbers.
 
-To create the simulated data, we set the population parameters as follows and then run
+% TODO is half-cauchy the right choice for sd or var?
+
+
+To create the simulated data, we set the population parameters to the values described
+in table\ \ref{populationparameters} and then run
 our data creation process:
 
-\begin{table}
-    \caption{Population Level Parameter Values for the Simulated Data}
-    \label{}
-    \begin{align}\label{populationparameters}
+\begin{table}[H]
+    \caption{Population Level Parameter Values for the Simulated Data}\label{populationparameters}
+    \begin{align}\label{}
         \text{population treatment A mean: } & \mu_{\theta} = 10 \nonumber \\
         \text{population treatment A standard deviation: } & \sigma_{\theta} = 0.2 \nonumber \\
         \text{population treatment B mean: } & \mu_{\eta} = 9.7 \nonumber \\
@@ -1481,7 +1497,7 @@ Second, the mean of the trend \(\beta \) is positive and its variance is small. 
 that almost all patient should have a steadily worsening condition (measurements get
 higher as the experiment progresses).
 
-In figure \ref{measurementtimeline} we see timelines of measurements for each patient. Just by looking at this plot, it seems
+In figure\ \ref{measurementtimeline} we see timelines of the simulated measurements for each patient. Just by looking, it seems
 pretty obvious that for patients 2 and 1 there is a clear difference in the efficacy of the
 treatments, with the treatment periods clearly visible. We also see more ambivalent
 cases. Patient 4 seems to have very stable measurement values regardless of the
@@ -1492,14 +1508,14 @@ that they started with (remember that because of the balanced design, patients s
 end the experiment with the same treatment).
 
 \begin{figure}[H]
-    \caption{Timeline of Measurements for Each Patient}
-    \label{measurementtimeline}
+    \caption{Timeline of Measurements for Each Patient}\label{measurementtimeline}
+    \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{measurements_timeline.pdf}
 \end{figure}
 
-Let's next look at the actual parameters that created this data. In figure\
-\ref{parameterdistribution}, we have all patient-level parameter values and population
-distributions which they where drawn from. On the left side we can see both of the
+Let's next look at the actual parameters that created this data. 
+In figure\ \ref{parameterdistribution}, we have all patient-level parameter values with the population
+distribution from which they where drawn from. On the left side we can see both of the
 treatment effect means. As these are plotted on an identical axis, we can easily compare
 them. We can see that for every patient, except patient for patient 3, treatment A is
 the better (higher parameter value). The second interesting finding is that for patient
@@ -1513,28 +1529,21 @@ grouped up for all patients. For the trend we see that patients 2, 4 and 5 are g
 worse significantly slower than the other patients.
 
 \begin{figure}[H]
-    \caption{Parameter Used to Create Simulated Data}
-    \label{parameterdistribution}
+    \caption{Parameter Used to Create Simulated Data}\label{parameterdistribution}
+    \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{population_parameter_distributions.pdf}
 \end{figure}
 
 \section{Analyzing a Single Trial}\label{1trial}
 
-We start with the case of analyzing just a single patient. We pick patient 1 as we saw
-previously when looking at the parameter values\ \ref{parameterdistribution} that this patient has a parameter value
-for treatment B that is significantly lower than for other patients. This makes for an
-interesting comparison as we can see how the estimates that we get for this parameter
-differs between the single patient model and the hierarchical model. We would expect the
-parameter value to be get pushed higher towards the other patients in the hierarchical
-model.
-
+We start analyzing our simulated experiments by first focusing on just a single patient.
 In figure\ \ref{patient1timeline} we have the timeline of observations for patient 1. We
 have highlighted the period where the patient was on treatment A with grey and can
 clearly see that this treatment is the inferior option for this patient.
 
 \begin{figure}[H]
-    \caption{Timeline of Measurements for Patient 1}
-    \label{patient1timeline}
+    \caption{Timeline of Measurements for Patient 1}\label{patient1timeline}
+    \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{patient1_timeline.pdf}
 \end{figure}
 
@@ -1568,9 +1577,9 @@ Next we go to choose the prior distributions for our model. We choose
 normal distributions for the treatment effect parameters and the trend as it makes sense to think
 that these would depends on multiple independent biological and social
 factors (very reasonable assumption!) and the central limit theorem tells us the that
-the parameters should then be normally distributed. For the variance of the error term we choose
-a half-Cauchy distribution as this is a common recommendation for the prior of variance\
-\cite{variancepriors}.
+the parameters should then be normally distributed. For the variance of the error 
+term we choose a half-Cauchy distribution as this is a common recommendation for the 
+prior of variance\ \cite{variancepriors}.
 
 \bigskip
 \begin{tikzpicture}
@@ -1623,9 +1632,8 @@ patients) and this is very hard to estimate so we set the value \(\gamma \) valu
 that should be fairly non-informative considering the value range we are dealing with.
 The set prior values can be seen in table\ \ref{singlelpatientpriorvalues}.
 
-\begin{table}
-    \caption{Single Patient Model Prior Values}
-    \label{singlelpatientmodelpriorvalues}
+\begin{table}[H]
+    \caption{Single Patient Model Prior Values}\label{singlelpatientmodelpriorvalues}
     \begin{align}\label{}
         \text{treatment A mean prior: } & \mu_{\theta} = 10 \nonumber \\
         \text{treatment A standard deviance prior: } & \sigma_{\theta} = 1 \nonumber \\
@@ -1660,7 +1668,7 @@ that the code shown is not executable, but parts of it that are related to techn
 (e.g. inter OS compatibility, saving the plots\ldots) are taken out to focus on what is
 important for Bayesian calculations.}.
 
-% need to make the code look cleaner without the footnote getting in the way
+% TODO need to make the code look cleaner without the footnote getting in the way
 \pagebreak
 
 \subsubsection{Full Model Implementation in PyMC3}
@@ -1680,13 +1688,13 @@ patient_idx = measurements_df["patient"]
 # define the model
 with pm.Model() as single_patient_no_trend_model:
 
-    # defing our prior beliefs of the distributions of parameters
+    # defining our prior beliefs of the distributions of parameters
     treatment_a = pm.Normal("Treatment A", mu=10, sigma=1)
     treatment_b = pm.Normal("Treatment B", mu=10, sigma=1)
     trend = pm.Normal("Trend", mu=0.1, sigma=0.3)
     gamma = pm.HalfCauchy("Gamma", beta=1)
 
-    # creating a vector definig the expected means of the observations
+    # creating a vector defining the expected means of the observations
     measurement_means = (
         treatment_a * measurements_df[patient_idx == 0]["treatment_a"]
         + treatment_b * measurements_df[patient_idx == 0]["treatment_b"]
@@ -1761,7 +1769,7 @@ import pandas as pd
 measurements_path = os.path.join("..", "data", "patient_measurements.csv")
 measurements_df = pd.read_csv(measurements_path)
 measurements_df.columns = ['patient', 'measurement', 'period', 'block',
-'treatement_a', 'treatment_b', 'value']
+'treatment_a', 'treatment_b', 'value']
 print(measurements_df.head(10).to_latex(index=False))
 \end{pycode}
 \bigskip
@@ -1829,7 +1837,7 @@ distributions with modified parameters. For both treatments and the trend we use
 for the variance of the error term \(\gamma \) we use a half-Cauchy. For the half-Cauchy
 distribution we don't need to define the location term as it is by default zero, just
 like we want it. Something to note here is that the PyMC3 normal distribution sigma
-paramaters expects the standard deviation and not the variance. As all the distributions
+parameters expects the standard deviation and not the variance. As all the distributions
 that we are using here are widely used, we can find functions implementing
 them already built-in PyMC3. It is also possible to define completely custom
 distributions, but unfortunately this is quite complex, as you don't just have to worry
@@ -1969,17 +1977,16 @@ the estimation. We can evaluate this by looking at diagnostic plots and from dia
 metrics. Lets first look at the visualizations of the MCMC-chain steps called traceplots:
 
 \begin{figure}[H]
-    \caption{Single Patient Traceplots}
-    \label{traceplots}
+    \caption{Single Patient Traceplots}\label{traceplots}
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_traceplot.pdf}
 \end{figure}
 
 On the right in figure\ \ref{traceplots} we can see the steps taken by each
 chain in our four parameters (remember from chapter\ \ref{bayesinferencechallenges} that
-each chain takes steps in all parameter values simultaneously. These are
+each chain takes steps in all parameter values simultaneously). These are
 just the steps used for the posterior estimation and don't include the tuning steps. Each
 chain is portrayed with a different color. What we want to see here is that the timeseries
-looks like noise with no obvious patterns \footnote{With this model it is hard to
+looks like noise with no obvious patterns\footnote{With this model it is hard to
 demonstrate this problem effectively in PyMC3 as not having enough tuning and and
 calculation steps just leads the model to fail outright without any results}. If we would see any patterns, like the chains
 moving values moving systematically up and down, it would mean that the
@@ -2000,15 +2007,15 @@ diagnostic metrics. PyMC3 has an inbuilt method for printing the common metrics
 
 \bigskip
 \begin{figure}[H]
-    \caption{Single Patient Traceplots}
-    \label{singlepatientdiagnosticmetrics}
+    \caption{Single Patient Traceplots}\label{singlepatientdiagnosticmetrics}
     \bigskip
+    \centering
     \input{../figures/single_patient_diag_metrics.tex}
 \end{figure}
 \bigskip
 
 The most important metrics here to keep an eye out is \(\hat{R}\) (r\_hat), that is short for potential scale
-reduction statistic). This metrics tells us if
+reduction statistic. This metrics tells us if
 chains have converged to the equilibrium distribution. The metrics is calculated by
 taking the variance of the drawn values for each chain,
 then calculating the variance of drawn values for all chains combined and then taking the
@@ -2048,8 +2055,7 @@ the computed posterior distributions\ \ref{singlepatientposteriors}:
 
 \bigskip
 \begin{figure}[H]
-    \caption{Single Patient Posterior Distributions}
-    \label{singlepatientposteriors}
+    \caption{Single Patient Posterior Distributions}\label{singlepatientposteriors}
     \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_posteriors.pdf}
 \end{figure}
@@ -2094,19 +2100,18 @@ Checking model fit for Bayesian models can be done with posterior sampling where
 the posterior distributions and for each of these samples we create a simulated dataset based
 on the chosen parameter values. Then we compare these simulated datasets to the actual
 data. What we want to see is that actual data looks like a typical case for a simulated
-dataset e.g. if our model where the exact way that the data was created, we would not be
+dataset e.g.\ if our model where the exact way that the data was created, we would not be
 surprised to see the data that we got from the experiment.
 
 PyMC3 has an inbuilt method for taking the posterior samples, and we can use each of
 these samples to recreate the time of measurements and see how well the simulated
-timelines match with the real timeline. This can be seen from figure\
-\ref{singlepatientposteriortimeline}. All 500 samples are drawn as grey lines and the
-actual measurement with a red line. We can see that the results line up quite nicely.
+timelines match with the real timeline. This can be seen from figure\ \ref{singlepatientposteriortimeline}. 
+All 500 samples are drawn as grey lines and the actual measurement with a red line. 
+We can see that the results line up quite nicely.
 
 \bigskip
 \begin{figure}[H]
-    \caption{Single Patient Posterior Sample Timeline}
-    \label{singlepatientposteriortimeline}
+    \caption{Single Patient Posterior Sample Timeline}\label{singlepatientposteriortimeline}
     \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{posterior_sample_timeline_single_patient.pdf}
 \end{figure}
@@ -2126,8 +2131,7 @@ function can be seen in figure\ \ref{singlepatientposteriorsampling}.
 
 \bigskip
 \begin{figure}[H]
-    \caption{Single Patient Posterior Sampling}
-    \label{singlepatientposteriorsampling}
+    \caption{Single Patient Posterior Sampling}\label{singlepatientposteriorsampling}
     \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_posterior_sampling.pdf}
 \end{figure}
@@ -2281,8 +2285,7 @@ The chosen priors values for our hierarchical
 model are summarized in table\ \ref{hierarchicalmodelpriorvalues}.
 
 \begin{table}[H]
-    \caption{Hierarchical Model Prior Values}
-    \label{hierarchicalmodelpriorvalues}
+    \caption{Hierarchical Model Prior Values}\label{hierarchicalmodelpriorvalues}
     \begin{align}\label{}
         \text{population treatment A mean mean prior: } & \mu_{\mu_{\theta}} = 10 \nonumber \\
         \text{population treatment A mean standard deviance prior: } & \sigma_{\mu_{\theta}} = 0.3 \nonumber \\
@@ -2578,8 +2581,7 @@ seems to be in order.
 
 \bigskip
 \begin{figure}[H]
-    \caption{Hierarchical Model Population Level Traceplots}
-    \label{hierarchicalmodelpopulationtraceplots}
+    \caption{Hierarchical Model Population Level Traceplots}\label{hierarchicalmodelpopulationtraceplots}
     \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{hierarchical_model_population_level_traceplot.pdf}
 \end{figure}
@@ -2597,8 +2599,7 @@ problems. In this case everything looks okay, so we skip this.
 
 \bigskip
 \begin{figure}[H]
-    \caption{Hierarchical Model Patient Level Traceplots}
-    \label{hierarchicalmodelpatienttraceplots}
+    \caption{Hierarchical Model Patient Level Traceplots}\label{hierarchicalmodelpatienttraceplots}
     \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{hierarchical_model_patient_level_traceplot.pdf}
 \end{figure}
@@ -2610,8 +2611,7 @@ the value for all parameters is 1.0 we can be confident that the chain have conv
 the equilibrium distribution.
 
 \begin{figure}[H]
-    \caption{Hierarchical Model Diagnostic Metrics}
-    \label{hierarchicalmodeldiagnosticmeasures}
+    \caption{Hierarchical Model Diagnostic Metrics}\label{hierarchicalmodeldiagnosticmeasures}
     \bigskip
     \centering
     \resizebox{!}{3.2in}{%
@@ -2671,8 +2671,7 @@ to create an average distribution based on the mean and standard deviation poste
 
 \bigskip
 \begin{figure}[H]
-    \caption{Hierarchical Model Population-level Posterior Distributions}
-    \label{hierarchicalmodelpopulationposteriors}
+    \caption{Hierarchical Model Population-level Posterior Distributions}\label{hierarchicalmodelpopulationposteriors}
     \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{hierarchical_model_population_level_posteriors.pdf}
 \end{figure}
@@ -2694,8 +2693,7 @@ analysis without any major adjustments as with bayesian framework, this kind of
 
 \bigskip
 \begin{figure}[H]
-    \caption{Hierarchical Model Patient-level Posterior Distributions}
-    \label{hierarchicalmodelpatientposteriors}
+    \caption{Hierarchical Model Patient-level Posterior Distributions}\label{hierarchicalmodelpatientposteriors}
     \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{hierarchical_model_patient_level_posteriors.pdf}
 \end{figure}
@@ -2724,8 +2722,7 @@ of the posterior samples to the actual measurement timeline (figure\ \ref{hierar
 
 \bigskip
 \begin{figure}[H]
-    \caption{Hierarchical Model Posterior Sample Timeline}
-    \label{hierarhicalmodelposteriortimeline}
+    \caption{Hierarchical Model Posterior Sample Timeline}\label{hierarhicalmodelposteriortimeline}
     \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{posterior_sample_timeline_hierarchical_model.pdf}
 \end{figure}
@@ -2747,8 +2744,7 @@ so that it can handle this new format and draw plots for each patient separately
 resulting graphs can be seen in figure\ \ref{hierarchicalmodelposteriorsampling}.
 
 \begin{figure}[H]
-    \caption{Hierarchical Model Posterior Sample}
-    \label{hierarchicalmodelposteriorsampling}
+    \caption{Hierarchical Model Posterior Sample}\label{hierarchicalmodelposteriorsampling}
     \bigskip
     \centering
     \includegraphics[width=\textwidth,height=7.6in,keepaspectratio]{hierarchical_model_posterior_sampling.pdf}
@@ -2776,8 +2772,7 @@ big difference, but this is not the whole story.
 
 \bigskip
 \begin{figure}[H]
-    \caption{Patient 1 Treatment Effect Difference Non-hierarchical vs Hierarchical Model}
-    \label{modelcomparisonpatient}
+    \caption{Patient 1 Treatment Effect Difference Non-hierarchical vs Hierarchical Model}\label{modelcomparisonpatient}
     \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{model_comparison_patient.pdf}
 \end{figure}
@@ -2795,8 +2790,7 @@ increasing or decreasing.
 
 \bigskip
 \begin{figure}[H]
-    \caption{Hierarchical Model Posterior Sample}
-    \label{posteriorshrinkage}
+    \caption{Hierarchical Model Posterior Sample}\label{posteriorshrinkage}
     \bigskip
     \centering
     \includegraphics[width=4.5in,height=4.5in,keepaspectratio]{posterior_shrinkage.pdf}
@@ -2825,8 +2819,7 @@ largest.
 
 \bigskip
 \begin{figure}[H]
-    \caption{Single Patient Model Posterior Estimate Distribution}
-    \label{modeltightness}
+    \caption{Single Patient Model Posterior Estimate Distribution}\label{modeltightness}
     \bigskip
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{posterior_tightness.pdf}
 \end{figure}

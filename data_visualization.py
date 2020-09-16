@@ -45,7 +45,7 @@ parameters_df = pd.read_csv(parameters_path)
 
 visualization_folder = os.path.join("figures")
 
-patient_colors = ["red", "green", "blue", "orange", "brown", "black"]
+patient_colors = ["red", "green", "cyan", "orange", "brown", "black"]
 population_color = "grey"
 population_alpha = 0.6
 
@@ -72,8 +72,9 @@ ax1.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
 ax1.set_xlim(8.8, 10.4)
 ax1.spines["top"].set_visible(False)
 ax1.spines["right"].set_visible(False)
+ax1.spines["left"].set_visible(False)
+ax1.set_yticklabels([])
 ax1.set_xlabel("Treatment A Effect")
-ax1.set_ylabel("Probability Density")
 
 # add patient parameter values
 for value, color, patient_idx in zip(
@@ -107,6 +108,8 @@ ax3.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
 ax3.set_xlim(8.8, 10.4)
 ax3.spines["top"].set_visible(False)
 ax3.spines["right"].set_visible(False)
+ax3.spines["left"].set_visible(False)
+ax3.set_yticklabels([])
 ax3.set_xlabel("Treatment B Effect")
 
 # add patient parameter values
@@ -124,6 +127,8 @@ ax2.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
 ax2.set_xlim(0, 0.58)
 ax2.spines["top"].set_visible(False)
 ax2.spines["right"].set_visible(False)
+ax2.spines["left"].set_visible(False)
+ax2.set_yticklabels([])
 ax2.set_xlabel("Measurement Error")
 
 # add patient parameter values
@@ -147,6 +152,8 @@ ax4.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
 ax4.set_xlim(0.25, 0.42)
 ax4.spines["top"].set_visible(False)
 ax4.spines["right"].set_visible(False)
+ax4.spines["left"].set_visible(False)
+ax4.set_yticklabels([])
 ax4.set_xlabel("Autocorrelation")
 
 # add patient parameter values
@@ -170,6 +177,8 @@ ax5.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
 ax5.set_xlim(-0.005, 0.045)
 ax5.spines["top"].set_visible(False)
 ax5.spines["right"].set_visible(False)
+ax5.spines["left"].set_visible(False)
+ax5.set_yticklabels([])
 ax5.set_xlabel("Trend")
 
 # add patient parameter values
