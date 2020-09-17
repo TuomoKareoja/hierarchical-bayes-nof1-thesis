@@ -1470,7 +1470,6 @@ the standard deviation to positive numbers.
 
 % TODO is half-cauchy the right choice for sd or var?
 
-
 To create the simulated data, we set the population parameters to the values described
 in table\ \ref{populationparameters} and then run
 our data creation process:
@@ -1516,14 +1515,15 @@ end the experiment with the same treatment).
 Let's next look at the actual parameters that created this data. 
 In figure\ \ref{parameterdistribution}, we have all patient-level parameter values with the population
 distribution from which they where drawn from. On the left side we can see both of the
-treatment effect means. As these are plotted on an identical axis, we can easily compare
-them. We can see that for every patient, except patient for patient 3, treatment A is
+treatment effect means. As these are plotted on an identical x-axis, we can easily compare
+them. We can see that for every patient, except for patient 3, treatment A is
 the better (higher parameter value). The second interesting finding is that for patient
-1 the treatment B effectiveness is far better than for other patients. When we look at
-the hierarchical model these two patients are the ones to keep an eye out as we would
+1 the treatment B effectiveness is far better than for other patients. When we look later on at
+the hierarchical model, these two patients are the ones to keep an eye out as we would
 expect the measurements from other patients to pull the treatment effectiveness of
-treatment B for patient 3 down (make it better) and conversely pull this up for patient 1. From the measurement error and autocorrelation
-there is less interesting things to see: the wild swings of the measurement for patient 2
+treatment B for patient 3 down (make it better) and conversely pull this up for patient
+1. From the measurement error and autocorrelation there are less interesting things to
+see: the wild swings of the measurement for patient 2
 are explained by her high measurement error and autocorrelation values are quite tightly
 grouped up for all patients. For the trend we see that patients 2, 4 and 5 are getting
 worse significantly slower than the other patients.
@@ -1536,10 +1536,11 @@ worse significantly slower than the other patients.
 
 \section{Analyzing a Single Trial}\label{1trial}
 
-We start analyzing our simulated experiments by first focusing on just a single patient.
-In figure\ \ref{patient1timeline} we have the timeline of observations for patient 1. We
-have highlighted the period where the patient was on treatment A with grey and can
-clearly see that this treatment is the inferior option for this patient.
+We start analyzing our simulated experiments by first focusing on just a single patient,
+choosing naturally patient 1. In figure\ \ref{patient1timeline} we have the timeline of
+observations for this patient. We have highlighted the period where the patient was on treatment A with grey and can
+clearly see that this treatment is the inferior option for this patient, so modelling
+this we should get the same recommendation, but with more specificity.
 
 \begin{figure}[H]
     \caption{Timeline of Measurements for Patient 1}\label{patient1timeline}
@@ -1548,22 +1549,22 @@ clearly see that this treatment is the inferior option for this patient.
 \end{figure}
 
 Normally before we would start with a more extensive exploration of the data, but as teaching preliminary analysis
-is not the focus here and we created the data ourself and so know exactly what kind
-of distribution it follows, we will skip this step here. For analyzing any real-world data
-this proper data exploration would be \emph{mandatory}.
+is not the focus here and we have created the data ourself and so know exactly what kind
+of distribution it follows and that there are not missing values or outliers, we will
+skip this step here. For analyzing any real-world data this proper data exploration would be \emph{mandatory}.
 
 \subsection{Defining the Model}
 
 We use a model with the two treatment parameters and error term and a trend\ \ref{singlepatientmodel}. We could
 start with a more simple model without the trend, but as we saw from figure\ \ref{patient1timeline}
-that there is a clearly trend in the data, so adding this parameter from the start seem appropriate:
+there is a clearly trend in the data, so adding this parameter from the start seem appropriate:
 
 \begin{def}\label{}
     \begin{equation}\label{singlepatientmodel}
         y_t = Z_t\theta + W_t\eta + t\beta + \epsilon_t
     \end{equation}
 \end{def} where \(\theta \) and \(\eta \) are the treatment effects with \(Z_t\) and \(W_t\) being indicator
-variables that is 1 when observation \(t\) is within a period where treatment was applied and
+variables that are 1 when observation \(t\) is within a period where treatment was applied and
 0 otherwise. \(\beta \) is the trend and \(\epsilon_{t} \sim N(0,\tau^2) \) is the error term at \(t\).
 
 Our model assumes that the measurement values are distributed normally with
@@ -1571,7 +1572,7 @@ variance \(\tau^2\) and with a mean of either \(\theta \) or \(\eta \) depending
 treatment is applied at the observation \(y_t \sim N(Z_t\theta + W_t\eta, \tau^2)\).
 This means that our likelihood function will have to be a bit special as using a simple
 normal distribution will not do. We will see that this will cause use some headaches
-later when we try to implement the model.
+later when we implement the model in PyMC3.
 
 Next we go to choose the prior distributions for our model. We choose
 normal distributions for the treatment effect parameters and the trend as it makes sense to think
@@ -1617,20 +1618,20 @@ Now that we have our model defined we should think about what kind of values we 
 give to our prior parameters. Lets say that for treatment A and B we know from existing
 literature that the typical measurements taken under these treatments are around 10. We
 can just slot this value in for the mean prior parameter values. Same thing can be
-easily applied to standard deviance as we can just slot in standard deviance for the
-patient treatment effect taken from other studies. Lets say that this value is
+easily applied to standard deviance as we can just slot in standard deviance for the 
+patient treatment effect mean taken from other studies. Lets say that this value is
 0.5, so that it is rare to values above 11.5 or under 8.5. We can tone down this certainty
 as we are not very sure that the patients on which the previous studies where conducted
 are that similar to our patients. We do this by doubling the standard deviance prior to 1 for both
 treatment options. For the trend we are not so certain, but we assume that it should be
-increasing slightly, so we set the mean to 0.1. Because of our uncertain we set the
+increasing slightly, so we set the mean to 0.1. Because of our uncertainty we set the
 standard deviance to 0.3, giving this value a lot of flexibility and allowing the trend to be also
 positive without the patient being a huge outlier. For the scale of the half-Cauchy
 distribution we go with a non-informative prior as the error also depends on if on
 properly the measurement is performed (remember that the measurements are taken by the
-patients) and this is very hard to estimate so we set the value \(\gamma \) value to 1
-that should be fairly non-informative considering the value range we are dealing with.
-The set prior values can be seen in table\ \ref{singlelpatientpriorvalues}.
+patients) and this is very hard to estimate so we set the value \(\gamma \) value to 10
+that gives us a very broad believable value range. The set prior values can be seen 
+in table\ \ref{singlelpatientmodelpriorvalues}.
 
 \begin{table}[H]
     \caption{Single Patient Model Prior Values}\label{singlelpatientmodelpriorvalues}
@@ -1657,8 +1658,7 @@ algorithmically approximate the posterior distribution. This is very nice, as th
 huge chunk of work from us, namely choosing and implementing the approximation method
 ourself. But now that we have entered the territory of algorithmic solutions, we have
 introduced a new hurdle, namely checking that the algorithm is actually works for our
-model and gives us good approximations. On top of this we of course have all the
-usual stuff related to model accuracy and checking that our model itself is a good
+model and gives us good approximations. On top of this we should check that our model is a good
 approximation of the reality. We will go over how these problems manifest themselves and
 how we can deal with them when these problems pop up, so lets us just jump in and
 implement the model in PyMC3 and then walk trough what the code is
@@ -1692,9 +1692,10 @@ with pm.Model() as single_patient_no_trend_model:
     treatment_a = pm.Normal("Treatment A", mu=10, sigma=1)
     treatment_b = pm.Normal("Treatment B", mu=10, sigma=1)
     trend = pm.Normal("Trend", mu=0.1, sigma=0.3)
-    gamma = pm.HalfCauchy("Gamma", beta=1)
+    gamma = pm.HalfCauchy("Gamma", beta=10)
 
     # creating a vector defining the expected means of the observations
+    # which are defined by one of the treatment means + trend
     measurement_means = (
         treatment_a * measurements_df[patient_idx == 0]["treatment_a"]
         + treatment_b * measurements_df[patient_idx == 0]["treatment_b"]
@@ -1702,8 +1703,8 @@ with pm.Model() as single_patient_no_trend_model:
     )
 
     # likelihood is normal distribution with the same amount of dimensions
-    # as the patient has measurements and and the means are defined by one of the
-    # treatment priors + trend with always the same variance
+    # as the patient has measurements and the means are defined by one of the
+    # treatment means + trend with always the same variance
     likelihood = pm.Normal(
         "y",
         measurement_means,
@@ -1731,12 +1732,12 @@ with pm.Model() as single_patient_no_trend_model:
     plt.show()
 
  
-# posterior sampling
+# sampling new observations based on posterior estimates (posterior sampling)
 with single_patient_no_trend_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)
     predictions = post_pred["y"]
 
-# visualizing posterior samples to check model match with reality
+# visualizing posterior samples to check the model's match with reality
 draw_posterior_checks(
     predictions=predictions,
     measurements_df=measurements_df[patient_idx == 0],
@@ -1744,7 +1745,7 @@ draw_posterior_checks(
 )
 \end{pyverbatim}
 
-\subsubsection{Loading in the Package and the Data}
+\subsubsection{Part 1: Loading in the Package and the Data}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -1758,10 +1759,15 @@ patient_idx = measurements_df["patient"]
 \end{pyverbatim}
 \bigskip
 
-The first thing we of course have to do is to load the package and get our data. There is
-not much to comment about loading the package, but lets show how our data looks like:
+The first thing we of course have to do is to load the packages and get our data. There is
+not much to comment about loading the packages, but lets check out table\
+\ref{measurements} to see how our data looks like:
 
 \bigskip
+\begin{table}[H]
+\caption{Structure of the Measurement Data}\label{measurements}
+\bigskip
+\centering
 \begin{pycode}
 import os
 import pandas as pd
@@ -1772,6 +1778,7 @@ measurements_df.columns = ['patient', 'measurement', 'period', 'block',
 'treatment_a', 'treatment_b', 'value']
 print(measurements_df.head(10).to_latex(index=False))
 \end{pycode}
+\end{table}
 \bigskip
 
 All columns expect the last one are index columns. As is the standard in Python, everything
@@ -1783,13 +1790,19 @@ data and almost any format is possible as long as you can feed the right values 
 the right places in the model definition. Also using the Pandas package to handle the
 data as a dataframe is not necessary, but is very convenient.
 
-The parameters\_df dataframe contains the true parameter values of the patients. This data is used to
-check how accurate our predictions actually are. Each row is a patient and contains the
+The \pyv{parameters_df} dataframe shown in table\ \ref{parameters} contains the true parameter values of the patients. These
+can be used check how accurate our predictions actually are. Normally we would of course
+not have access to these values, but as we created the data ourself we do. Each row in
+this dataset is a patient and contains the
 true parameter values for each of the parameters we used to create the simulated data.
 Only a couple of the columns included in the dataset are shown here, because the full
 table would not fit.
 
 \bigskip
+\begin{table}[H]
+\caption{Structure of the Parameter Data}\label{parameters}
+\bigskip
+\centering
 \begin{pycode}
 import os
 import pandas as pd
@@ -1800,12 +1813,13 @@ parameters_df.drop(columns=["treatment_order", 'autocorrelation'], inplace=True)
 parameters_df.columns = ['patient', 'treatment_a', 'treatment_b', 'trend', 'measurement_error_sd']
 print(parameters_df.to_latex(index=False))
 \end{pycode}
+\end{table}
 \bigskip
 
-The last part of the code where we create the variable patient\_idx is just for
+The last part of the code where we create the variable \pyv{patient_idx} is just for
 convenience so that we need to type less when referring to the data of a particular patient.
 
-\subsubsection{Initializing the Model}
+\subsubsection{Part 2: Initializing the Model}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -1819,14 +1833,14 @@ defined in the context manager, all subsequent parts defined within the manager
 (indented parts of the code) are automatically associated with this particular model
 without need for manually defining this.
 
-\subsubsection{Defining the Priors}
+\subsubsection{Part 3: Defining the Priors}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
 treatment_a = pm.Normal("Treatment A", mu=10, sigma=1)
 treatment_b = pm.Normal("Treatment B", mu=10, sigma=1)
 trend = pm.Normal("Trend", mu=0.1, sigma=0.3)
-gamma = pm.HalfCauchy("Gamma", beta=1)
+gamma = pm.HalfCauchy("Gamma", beta=10)
 \end{pyverbatim}
 \bigskip
 
@@ -1847,7 +1861,7 @@ distributions. Although Stan requires to you to write model definition with its 
 language, this hurdle is worth in some cases as you just have
 worry about the math and there is no need to consider implementing any helper functions}.
 
-\subsubsection{Defining the Likelihood}
+\subsubsection{Part 4: Defining the Likelihood}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -1890,7 +1904,7 @@ parameters or a vector of parameters matching the data and PyMC3 will automatica
 change from using a single dimensional distribution with multiple observations to
 multidimensional distribution with one observation vector.
 
-\subsection{Defining the Parameter Comparison}
+\subsection{Part 5: Defining the Parameter Comparison}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -1908,7 +1922,7 @@ parameters, we have to use PyMC3 pm.deterministic function that calculates the p
 by simple subtracting the value of treatment 2 parameter value from treatment 1
 parameter value at each step in the chain.
 
-\subsubsection{Running the Model}
+\subsubsection{Part 6: Running the Model}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -1959,7 +1973,7 @@ chains. So in our case we will use 3 cores and have 3 chains (running this on a 
 CPU so we will leave 1 core free for other tasks), in total these chains will make (800 +
 700) * 3 = 4500 steps, of which 800 * 3 = 2400 steps will be used for the posterior estimation.
 
-\subsubsection{Checking Algorithm Diagnostics}
+\subsubsection{Part 7: Checking Algorithm Diagnostics}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2003,7 +2017,7 @@ other. If we see this problem the solution is once again to increase the tuning 
 
 Besides looking at plots, we can also estimate the success of the estimation from
 diagnostic metrics. PyMC3 has an inbuilt method for printing the common metrics
-(pm.summary(trace)). Below\ \ref{singlepatientdiagnosticmetrics} we can see the output from this methods:
+(\pyv{pm.summary(trace)}). Below\ \ref{singlepatientdiagnosticmetrics} we can see the output from this methods:
 
 \bigskip
 \begin{figure}[H]
@@ -2014,7 +2028,7 @@ diagnostic metrics. PyMC3 has an inbuilt method for printing the common metrics
 \end{figure}
 \bigskip
 
-The most important metrics here to keep an eye out is \(\hat{R}\) (r\_hat), that is short for potential scale
+The most important metrics here to keep an eye out is \(\hat{R}\) (\pyv{r_hat}), that is short for potential scale
 reduction statistic. This metrics tells us if
 chains have converged to the equilibrium distribution. The metrics is calculated by
 taking the variance of the drawn values for each chain,
@@ -2042,7 +2056,7 @@ most interested in. The reason for this, is that the difference is entirely dete
 by the individual treatment parameters, so if the estimation of these is in order, so
 will be the estimate of their difference.
 
-\subsubsection{Checking the Posterior}
+\subsubsection{Part 8: Checking the Posterior}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2071,7 +2085,7 @@ that the mean is positive and the HPD does not include zero, we can quite certai
 treatment A is a worse option for this patient than treatment B, with the likely values of
 the difference falling between 0.71 and 0.94.
 
-\subsubsection{Checking Model Fit with Posterior Sampling}
+\subsubsection{Part 9: Checking Model Fit with Posterior Sampling}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2118,7 +2132,7 @@ We can see that the results line up quite nicely.
 \bigskip
 
 For more precise comparison we have written a special function
-called ``draw posteriors''. We don't go over the code of this function,
+\pyv{draw_posteriors()}. We don't go over the code of this function,
 but what it does is to use the datasets created by the PyMC3 inbuilt method and
 calculates the mean of the measurements under each treatment and difference between
 these means from each posterior sample. It then plots these means as a distribution against the mean treatment
@@ -2424,7 +2438,7 @@ draw_posterior_checks(
 \end{pyverbatim}
 \bigskip
 
-\subsubsection{Defining the Population Level Priors}
+\subsubsection{Part 1: Defining the Population Level Priors}
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
 with pm.Model() as hierarchical_model:
@@ -2445,13 +2459,13 @@ with pm.Model() as hierarchical_model:
 
 The first thing we do even before defining the population level priors is the create an
 index variable of the patient index. This is done just for clarity as referring to
-patient\_idx instead of measurements\_df[``patient\_idx''].
+\pyv{patient_idx} instead of \pyv{measurements_df["patient_idx"]}.
 
 With the population priors we use the exact same method that we used when we were
 defining priors in the single patient model. All the distributions that we use are
 inbuilt in PyMC3, so now complex procedures are needed here.
 
-\subsubsection{Defining the Patient Level Parameters}
+\subsubsection{Part 2: Defining the Patient Level Parameters}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2491,7 +2505,7 @@ parameters), takes an integer value and makes the distribution have that many
 dimensions, using the same parameter values for each dimensions. The parameter values
 for the distributions we get from the population distributions.
 
-\subsubsection{Defining the Likelihood}
+\subsubsection{Part 3: Defining the Likelihood}
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
     measurement_means = (
@@ -2516,7 +2530,7 @@ with imaging the data as one sample from a multidimensional distribution. In thi
 distribution will have 168 dimensions (we have 28 measurements from each of the 6 patients). We
 create the means of this distribution by turning the treatment and trend means from
 a vector of length 6 (one value for each patient) to a vector of length 168 with the
-patient\_idx vector. This vector has a length 168 and its values are the indices of the
+\pyv{patient_idx} vector. This vector has a length 168 and its values are the indices of the
 patients with the first 28 values being
 zero representing the measurements of patient 1, next 28 values being 1 representing
 patient 2 and so on. By indexing the treatment mean and trend vectors with this vector the end
@@ -2527,12 +2541,12 @@ measurement index (0-27) and then sum these together. The end result is a
 vector of length 128 with each patient being represented with 28 sequential values that
 combine the mean of treatment taken at that time point and the trend. The standard
 deviation of the distribution is also turned into a similar type vector with the
-patient\_idx vector. Note that unlike in the single patient case where we could used a single
+\pyv{patient_idx} vector. Note that unlike in the single patient case where we could used a single
 standard deviation value even though we had multiple means, in this case we have to
 provide a vector with a length that matches the length of the vector of the means as we
 want to use different standard deviations for the different patients.
 
-\subsubsection{Running the Model}
+\subsubsection{Part 4: Running the Model}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2547,7 +2561,7 @@ Otherwise nothing changes. We still use 3 chains and now these chains take
 steps in the multidimensional posterior defined not just by patient parameters, but also
 population parameters.
 
-\subsubsection{Checking Algorithm Diagnostics}
+\subsubsection{Part 5: Checking Algorithm Diagnostics}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2606,7 +2620,7 @@ problems. In this case everything looks okay, so we skip this.
 \bigskip
 
 Even if the graphs look good, it always a good idea to also check the values of the
-\(\hat{R}\) (r\_hat) diagnostic metric\ \ref{hierarchicalmodeldiagnosticmeasures}. As
+\(\hat{R}\) (\pyv{r_hat}) diagnostic metric\ \ref{hierarchicalmodeldiagnosticmeasures}. As
 the value for all parameters is 1.0 we can be confident that the chain have converged to
 the equilibrium distribution.
 
@@ -2620,7 +2634,7 @@ the equilibrium distribution.
 \end{figure}
 \bigskip
 
-\subsubsection{Checking the Posterior}
+\subsubsection{Part 6: Checking the Posterior}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2699,7 +2713,7 @@ analysis without any major adjustments as with bayesian framework, this kind of
 \end{figure}
 \bigskip
 
-\subsubsection{Checking Model Fit with Posterior Sampling}
+\subsubsection{Part 7: Checking Model Fit with Posterior Sampling}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2737,9 +2751,9 @@ original measurements affects the posterior. For patient 6 the measurement error
 very small and this the posterior estimates are tight and so is are samples created from
 them.
 
-To get more precision lets use our draw\_posterior\_checks function that we
+To get more precision lets use our \pyv{draw_posterior_checks} function that we
 used in single patient model. Even though the posterior predictions that we now get from
-from the PyMC3 inbuilt sample\_posterior\_predictive function, our function is written
+from the PyMC3 inbuilt \pyv{sample_posterior_predictive} function, our function is written
 so that it can handle this new format and draw plots for each patient separately. The
 resulting graphs can be seen in figure\ \ref{hierarchicalmodelposteriorsampling}.
 

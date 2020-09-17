@@ -104,6 +104,7 @@ target/
 *.pytxpyg
 *.stdout
 *.pkl
+*.snippets
 
 # compliled LaTeX pdf
 /report/*.pdf
