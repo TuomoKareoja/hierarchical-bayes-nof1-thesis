@@ -883,7 +883,8 @@ throws we get a 6. Doing this kind sampling would be easy if the distribution wo
 normal distribution, but in this case we could already calculate an analytical
 solution. The real problem is, how can we get a representative sample from an arbitrary
 distribution where can't analytically formulate the probability density function.
-The general outline for the algorithm for solving this problem is as follows:
+The general outline for the group of algorithms trying to solve this problem called
+Monte Carlo Markov Chain algorithms (MCMC) goes as follows:
 
 \begin{enumerate}
     \item Pick a set of values for our parameters as our starting position in
@@ -893,7 +894,7 @@ The general outline for the algorithm for solving this problem is as follows:
           the value of this function is zero when we put our set of
           parameter values in it, these values are impossible and should not be
           uses as a starting point.
-    \item Pick a second set of values for our parameters with some random method.
+    \item Pick a second set of values for our parameters with some a random method
     \item Calculate the probability of moving from our current position in the
           parameter space to the second set of parameter values with the
           following formula:
@@ -921,62 +922,84 @@ After a sufficient number of repeats of this process we will end up with list of
 These values will be representative sample of the distribution defined by the prior time
 likelihood. When we divide the values by their sum we are left with estimate of the
 posterior probabilities of our chosen parameter combination. With enough samples these
-values give us a good estimate of the entire posterior distribution. Why does this work?
-The crucial part in the algorithm is the step 3.
+values give us a good estimate of the entire posterior distribution.
 
-This method takes us on a random walk on the distribution with the steps defined
-by the likelihood times prior, but as this is distribution has an identical shape
-with the posterior function we indirectly end up with a representative sample of
-values from the posterior distribution.
+Why does this work? The crucial part in the algorithm is the step 3. Consider a case
+where we have just one parameter that can take two different values. Now the probability
+of moving from one value to the other matches the relative values of the
+target distribution and that means if value A is twice as probable as value B (if we don't know the
+actual probability yet), the chance of moving from A to B is 50 \% and chance of moving
+from B to A is 100 \%. When we keep running process, eventually each of our two values
+will be visited proportionally to its value so we would expect the value to be A in 66
+\% of cases and B in 33 \% of cases. We can demonstrate this with short Python
+example:
+
+\begin{pyblock}[][fontsize=\footnotesize]
+import numpy as np
+
+np.random.seed(123)
+steps = 10000
+values = ["A", "B"]
+sample = []
+position = "A"
+
+for i in range(steps):
+    if position == "A":
+        prob = np.random.random()
+        if prob > 0.5:
+            sample.append("B")
+            position = "B"
+        else:
+            sample.append("A")
+    else:
+        sample.append("A")
+        position = "A"
+
+prob_a = sample.count("A") * 100 / steps
+prob_b = sample.count("B") * 100 / steps
+
+print(f"probability A: {prob_a} \%, probability B: {prob_b} \%")
+\end{pyblock}
+\stdoutpythontex
+\bigskip
+
+This logic extends to the case when we have
+continuous values and also the case where we have multiple parameters. The formal proof
+of this process is somewhat involved so we will skip it here, but interested readers are
+advised to check chapter 7 in John Kruschke's Doing Bayesian Data Analysis\ \cite{kruschke}.
 
 The second critical part of the algorithm is step 2 where we randomly create a new
 position in the distribution where we will consider to move. In principal any kind of
-random value picker works here and we get a proper sample eventually. The problem is
-that with a bad algorithm this could take a long long time. What we would want here is
-way to create proposed steps that are rejected as little as possible. This leads to
-quick movement over posterior distribution and more efficient sampling. Some of the
-simpler solutions to this problem are still explainable (e.g. Gibbs sampling), but
+random value picker works here and we will get a proper sample eventually. The problem is
+that with a bad algorithm this could take a long time. What we would want to have is a
+way to create proposed steps that are rejected as rarely as possible and that the
+correlation between the current value and the proposed value to be as small as possible.
+This would lead to quick movement over posterior distribution and more efficient sampling. Some of the
+simpler solutions to this problem are still easily explainable, but
 this part of the algorithm has seen some major improvement in recent years and the
 current widely used solutions are technically much too complex to cover here. The
 current ``industry standard'' is an an algorithm called no-u-turn-Sampler (NUTS)\ \cite{nuts}
 that could be heuristically described as choosing the values by rolling a frictionless
-ball on terrain defined by the inverse of our distribution\ \cite{kruschke}. The
-technicalities how this works in practice are not for the faint of heart.
-
-Below in figure\ \ref{traceexample} we have visualization of the 200 first steps taken
-by the NUTS sampler when estimating two parameters. We can see that there seem to be a
-clear correlation between the parameters and our sample is already reflecting that. We
-also see that the sampling is quite clever with the algorithm taking larger steps at
-less probable parts of the distribution. This means that algorithm does not get stuck in
-the less probable parts of the distribution and thus moves more efficiently.
+ball on terrain defined by the inverse of our distribution while at the same time
+avoiding inefficient u-turns\ \cite{kruschke}. The technicalities how this works
+in practice are not for the faint of heart.
 
 \begin{figure}[H]
     \centering
-    \caption{First 200 Steps When Estimating Two Parameters With the NUTS Sampler}\label{traceexample}
+    \caption{First 100 Steps When Estimating Two Parameters With the NUTS Sampler}\label{traceexample}
     \includegraphics{trace_draw_example.pdf}
 \end{figure}
 
-
-This algorithm is a general description of a group of algorithms called
-Metropolis-Hastings algorithms. All of these methods follow the principles
-above, but they differ in the way they decide where to move next. Although with
-even very simple rules of picking a random proposed value the described will end
-up exploring the whole posterior distribution eventually, more clever algorithms
-can make this process much more efficient, by proposing steps that are more
-likely to be accepted. A clever algorithm can lower the chance of
-proposing steps that have a high probability of being rejected and so assure
-efficient moving trough the parameter space with less steps.
-
-Metropolis-Hastings algorithms themselves are a part of a more broader group of
-algorithms called Markov Chain Monte Carlo methods (MCMC) that all are methods of
-sampling from a probability distribution. The development of these methods has
-been pushed forward by the need to have the sampling be as efficient as
-possible, as even with the computational power of a modern computer, more complex
-models can run into unfeasibly long computational times. On top of choosing the
-right algorithm, there are lots of other things related to the computation to
-consider when implementing Bayesian inference, but we will return to these later
-in the example of practical implementation of this kind of calculation with
-Python and PyMC3 package.
+To make it concrete how modern clever modern value proposal algorithms are we
+have we have visualized the first 100 steps taken by the aforementioned NUTS sampler
+when estimating two parameters (figure\ \ref{traceexample}). The starting value is
+marked with a black X and the markers turn from red to yellow as the chain progresses.
+We can see that there seem to be a clear correlation between the parameters and our
+sample is already reflecting that. If we look at the sizes the steps that algorithm
+takes we can see that these are larger in the less probable parts of the distribution.
+This means that the proposed step depends on where on distribution the current position
+is located. With this intelligent sampling chain traverses more
+quickly in distribution and makes the sampling much more efficient.
 
 \subsubsection{How to Define the Priors?}\label{bayesproblems}
 

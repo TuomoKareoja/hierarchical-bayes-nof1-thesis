@@ -140,23 +140,31 @@ draw_posterior_checks(
 
 # VISUALIZE TRACES IN 2D
 
-parameter_a = single_patient_trace['Treatment A'][:200]
-parameter_b = single_patient_trace['Treatment B'][:200]
+steps = 100
+
+parameter_a = single_patient_trace["Treatment A"][:steps]
+parameter_b = single_patient_trace["Treatment B"][:steps]
 
 fig, ax = plt.subplots(figsize=(8, 4))
 
-ax.plot(parameter_a, parameter_b, alpha=0.6, color='grey')
-ax.scatter(x=parameter_a, y=parameter_b, alpha=0.8, s=25)
+ax.plot(parameter_a, parameter_b, alpha=0.6, color="grey")
+ax.scatter(
+    x=parameter_a[1:],
+    y=parameter_b[1:],
+    s=25,
+    c=np.arange(steps - 1),
+    cmap="autumn",
+)
+ax.scatter(x=parameter_a[0], y=parameter_b[0], s=120, marker='x', color="black")
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
 plt.xlabel("Parameter A")
 plt.ylabel("Parameter B")
 plt.grid()
-plt.gca().set_aspect('equal', adjustable='box')
+plt.gca().set_aspect("equal", adjustable="box")
 plt.tight_layout()
 plt.savefig(
-    os.path.join(visualization_path, "trace_draw_example.pdf"),
-    bbox_inches="tight",
+    os.path.join(visualization_path, "trace_draw_example.pdf"), bbox_inches="tight",
 )
 plt.show()
 
