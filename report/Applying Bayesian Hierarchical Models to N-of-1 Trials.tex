@@ -1077,7 +1077,7 @@ own complexities that we previously went over.
 The central tenet of frequentist inference is the assumption that same the
 experiment could in theory be repeated with statistically independent results. Probability
 is defined in relation to these hypothetical repetitions as a proportion of them
-that would have some event of interest (e.g. over 5 tails with 10 coin tosses).
+that would have some event of interest (e.g.\ over 5 tails with 10 coin tosses).
 To repeat the same experiment its design needs to be defined precisely and this
 definition needs to be made before the study has begun because the changes made
 to the design during the experiment might be influenced by its results.
@@ -1184,7 +1184,8 @@ Let's say we have our N-of-1 trial set up nicely and we have a good model for an
 results. After running the first trials we continue to perform the same kind of setup
 with multiple patients as the treatments we are considering seem to have lots of
 individual variation in their effectiveness. Running these experiments separately is
-fine, but one might wonder if these separate trials could somehow be combined. Of course, we could pool the data and run a group-based
+fine, but one might wonder if these separate trials could somehow be combined. Of
+course, we could pool the data and run a group-based
 analysis about what treatments seems to be the best in general, but there is a better
 way that keeps true to the goal of N-of-1 experiments of finding the best treatment for
 each \emph{individual patient} by using hierarchical models. In these models the
@@ -1194,21 +1195,24 @@ where the patient-level parameters are drawn from. This makes lots of sense as i
 clear that, for example in case of drug effectiveness, different people have different
 effect, but these effects follow a distribution so that very high or very low values are
 uncommon. In a sense having a common prior for
-all patient-level parameters can already be thought as defining this population level distribution, but the difference is that the prior
-is set in stone, but when we make the model hierarchical, the population-level distribution works just like the patient-level
+all patient-level parameters can already be thought as defining this population level
+distribution, but the difference is that the prior
+is set in stone, but when we make the model hierarchical, the population-level
+distribution works just like the patient-level
 parameters with uncertainty included and thus it is possible that our beliefs (posterior
 estimates) about this distribution will be changed by the data. Just like in the case of
 shared prior, the estimates of this population level distribution can draw the
-patient-level estimates closer together, but here the as the distribution is itself
-estimated from the data, this happens only if the data seem to suggest commonalities
-between the patients.
+patient-level estimates closer together, but as the distribution is itself is now
+estimated from the data, the strength of this effect depends on how similar the
+observations from different patients are.
 
 \section{How to Make a Model Hierarchical?}
 
 The practicalities of hierarchical models are easier to explain if we conceptualize our
-models as a trees. In the top of the tree we have prior values that define the shape of
+models as trees. In the top of the tree we have prior values that define the shape of
 prior distribution next level down, from these distributions come the parameters that
-define the data creation process at the bottom of the tree. Lets take a simple example where we have $p$ patients with $n$
+define the data creation process at the bottom of the tree. Lets take a simple example
+where we have \(p\) patients with \(n\)
 measurements and, to make things simple just one treatment option. We can model this by
 a simple two-parameter model:
 
@@ -1216,7 +1220,7 @@ a simple two-parameter model:
     \begin{equation}\label{simplehierachical}
         y_{tj} = \theta_j + \epsilon_{tj}, i\in(1 \dots n), j\in(1 \dots p)
     \end{equation}
-\end{def}where $\theta_j$ represents the effect of the treatment for patient $j$ and
+\end{def}where \(\theta_j\) represents the effect of the treatment for patient $j$ and
 \(\epsilon_{tj} \sim N(0,\tau_j^2)\) is the error term for patient $j$ at observation
 taken on time $t$. Now lets look at this model as a tree graph:
 
