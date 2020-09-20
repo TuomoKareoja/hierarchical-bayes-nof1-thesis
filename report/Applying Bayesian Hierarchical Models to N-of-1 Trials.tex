@@ -929,8 +929,6 @@ by the likelihood times prior, but as this is distribution has an identical shap
 with the posterior function we indirectly end up with a representative sample of
 values from the posterior distribution.
 
-% TODO add illustration with two parameters
-
 The second critical part of the algorithm is step 2 where we randomly create a new
 position in the distribution where we will consider to move. In principal any kind of
 random value picker works here and we get a proper sample eventually. The problem is
@@ -940,10 +938,24 @@ quick movement over posterior distribution and more efficient sampling. Some of 
 simpler solutions to this problem are still explainable (e.g. Gibbs sampling), but
 this part of the algorithm has seen some major improvement in recent years and the
 current widely used solutions are technically much too complex to cover here. The
-current ``industry standard'' is an an algorithm called no-u-turn-Sampler\ \cite{nuts}
+current ``industry standard'' is an an algorithm called no-u-turn-Sampler (NUTS)\ \cite{nuts}
 that could be heuristically described as choosing the values by rolling a frictionless
 ball on terrain defined by the inverse of our distribution\ \cite{kruschke}. The
-technicalities how this actually works are not for the faint of heart.
+technicalities how this works in practice are not for the faint of heart.
+
+Below in figure\ \ref{traceexample} we have visualization of the 200 first steps taken
+by the NUTS sampler when estimating two parameters. We can see that there seem to be a
+clear correlation between the parameters and our sample is already reflecting that. We
+also see that the sampling is quite clever with the algorithm taking larger steps at
+less probable parts of the distribution. This means that algorithm does not get stuck in
+the less probable parts of the distribution and thus moves more efficiently.
+
+\begin{figure}[H]
+    \centering
+    \caption{First 200 Steps When Estimating Two Parameters With the NUTS Sampler}\label{traceexample}
+    \includegraphics{trace_draw_example.pdf}
+\end{figure}
+
 
 This algorithm is a general description of a group of algorithms called
 Metropolis-Hastings algorithms. All of these methods follow the principles

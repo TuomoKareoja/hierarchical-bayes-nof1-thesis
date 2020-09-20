@@ -138,6 +138,30 @@ draw_posterior_checks(
 
 # %%
 
+# VISUALIZE TRACES IN 2D
+
+parameter_a = single_patient_trace['Treatment A'][:200]
+parameter_b = single_patient_trace['Treatment B'][:200]
+
+fig, ax = plt.subplots(figsize=(8, 4))
+
+ax.plot(parameter_a, parameter_b, alpha=0.6, color='grey')
+ax.scatter(x=parameter_a, y=parameter_b, alpha=0.8, s=25)
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+plt.xlabel("Parameter A")
+plt.ylabel("Parameter B")
+plt.grid()
+plt.gca().set_aspect('equal', adjustable='box')
+plt.tight_layout()
+plt.savefig(
+    os.path.join(visualization_path, "trace_draw_example.pdf"),
+    bbox_inches="tight",
+)
+plt.show()
+
+# %%
+
 # TIMELINE
 fig, ax = plt.subplots(figsize=(8, 4))
 
