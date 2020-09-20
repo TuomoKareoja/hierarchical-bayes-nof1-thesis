@@ -48,6 +48,9 @@
 \graphicspath{{../figures/}}
 \epstopdfsetup{outdir=../figures/}
 
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+
 \title{Applying Bayesian Hierarchical Models to N-of-1 Trials}
 \author{Tuomo Kareoja}
 \date{\today}
@@ -822,7 +825,7 @@ anywhere, but the fact that we could arithmetically solve that the posterior
 follows a well-defined distribution is not a general occurrence. Usually we need
 to go beyond arithmetic methods and solve the problem algorithmically.
 
-\subsection{Challenges of Bayesian Inference}\label{bayesinferencechallenges}
+\section{Challenges of Bayesian Inference}\label{bayesinferencechallenges}
 
 Although the Bayes formula is conceptually simple, but when actually utilizing
 it we run into two big difficulties. First is the common case when the
@@ -840,7 +843,7 @@ formulate our beliefs in a precise mathematic form and even when we don't have p
 need to come up with a prior, but in this case it has to be defined so that it has
 minimal effects on the posterior distribution.
 
-\subsubsection{Dealing with the Marginal Likelihood}\label{marginallikehoodproblems}
+\subsection{Dealing with the Marginal Likelihood}\label{marginallikehoodproblems}
 
 As mentioned above, the marginal likelihood can often be impossible or
 unfeasible to calculate analytically even in the case parameters with discrete
@@ -1001,7 +1004,7 @@ This means that the proposed step depends on where on distribution the current p
 is located. With this intelligent sampling chain traverses more
 quickly in distribution and makes the sampling much more efficient.
 
-\subsubsection{How to Define the Priors?}\label{bayesproblems}
+\subsection{How to Define the Priors?}\label{bayesproblems}
 
 For the Bayesian formula to work we have to define a prior and this can be
 trickier that it seems at first glance. Ideally the prior would codify our prior
@@ -1739,7 +1742,7 @@ important for Bayesian calculations.}.
 % TODO need to make the code look cleaner without the footnote getting in the way
 \pagebreak
 
-\subsubsection{Full Model Implementation in PyMC3}
+\subsubsection*{Full Model Implementation in PyMC3}
 
 \begin{pyverbatim}[][fontsize=\footnotesize]
 # load in needed packages
@@ -1813,7 +1816,7 @@ draw_posterior_checks(
 )
 \end{pyverbatim}
 
-\subsubsection{Part 1: Loading in the Package and the Data}
+\subsubsection*{Part 1: Loading in the Package and the Data}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -1887,7 +1890,7 @@ print(parameters_df.to_latex(index=False))
 The last part of the code where we create the variable \pyv{patient_idx} is just for
 convenience so that we need to type less when referring to the data of a particular patient.
 
-\subsubsection{Part 2: Initializing the Model}
+\subsubsection*{Part 2: Initializing the Model}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -1901,7 +1904,7 @@ defined in the context manager, all subsequent parts defined within the manager
 (indented parts of the code) are automatically associated with this particular model
 without need for manually defining this.
 
-\subsubsection{Part 3: Defining the Priors}
+\subsubsection*{Part 3: Defining the Priors}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -1929,7 +1932,7 @@ distributions. Although Stan requires to you to write model definition with its 
 language, this hurdle is worth in some cases as you just have
 worry about the math and there is no need to consider implementing any helper functions}.
 
-\subsubsection{Part 4: Defining the Likelihood}
+\subsubsection*{Part 4: Defining the Likelihood}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -1972,7 +1975,7 @@ parameters or a vector of parameters matching the data and PyMC3 will automatica
 change from using a single dimensional distribution with multiple observations to
 multidimensional distribution with one observation vector.
 
-\subsection{Part 5: Defining the Parameter Comparison}
+\subsubsection*{Part 5: Defining the Parameter Comparison}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -1990,7 +1993,7 @@ parameters, we have to use PyMC3 pm.deterministic function that calculates the p
 by simple subtracting the value of treatment 2 parameter value from treatment 1
 parameter value at each step in the chain.
 
-\subsubsection{Part 6: Running the Model}
+\subsubsection*{Part 6: Running the Model}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2041,7 +2044,7 @@ chains. So in our case we will use 3 cores and have 3 chains (running this on a 
 CPU so we will leave 1 core free for other tasks), in total these chains will make (800 +
 700) * 3 = 4500 steps, of which 800 * 3 = 2400 steps will be used for the posterior estimation.
 
-\subsubsection{Part 7: Checking Algorithm Diagnostics}
+\subsubsection*{Part 7: Checking Algorithm Diagnostics}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2124,7 +2127,7 @@ most interested in. The reason for this, is that the difference is entirely dete
 by the individual treatment parameters, so if the estimation of these is in order, so
 will be the estimate of their difference.
 
-\subsubsection{Part 8: Checking the Posterior}
+\subsubsection*{Part 8: Checking the Posterior}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2153,7 +2156,7 @@ that the mean is positive and the HPD does not include zero, we can quite certai
 treatment A is a worse option for this patient than treatment B, with the likely values of
 the difference falling between 0.71 and 0.94.
 
-\subsubsection{Part 9: Checking Model Fit with Posterior Sampling}
+\subsubsection*{Part 9: Checking Model Fit with Posterior Sampling}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2506,7 +2509,7 @@ draw_posterior_checks(
 \end{pyverbatim}
 \bigskip
 
-\subsubsection{Part 1: Defining the Population Level Priors}
+\subsubsection*{Part 1: Defining the Population Level Priors}
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
 with pm.Model() as hierarchical_model:
@@ -2533,7 +2536,7 @@ With the population priors we use the exact same method that we used when we wer
 defining priors in the single patient model. All the distributions that we use are
 inbuilt in PyMC3, so now complex procedures are needed here.
 
-\subsubsection{Part 2: Defining the Patient Level Parameters}
+\subsubsection*{Part 2: Defining the Patient Level Parameters}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2573,7 +2576,7 @@ parameters), takes an integer value and makes the distribution have that many
 dimensions, using the same parameter values for each dimensions. The parameter values
 for the distributions we get from the population distributions.
 
-\subsubsection{Part 3: Defining the Likelihood}
+\subsubsection*{Part 3: Defining the Likelihood}
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
     measurement_means = (
@@ -2614,7 +2617,7 @@ standard deviation value even though we had multiple means, in this case we have
 provide a vector with a length that matches the length of the vector of the means as we
 want to use different standard deviations for the different patients.
 
-\subsubsection{Part 4: Running the Model}
+\subsubsection*{Part 4: Running the Model}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2629,7 +2632,7 @@ Otherwise nothing changes. We still use 3 chains and now these chains take
 steps in the multidimensional posterior defined not just by patient parameters, but also
 population parameters.
 
-\subsubsection{Part 5: Checking Algorithm Diagnostics}
+\subsubsection*{Part 5: Checking Algorithm Diagnostics}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2702,7 +2705,7 @@ the equilibrium distribution.
 \end{figure}
 \bigskip
 
-\subsubsection{Part 6: Checking the Posterior}
+\subsubsection*{Part 6: Checking the Posterior}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
@@ -2781,7 +2784,7 @@ analysis without any major adjustments as with bayesian framework, this kind of
 \end{figure}
 \bigskip
 
-\subsubsection{Part 7: Checking Model Fit with Posterior Sampling}
+\subsubsection*{Part 7: Checking Model Fit with Posterior Sampling}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
