@@ -1008,12 +1008,12 @@ quickly in distribution and makes the sampling much more efficient.
 
 For the Bayesian formula to work we have to define a prior and this can be
 trickier that it seems at first glance. Ideally the prior would codify our prior
-beliefs and knowledge\ \cite{gelman, kruschke}, but trying to actually codify all we
-know is a fool's errand, because of how complex this is and we are
-anyway working with a model that is a simplified representation of reality. Even if
-we aim for a more limited goal, codifying what we know (or think we know)
-to mathematic formulas can be a tricky business. But it gets more
-difficult when we consider that we are doing the study not just to convince ourselves
+beliefs and knowledge, but trying to rigorously codify everything we
+know is often impractical, because of how complex this gets and we should aim lower as we are
+anyway working with a model that is a simplified representation of reality\ \cite{gelman}. Even if
+we aim for a more limited goal, codifying our existing knowledge and beliefs
+to mathematic formulas can be a tricky business. It gets even more
+tricky when we consider that we are doing the study not just to convince ourselves
 but also other people and we should try to capture the beliefs of our target audience.
 Unless this target audience is easily available for questions and is highly mathematically minded,
 this leads to multiple layers of uncertainty as we try guess what others
@@ -1022,7 +1022,7 @@ believe and then codify these beliefs with mathematical precision.
 To avoid this hurdle the other option is to try to define some non-informative
 priors that ``let the data speak for itself'', but this approach also has
 problems. Firstly, defining priors that have no effects on the posterior can be mathematically
-very difficult when we move beyond simple models\ \cite{gelman} and if we would need
+very difficult when we move beyond simple models and if we would need
 to invest a lot of time finding these priors we should instead probably spend this time
 to define proper informed priors. Second, non-informative priors do not always
 seem so non-informative, when we actually know something about the issues.
@@ -1031,14 +1031,14 @@ and we assign a uniform prior from 0 to 1 as this seems non-informative. This
 prior will have the effect of moving the posteriors towards the
 possibility of the patient actually having the disease. So if we definitely know
 something about the phenomenon, a non-informative prior can work against these
-beliefs.
+beliefs.\ \cite{gelman}
 
 Considered more broadly, chasing after truly non-informative prior is also
 somewhat of a fool's errand if the data actually has ``something to say''.
 If the data is informative, then lots of different priors that are somewhat weak
 should lead to almost identical posterior distributions. On the other hand if the data is weak and we
 have a weak prior, why are we even doing the analysis if we know that it will
-give us almost no information?
+give us almost no information?\ \cite{gelman}
 
 As a compromise between having strong priors based on previous beliefs and knowledge and
 letting the data stand on its own, Gelman et al.
@@ -1050,49 +1050,56 @@ must be between 50 and 300 cm). The other way is to start with strong informativ
 priors and then broaden these to take into account the uncertainty of
 how applicable our priors knowledge is to the question at hand.
 
-Because of how complex defining priors can get, this problem can act as an
-additional limiter on how complex Bayesian models we can build. The more complex model, the more priors we
+Because of how complex defining priors can get, this problem can act as a limiter on
+how complex Bayesian models we can build. The more complex model, the more priors we
 have to define and the more prior information and beliefs we could codify and
-the more difficult this problem gets.
+the more difficult this problem gets. As there is no obvious universally applicable
+solution to how we should create our priors, we have to make decisions case by case,
+keeping in mind the existence of strong prior information, the needs of our model and
+what makes sense to us and our target audience.
 
 \section{Why Bayesian Inference Fits N-of-1 Studies}\label{whybayes}
 
-As mentioned at the beginning of the previous chapter, both frequentist and
-Bayesian inference can be used to estimate the parameter values of the models
-described. The choice between these two methods is not just a technical one as both come
-with different conceptions about the nature of probability and assumptions
-related to this conception and these have serious implications on how we should
-interpret the results and run the studies. Unfortunately for frequentist inference, its
-assumptions fit the reality the N-of-1 trials poorly, and its estimates, and
-especially their uncertainty, can be hard to communicate to a lay audience (doctors and patients).
-Because of these issues, Bayesian inference can usually be recommended over
-frequentist inference when analyzing and communicating the results of N-of-1
-studies, even though it comes it with its' own complexities that we previously went over.
+As was mentioned before, both frequentist and Bayesian inference can be used to
+estimate the parameter values of the types models we described
+in chapter\ \ref{modelling}. The choice between these two methods is not just a
+technical one as both come with different conceptions about the nature of probability
+and these have serious implications on how we should interpret the results and run the studies.
+Unfortunately for frequentist inference, its assumptions fit the reality of running
+N-of-1 trials poorly, and its results, can be hard to communicate to a lay
+audience (doctors and patients). Because of these issues, Bayesian inference
+can usually be recommended over frequentist inference when analyzing and
+communicating the results of N-of-1 studies, even though it comes it with its'
+own complexities that we previously went over.
 
 \subsection{Flexibility of Experimental Design}\label{whybayes}
 
 The central tenet of frequentist inference is the assumption that same the
-experiment could be in theory repeated with statistically independent results. Probability
+experiment could in theory be repeated with statistically independent results. Probability
 is defined in relation to these hypothetical repetitions as a proportion of them
-that would have some event of interest (e.g. over 5 tails with 10 coin tosses). To repeat the same experiment its design
-needs to be defined precisely and this definition needs to be made before the
-study has begun because the changes made to the design during the experiment
-might be influenced by its results.
+that would have some event of interest (e.g. over 5 tails with 10 coin tosses).
+To repeat the same experiment its design needs to be defined precisely and this
+definition needs to be made before the study has begun because the changes made
+to the design during the experiment might be influenced by its results.
 
-Lets take for example an experiment where we are trying to find out if a coin
-is fair. For this purpose, we decide to flip the coin 20 times and count the number
-of heads. Then we can model how ``typical'' the result we got would be for a fair coin. We do
-this by calculating the distribution of heads from multiple 20 coin toss trials
+Lets consider an experiment where we are trying to find out if a coin
+is fair with frequentist methods. For this purpose, we decide to flip the coin 20 times
+and count the number of heads. After this we model how ``typical'' the result we got
+would be for a fair coin. We do this by calculating the distribution of heads from
+multiple 20 coin toss trials
 assuming that the coin is fair. Then we can compare our actual result against this
-distribution. If the result would be typical within this distribution, then we
-can say that the null hypothesis stands and the coin is fair. The problem comes if we did
-not actually decide to throw the coin 20 times beforehand, but first threw it 10 times, looked at
-the results, though that we should get some more data, and then threw the rest 10. Now what
+distribution. If the our result seems like a typical sample from this distribution, we
+can say that the null hypothesis stands and the coin is fair. This far we have no
+issues. The problem comes if we did not actually decide to throw the coin 20 times
+beforehand, but first threw it 10 times, looked at the results, though that we
+should get some more data, and then threw the rest 10. Now what
 kind of distribution should we compare our results against? The length of the trials
 seems to now hinge in some undefined way from the results of the first 10 coin tosses
-that made us decide to keep tossing the coin some more.
+that made us decide to keep tossing the coin some more. For frequentist inference to
+work our experiment design has to be clearly defined beforehand and we cannot make
+unexpected changes to experiment based on the data we have or any other factors.
 
-This demand for predefined experiment designs can be especially problematic in N-of-1 studies
+This demand for predefined experiment designs is problematic in N-of-1 studies
 used in a clinical setting. There might be cases when some treatment seems
 clearly better in the middle of an experiment and the patient (or the clinician)
 wants to stop the experiment. As the subjects are real people, it would be
@@ -1101,17 +1108,19 @@ rigor. There might also be a situation where a couple of treatments seem
 promising, but the rest seem completely useless, and we would want to change the
 design of the experiment on the fly to focus just on the promising treatments.
 These changes to the predefined experimental design will brake frequentist
-assumptions and make the inferences made with this method very difficult.
+assumptions and make the accurate inferences with this method impossible.
 
-The possibility to stop the study or change the experimental design can be
-incorporated to frequentist inference if we predefine the rules of when to
+The option to stop the study or change the experimental design can be
+incorporated to frequentist inference if we predefine the rules for when to
 stop the experiment and under what circumstances the design should be altered
 and how. Then we need to take these rules into account when performing the estimation
-calculations which adds complexity is but is still possible. The problem is that it is questionable if we can actually
-define and stick to these rules because of the human element: we would need to convince the patient that she should stop the experiment only in these predefined circumstances. This seems quite
+calculations which adds complexity is but is still possible. The problem is that it is
+questionable if we can actually define and stick to these rules because of
+the human element: we would need to convince the patient that she should
+stop the experiment only in these predefined circumstances. This seems quite
 unrealistic, as if there are any unforeseen problems with the treatments, it is
-more than likely that the patient will want to stop whatever rules she sign to follow
-beforehand.
+more than likely that the patient will want to stop regardless of any rules she
+signed up to follow beforehand.
 
 With Bayesian inference doing on the fly modifications of the study design do not
 cause such problems as with frequentist inference, as there is no assumption
@@ -1130,41 +1139,40 @@ In N-of-1 studies, much consideration has to be given to the communication of th
 results, both to the patient and the clinician administering the experiment. We
 would like to portray not just the estimates of the effects of the treatments,
 but also the uncertainty associated with these estimates. In frequentist
-inference there are two options to communicate these facts. The first one is
-maximum likelihood estimates combined with confidence intervals. Maximum
-likelihood estimates are just point estimates of the most likely parameter values and don't
-communicate any uncertainty. Confidence intervals of these parameter values communicate uncertainty, but
-don't actually mark the most likely values of the estimate. A 95 \%
-confidence interval, is often interpreted wrongly as including the true value of
-the parameter with 95 \% change, but the real meaning is that if we repeated the
-experiment indefinitely 95 \% of the 95 \% confidence intervals would include
-the true parameter value. This is because in frequentist interpretation of
-probability, true parameter values are not random but fixed, so a single
-confidence interval either does or does not include the true value. This
-confusing definition makes confidence intervals a poor choice of presenting the
-uncertainty of the estimates to a lay audience as they might create lots of misinterpretations and
-even when interpreted correctly are hard to grasp.
-
-The second frequentist communication tool are p-values of hypothesis tests. We
-might define a null hypothesis that the parameters of the effects of different
-treatments are equal and calculate the likelihood to obtain the data or a more
-extreme version of it if this is indeed the case. This would give us a more
-easily communicable way to portray the probability to obtain the data if the null
-hypothesis is true. If the p-value is low we could say with confidence
-that there is real differences between the effectiveness of the treatments. The
-problem is that this actually gives us very little useful information, as we
-would also like to how big the differences in the treatments' effectiveness
+inference we communicate these with maximum likelihood estimates, confidence
+intervals and p-values. Maximum likelihood estimates are just point estimates and perfectly
+understandable, but don't communicate any uncertainty by themselves. With confidence
+intervals we can communicate uncertainty, but don't actually mark the most likely
+values of the estimate. A 95 \% confidence interval is often interpreted wrongly
+as including the true value of the parameter with 95 \% change, but the real
+meaning is that if we repeated the experiment indefinitely 95 \% of the
+95 \% confidence intervals would include the true parameter value. This is
+because in frequentist interpretation of probability, true parameter values
+are not random but fixed, so a single confidence interval either does or does
+not include the true value. This confusing definition makes confidence intervals
+a poor choice of presenting the uncertainty of the estimates to a lay audience
+as they might create lots of misinterpretations and even when interpreted correctly
+are hard to grasp. The second frequentist tool for communicating uncertainty
+are p-values of hypothesis tests. We might define a null hypothesis that the
+parameters of the effects of different treatments are equal and calculate the
+likelihood to obtain the data or a more extreme version of it if this is indeed the
+case. This would give us a more easily communicable way to portray the probability
+to obtain the data if the null hypothesis is true. If the p-value is low we could
+say with confidence that there is real differences between the effectiveness of
+the treatments. The problem is that this actually gives us very little useful
+information, as we would also like to how big the differences in the treatments' effectiveness
 could realistically be.
 
 A Bayesian approach to inference gives us richer and more easily communicable
-information about the estimates because it gives us a distribution as a
-result in the form of the posterior distribution. With this is we can easily point out the plausible values
+information about the estimates because it gives the estimates in the form of the
+posterior distribution. With this is we can easily point out the plausible values
 with the tops of this distribution and the uncertainty with how flat the
 distribution is. The usual misinterpretation of the confidence intervals as
 containing the true value of the parameter with a certain probability is actually
 the right interpretation for Bayesian credible intervals, that contain certain
 percentage of the probability mass of the posterior distribution and so have a
-defined chance of containing the true value of the parameter. Bayesian method itself also seems to fit really well with the ways that clinicians conceptualize
+defined chance of containing the true value of the parameter. Bayesian method itself
+also seems to fit really well with the ways that clinicians conceptualize
 their practice of arriving to  diagnosis for a patient as updating their beliefs
 (i.e.\ priors) with the new information gained from new observation such as test
 results\ \cite{clinbayes}.
