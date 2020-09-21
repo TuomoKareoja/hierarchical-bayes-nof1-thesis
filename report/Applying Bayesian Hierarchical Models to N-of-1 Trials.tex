@@ -998,10 +998,10 @@ have we have visualized the first 100 steps taken by the aforementioned NUTS sam
 when estimating two parameters (figure\ \ref{traceexample}). The starting value is
 marked with a black X and the markers turn from red to yellow as the chain progresses.
 We can see that there seem to be a clear correlation between the parameters and our
-sample is already reflecting that. If we look at the sizes the steps that algorithm
-takes we can see that these are larger in the less probable parts of the distribution.
+sample is already reflecting that. If we look at the sizes the steps that the algorithm
+takes, we can see that these are larger in the less probable parts of the distribution.
 This means that the proposed step depends on where on distribution the current position
-is located. With this intelligent sampling chain traverses more
+is located. With this intelligent sampling the chain traverses more
 quickly in distribution and makes the sampling much more efficient.
 
 \subsection{How to Define the Priors?}\label{bayesproblems}
@@ -1061,7 +1061,7 @@ what makes sense to us and our target audience.
 \section{Why Bayesian Inference Fits N-of-1 Studies}\label{whybayes}
 
 As was mentioned before, both frequentist and Bayesian inference can be used to
-estimate the parameter values of the types models we described
+estimate the parameter values of the types of models we described
 in chapter\ \ref{modelling}. The choice between these two methods is not just a
 technical one as both come with different conceptions about the nature of probability
 and these have serious implications on how we should interpret the results and run the studies.
@@ -1088,7 +1088,7 @@ and count the number of heads. After this we model how ``typical'' the result we
 would be for a fair coin. We do this by calculating the distribution of heads from
 multiple 20 coin toss trials
 assuming that the coin is fair. Then we can compare our actual result against this
-distribution. If the our result seems like a typical sample from this distribution, we
+distribution. If our result seems like a typical sample from this distribution, we
 can say that the null hypothesis stands and the coin is fair. This far we have no
 issues. The problem comes if we did not actually decide to throw the coin 20 times
 beforehand, but first threw it 10 times, looked at the results, though that we
@@ -1097,7 +1097,7 @@ kind of distribution should we compare our results against? The length of the tr
 seems to now hinge in some undefined way from the results of the first 10 coin tosses
 that made us decide to keep tossing the coin some more. For frequentist inference to
 work our experiment design has to be clearly defined beforehand and we cannot make
-unexpected changes to experiment based on the data we have or any other factors.
+unexpected changes to the experiment based on the data we have or any other factors.
 
 This demand for predefined experiment designs is problematic in N-of-1 studies
 used in a clinical setting. There might be cases when some treatment seems
@@ -1188,33 +1188,34 @@ fine, but one might wonder if these separate trials could somehow be combined. O
 course, we could pool the data and run a group-based
 analysis about what treatments seems to be the best in general, but there is a better
 way that keeps true to the goal of N-of-1 experiments of finding the best treatment for
-each \emph{individual patient} by using hierarchical models. In these models the
-individual parameters are connected by imaging them as coming from a higher level
+each individual patient by using hierarchical models. In these models the
+patient-level parameters are connected by imaging them as coming from a higher level
 distribution. In the case of N-of-1 studies we can think of a population-level distribution
 where the patient-level parameters are drawn from. This makes lots of sense as it is
-clear that, for example in case of drug effectiveness, different people have different
-effect, but these effects follow a distribution so that very high or very low values are
+clear that, for example in the case of drug effectiveness, different people have different
+effects, but these effects follow a distribution so that very high or very low values are
 uncommon. In a sense having a common prior for
 all patient-level parameters can already be thought as defining this population level
-distribution, but the difference is that the prior
-is set in stone, but when we make the model hierarchical, the population-level
-distribution works just like the patient-level
+distribution, but the difference is that, where as the prior
+is set in stone, the population-level
+distribution in a hierarchical model works just like the patient-level
 parameters with uncertainty included and thus it is possible that our beliefs (posterior
 estimates) about this distribution will be changed by the data. Just like in the case of
-shared prior, the estimates of this population level distribution can draw the
+informative shared prior,
+the estimates of this population-level distribution can draw the
 patient-level estimates closer together, but as the distribution is itself is now
 estimated from the data, the strength of this effect depends on how similar the
 observations from different patients are.
 
 \section{How to Make a Model Hierarchical?}
 
-The practicalities of hierarchical models are easier to explain if we conceptualize our
+The practicalities of hierarchical models are easier to explain if we conceptualize
+Bayesian
 models as trees. In the top of the tree we have prior values that define the shape of
 prior distribution next level down, from these distributions come the parameters that
-define the data creation process at the bottom of the tree. Lets take a simple example
-where we have \(p\) patients with \(n\)
-measurements and, to make things simple just one treatment option. We can model this by
-a simple two-parameter model:
+define the data creation process at the bottom of the tree. Lets take an example
+where we have \(p\) patients with \(n\) measurements and, to make things simple just
+one treatment option. We can model this by a simple two-parameter model:
 
 \begin{def}\label{}
     \begin{equation}\label{simplehierachical}
@@ -1254,18 +1255,18 @@ taken on time $t$. Now lets look at this model as a tree graph:
 \end{equation}
 \bigskip
 
-On top are the prior parameters that represent our existing knowledge and are shared by
-all patients. Next are actual prior distributions defined by these parameters from which the individual patient
-level patient parameters are drawn. At the bottom we describe the actual data generating
-process where values of individual observations are drawn from normal distributions
-defined by the patient level parameters. For the prior distributions we choose a normal
-distribution for the treatment effect and half-Cauchy distribution for the variance. The
+% TODO should the variance prior always be non-informative?
+
+For the prior distributions we chose a normal distribution for the treatment effect and half-Cauchy
+distribution for the variance. The
 normal distribution for the treatment effect is a natural choice as probably the
 treatment effect is dependent on multiple factors which many could be independent. If
 this is the case, then the central limit theorem says that the treatment effect will follow a
 normal distribution. The variance parameters is more difficult and there are multiple
 reasonable distributions to choose, but half-Cauchy distribution is generally
 recommended for reasons we don't have space to go into here\ \cite{variancepriors}.
+
+% TODO where is the best place to introduce logic of choosing the prior distributions?
 
 Even though in this model each patient shares the same prior parameters, the estimates of the patient-level parameters
 are only affected by the data of the patient in question as the shared prior parameter values are set
@@ -1274,7 +1275,7 @@ perfect knowledge of the population-level distribution and we describe this by t
 of our priors. To change this we need to introduce
 some parameter that is shared by all patients and that is also being estimated based on
 the data. We can accomplish this by changing the priors from set of values to distributions
-that are themselves defined by new higher level prior values. This new level of
+that are themselves defined by a new higher level prior values. This new level of
 ``uncertain priors'' are be interpreted in this context as the population-level
 distribution of the treatment effectiveness, where we are uncertain about the shape of
 this distribution and express this uncertainty with new higher level priors:
@@ -1286,7 +1287,7 @@ this distribution and express this uncertainty with new higher level priors:
     \matrix[matrix of math nodes, column sep=0pt, row sep=30pt] (mat)
     {
         \ & \mu_{\mu}, \sigma_{\mu}, \gamma_{\sigma} & \ \\
-        \ & \mu, \sigma & \gamma_{\tau} \\
+        \ & \mu, \sigma & \gamma \\
         \theta_1, \tau_1 & \ldots & \theta_j, \tau_j \\
         y_{1,1}, \ldots, y_{n, 1} & \ldots & y_{1, p}, \ldots, y_{n, p} \\
     };
@@ -1304,7 +1305,7 @@ this distribution and express this uncertainty with new higher level priors:
     \text{HalfCauchy}(0, \gamma_{\sigma})$};
    
     \node[anchor=east] at ([xshift = -40pt]mat-3-1)
-    {$\theta_j \sim \text{N}(\mu, \sigma^2), \tau_j \sim \text{HalfCauchy}(0, \gamma_{\tau})$};
+    {$\theta_j \sim \text{N}(\mu, \sigma^2), \tau_j \sim \text{HalfCauchy}(0, \gamma)$};
 
     \node[anchor=east] at ([xshift = -40pt]mat-4-1)
     {$y_{ij} \sim \text{N}(\theta_j, \tau_j^2)$};
@@ -1313,13 +1314,15 @@ this distribution and express this uncertainty with new higher level priors:
 \end{equation}
 \bigskip
 
-Now instead of drawing the patient level parameters straight from distributions defined
+Now instead of drawing the treatment related patient-level parameters straight from a distributions defined
 by the priors, these are drawn from the population-level distributions. The parameters
-population-level distributions themselves are taken from set distributions defined by
-the prior values. The exception here is the error term \(\tau \). We also make this
+of the
+population-level distributions themselves are taken from the prior values expressing our
+uncertain knowledge about these distribution. The exception to this pattern is the error
+term \(\tau \). We could make this
 parameter hierarchical, but this is not commonly done in hierarchical models. There are
 two reasons for this. Firstly this term is already the ``extra'' in the model describing
-the variance of the values after the more interesting parameters. Compared to the actual
+the variance left after the more interesting parameters have been fitted. Compared to the actual
 treatment effect this makes it less interesting and adding hierarchical layers for this
 parameters can be thought of as unnecessary complexity. The second reason is that with a
 reasonable amount of observations, the error term can be estimated very accurately. This
@@ -1327,19 +1330,22 @@ means that adding the hierarchy should not have much effect on this estimate as 
 patient-level estimates are likely too strong to be swayed by the population-level
 estimates.
 
-% TODO add reference
+% TODO why the variance can be estimated so accurately
 
 \section{Benefits of Hierarchical Models}
 
-The kinds of multilayered dependencies introduced with hierarchical models are useful in many ways.
-First, the dependencies can meaningful for the application, e.g.\ we can
+% TODO check that e.g. and i.e. are used appropriately
+% TODO check spelling of patient-level and population-level
+
+The kinds of multilayered dependencies introduced by hierarchical models are useful in many ways.
+Firstly, the dependencies can meaningful for the application, i.e.\ we can
 model the treatment effect for a single patient as an instance from a
-broader population distribution of this effectiveness. The population level is not just
+broader population distribution of this effectiveness. The population-level is not just
 a mathematical curiosity, but it has a meaningful interpretation and the estimates we
-get for the population-level parameters are interesting by themselves. Second, because
+get for the population-level parameters are interesting by themselves. Secondly, because
 of the dependencies across parameters, all the data can now jointly inform all the
 parameter estimates. As there is now more data used for the lower-level estimates trough
-intelligent pooling there is usually some reduction in the variance of these estimates
+pooling, there is usually some reduction in the variance of these estimates
 and especially between them. This reduction of variance between the estimates is
 generally referred by the term ``shrinkage''. In general,
 shrinkage in hierarchical models causes lower-level parameters to shift toward the modes
@@ -1357,16 +1363,19 @@ patients are actually are very different, does not force the estimates together 
 widely spread measurement values leads to the estimates of the population level-distributions to
 have a large variance and thus to have little impact on the patient level estimates. So
 instead forcing similarity, the model ``makes the decisions'' if this is appropriate
-based on the data.
+based on the data (and our priors, as strong priors might force or prevent this effect).
 
 \section{Applying the Bayes Formula to Hierarchical Models}
 
-With all the parameters introduced by the new parameter levels in hierarchical models, the question now becomes, how we apply
+With all the parameters introduced by the new parameter levels in hierarchical models,
+the question now becomes, how we apply
 the Bayesian formula in these cases? Luckily this happens to be very simple as we just
 have to remember two rules of probability: the chain rule\ \ref{chainrule}, that
-tells us that the probability of $A$ and $B$ is the probability of $B$ on condition $A$
-times the probability of $A$, and the rule of independence\ \ref{ruleofindependence} that states that the
-probability of $A$ on condition $B$ is just the probability of $A$ if $A$ and $B$ are independent.
+tells us that the probability of \(A\) and \(B\) is the probability of \(B\) on condition \(A\)
+times the probability of \(A\), and the rule of independence\ \ref{ruleofindependence}
+that states that the
+probability of \(A\) on condition \(B\) is just the probability of \(A\) if \(A\) and
+\(B\) are independent.
 
 \begin{equation}\label{chainrule}
     P(A \cap B) = P(B|A)P(A)
@@ -1401,11 +1410,12 @@ model\ \ref{hierarhicalmodelexampletree} in the Bayes formula\
     \end{aligned}
 \end{equation*}
 
-We can see that the measurements of each patient \(Y_1, Y_2\) depend only on the patient
+We have now successfully expressed our hierarchical model in the Bayes formula.
+We can see that the measurements of each patient \(Y_1, Y_2\) depend directly only on the patient
 level parameters \(\theta_1, \theta_2, \tau_1, \tau_2\), so that if these values are set, then the
 measurements are independent of all other parameters. Similarly, \(\theta_1, \theta_2 \) depend conditionally only
-on the population level parameters \(\mu, \sigma \), while \(\tau \) is independent of them. So we have now successfully
-expressed our hierarchical model in the Bayes formula. We could continue by writing the
+on the population level parameters \(\mu, \sigma \), while \(\tau \) is independent of
+them. We could continue by writing the
 formula out by adding in the prior terms and replacing the abstract probability
 markings with the actual probability density functions given by our chosen
 distributions, but this gets messy and, in this case, no nice analytical solution can be
@@ -1421,17 +1431,17 @@ can be.
 To put everything we learned into practice, lets go over an example Bayesian
 analysis of multiple N-of-1 trials, where we first analyze one trial separately and then
 combine multiple trials by using a hierarchical model. For the analysis we use Python and PyMC3 library\ \cite{pymc3} built
-for probabilistic programming. We will not go over each part of the code, but focus only
-on the critical parts where we see how the models and inference we went over in the
+for probabilistic programming. We will not go over each part of the code used, but focus only
+on the critical parts where we see how the principals we went over in the
 previous chapters look like when implemented in practice. For those who want to see the
 full code, it is available from a GitHub repository\ \cite{github} with instructions on how
 to run it.
 
 As we now jump from theoretical and analytical considerations to practical consideration
-when doing this kind of analysis, we will need revisit the concepts that we went over
+when doing this kind of analysis, we will need to revisit the concepts that we went over
 while talking about the problems of dealing with marginal likelihood\
 \ref{marginallikehoodproblems} and introduce some new concepts related to how
-PyMC3 deals with this problem and what do we need to pay attention to
+PyMC3 deals with this problem and what we need to pay attention to
 make sure that the algorithmically derived results we get are reliable. We also have to
 consider how we can make sure that our model is ``good enough'' description of reality.
 Almost any kind of model can be fitted to the data and most of these can be even
@@ -1444,7 +1454,8 @@ posteriors and see if this data looks like our original dataset.
 
 Lets first describe our experiment design, as this is critical for understanding
 everything that comes later. Imagine that we have 6 patients that all suffer from the
-same medical condition to which there are two treatment options available (\(A\)) and (\(B\)). We know from the
+same medical condition to which there are two treatment options available (\(A\)) and
+(\(B\)). We know from the
 literature that there is clear patient-level variation in which treatment works better
 so we decide to test this with N-of-1 trials. We know that both of the treatments act
 very fast and that there are no known problems with interaction effects between them.
@@ -1476,7 +1487,7 @@ disease and not curing it. Based on this information we come up with the followi
 
 \section{Simulating the Data}
 
-Next we simulate the data that we could get from our defined experiment with Python.
+Next we simulate the data that we could get from our hypothetical experiment with Python.
 As there should not be any interaction effects between the treatments, the treatment
 effect onset is immediate and there is no washout period, this is a fairly simple
 task. The benefit of having a relatively simple data generating process, is that it is
@@ -1506,7 +1517,6 @@ the process with a simplified version of reality.
 that define the distribution from which the patient-level parameters are drawn from:
 
 \bigskip
-
 \begin{tikzpicture}
 
     \matrix[matrix of math nodes, column sep=-70pt, row sep=30pt] (mat)
@@ -1540,16 +1550,7 @@ that define the distribution from which the patient-level parameters are drawn f
     $};
 
 \end{tikzpicture}
-
-For the treatment effects and mean a normal distribution for the population level makes
-intuitive sense as these values can be both positive and negative and should be affected
-by multiple independent factors, leading to them to follow a normal distribution
-according to the central limit theorem. The choice for the distribution of
-autocorrelation is also very clear as a beta distribution is a natural choice as it
-limits the values nicely between 0 and 1. The choice for the variance distribution is
-more difficult as there are multiple possible realistic candidates. Besides half-Cauchy
-distribution we could have used inverse-gamma or half-t-distribution. These all limit
-the standard deviation to positive numbers.
+\bigskip
 
 % TODO is half-cauchy the right choice for sd or var?
 
@@ -1579,13 +1580,15 @@ Second, the mean of the trend \(\beta \) is positive and its variance is small. 
 that almost all patient should have a steadily worsening condition (measurements get
 higher as the experiment progresses).
 
+% TODO is the variance of the treatment effects too small?
+
 In figure\ \ref{measurementtimeline} we see timelines of the simulated measurements for each patient. Just by looking, it seems
 pretty obvious that for patients 2 and 1 there is a clear difference in the efficacy of the
 treatments, with the treatment periods clearly visible. We also see more ambivalent
 cases. Patient 4 seems to have very stable measurement values regardless of the
 treatment, while patient 2 has lots of random fluctuations in the data making it hard to
 interpret the data just by looking at the plot. We can also see the upwards trend in the
-measurement as all patients except patient 2 end the experiment with higher measurement values
+measurements, as all patients except patient 2 end the experiment with higher measurement values
 that they started with (remember that because of the balanced design, patients start and
 end the experiment with the same treatment).
 
@@ -1595,18 +1598,20 @@ end the experiment with the same treatment).
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{measurements_timeline.pdf}
 \end{figure}
 
+% TODO use colors or patterns that are easier to discern
+
 Let's next look at the actual parameters that created this data.
 In figure\ \ref{parameterdistribution}, we have all patient-level parameter values with the population
 distribution from which they where drawn from. On the left side we can see both of the
-treatment effect means. As these are plotted on an identical x-axis, we can easily compare
-them. We can see that for every patient, except for patient 3, treatment A is
-the better (higher parameter value). The second interesting finding is that for patient
+treatment effect means. These are plotted on an identical x-axis for easy comparison.
+We can see that for every patient, except for patient 3, treatment B is
+better (lower parameter values). The second interesting finding is that for patient
 1 the treatment B effectiveness is far better than for other patients. When we look later on at
-the hierarchical model, these two patients are the ones to keep an eye out as we would
+the hierarchical model, these two patients are the ones to keep an eye out, as we would
 expect the measurements from other patients to pull the treatment effectiveness of
 treatment B for patient 3 down (make it better) and conversely pull this up for patient
 1. From the measurement error and autocorrelation there are less interesting things to
-see: the wild swings of the measurement for patient 2
+see: the wild swings of the measurements for patient 2
 are explained by her high measurement error and autocorrelation values are quite tightly
 grouped up for all patients. For the trend we see that patients 2, 4 and 5 are getting
 worse significantly slower than the other patients.
