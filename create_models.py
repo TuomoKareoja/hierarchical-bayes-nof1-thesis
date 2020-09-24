@@ -149,13 +149,9 @@ fig, ax = plt.subplots(figsize=(8, 4))
 
 ax.plot(parameter_a, parameter_b, alpha=0.6, color="grey")
 ax.scatter(
-    x=parameter_a[1:],
-    y=parameter_b[1:],
-    s=25,
-    c=np.arange(steps - 1),
-    cmap="autumn",
+    x=parameter_a[1:], y=parameter_b[1:], s=25, c=np.arange(steps - 1), cmap="autumn",
 )
-ax.scatter(x=parameter_a[0], y=parameter_b[0], s=120, marker='x', color="black")
+ax.scatter(x=parameter_a[0], y=parameter_b[0], s=120, marker="x", color="black")
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
 plt.xlabel("Parameter A")
@@ -173,17 +169,28 @@ plt.show()
 # TIMELINE
 fig, ax = plt.subplots(figsize=(8, 4))
 
-for sample in single_patient_predictions:
+for i, sample in enumerate(single_patient_predictions):
+
+    if i == len(single_patient_predictions) - 1:
+        color = "blue"
+        linestyle = "--"
+        label = "Example sample"
+        alpha = 1
+    else:
+        color = "grey"
+        linestyle = "-"
+        label = ""
+        alpha = 0.05
 
     ax.plot(
         range(len(sample)),
         sample,
-        linestyle="solid",
+        linestyle=linestyle,
         linewidth=1,
-        color="grey",
-        alpha=0.05,
+        color=color,
+        alpha=alpha,
+        label=label,
     )
-
 
 ax.plot(
     measurements_df[patient_index == 0]["measurement_index"],
@@ -191,9 +198,8 @@ ax.plot(
     color="red",
     linestyle="solid",
     linewidth=1,
-    label="Patient 1",
+    label="Original measurements",
 )
-
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
 plt.ylabel("Measurement Value")
