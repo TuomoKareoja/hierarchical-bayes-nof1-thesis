@@ -1514,7 +1514,12 @@ fully modeled and some decisions have to be made on how to try to approximate
 the process with a simplified version of reality.
 
 ``Above'' the part creating the individual observations we have a population-level parameters
-that define the distribution from which the patient-level parameters are drawn from:
+that define the distribution from which the patient-level parameters are drawn from.
+Here we are mimicking a hierarchical model also in the data creation process. This is
+important because if there was no underlying pattern to the patient-level parameter values
+, pooling the information across the patients
+would be nonsensical. So instead of directly picking the patient-level parameter values,
+we are just going to pick the form of the distribution where these are drawn from.
 
 \bigskip
 \begin{tikzpicture}
@@ -1601,17 +1606,18 @@ end the experiment with the same treatment).
 % TODO use colors or patterns that are easier to discern
 
 Let's next look at the actual parameters that created this data.
-In figure\ \ref{parameterdistribution}, we have all patient-level parameter values with the population
+In figure\ \ref{parameterdistribution}, we have all patient-level parameter values
+overlayed on top of the population
 distribution from which they where drawn from. On the left side we can see both of the
 treatment effect means. These are plotted on an identical x-axis for easy comparison.
 We can see that for every patient, except for patient 3, treatment B is
 better (lower parameter values). The second interesting finding is that for patient
 1 the treatment B effectiveness is far better than for other patients. When we look later on at
 the hierarchical model, these two patients are the ones to keep an eye out, as we would
-expect the measurements from other patients to pull the treatment effectiveness of
+expect the measurements from other patients to pull the treatment effect of
 treatment B for patient 3 down (make it better) and conversely pull this up for patient
 1. From the measurement error and autocorrelation there are less interesting things to
-see: the wild swings of the measurements for patient 2
+note: the wild swings of the measurements for patient 2
 are explained by her high measurement error and autocorrelation values are quite tightly
 grouped up for all patients. For the trend we see that patients 2, 4 and 5 are getting
 worse significantly slower than the other patients.
@@ -1628,7 +1634,7 @@ We start analyzing our simulated experiments by first focusing on just a single 
 choosing naturally patient 1. In figure\ \ref{patient1timeline} we have the timeline of
 observations for this patient. We have highlighted the period where the patient was on treatment A with grey and can
 clearly see that this treatment is the inferior option for this patient, so modelling
-this we should get the same recommendation, but with more specificity.
+this we should expect to get the same recommendation, but with more specificity.
 
 \begin{figure}[H]
     \caption{Timeline of Measurements for Patient 1}\label{patient1timeline}
@@ -1656,7 +1662,7 @@ variables that are 1 when observation \(t\) is within a period where treatment w
 0 otherwise. \(\beta \) is the trend and \(\epsilon_{t} \sim N(0,\tau^2) \) is the error term at \(t\).
 
 Our model assumes that the measurement values are distributed normally with
-variance \(\tau^2\) and with a mean of either \(\theta \) or \(\eta \) depending on which
+variance \(\tau^2\) and a mean of either \(\theta \) or \(\eta \) depending on which
 treatment is applied at the observation \(y_t \sim N(Z_t\theta + W_t\eta, \tau^2)\).
 This means that our likelihood function will have to be a bit special as using a simple
 normal distribution will not do. We will see that this will cause use some headaches
@@ -1665,7 +1671,7 @@ later when we implement the model in PyMC3.
 Next we go to choose the prior distributions for our model. We choose
 normal distributions for the treatment effect parameters and the trend as it makes sense to think
 that these would depends on multiple independent biological and social
-factors (very reasonable assumption!) and the central limit theorem tells us the that
+factors and the central limit theorem tells us the that
 the parameters should then be normally distributed. For the variance of the error
 term we choose a half-Cauchy distribution as this is a common recommendation for the
 prior of variance\ \cite{variancepriors}.
@@ -1702,12 +1708,15 @@ prior of variance\ \cite{variancepriors}.
 \end{tikzpicture}
 \bigskip
 
+% TODO should we use a separate scale parameter so that we would not have to worry
+% about combining this info in the variance parameter?
+
 Now that we have our model defined we should think about what kind of values we should
-give to our prior parameters. Lets say that for treatment A and B we know from existing
+give to our prior parameters. Lets say that for treatment A and B we know from the
 literature that the typical measurements taken under these treatments are around 10. We
 can just slot this value in for the mean prior parameter values. Same thing can be
-easily applied to standard deviance as we can just slot in standard deviance for the
-patient treatment effect mean taken from other studies. Lets say that this value is
+easily applied to standard deviance as we can just slot in the standard deviance for the
+patient treatment effect mean taken from existing studies. Lets say that this value is
 0.5, so that it is rare to values above 11.5 or under 8.5. We can tone down this certainty
 as we are not very sure that the patients on which the previous studies where conducted
 are that similar to our patients. We do this by doubling the standard deviance prior to 1 for both
@@ -1737,7 +1746,7 @@ in table\ \ref{singlelpatientmodelpriorvalues}.
 \subsection{Implementing the Model in PyMC3}
 
 PyMC3 is Python package built for probabilistic programming. Although it is not
-limited to Bayesian methods, that it is its main focus. Implementing Bayesian models in
+limited to Bayesian methods, that is its main focus. Implementing Bayesian models in
 the package works so that you give it all the parts of the Bayesian formula except the
 marginal likelihood: the likelihood, prior
 distribution and the values defining the prior distributions. Then it automatically
@@ -1750,27 +1759,29 @@ model and gives us good approximations. On top of this we should check that our 
 approximation of the reality. We will go over how these problems manifest themselves and
 how we can deal with them when these problems pop up, so lets us just jump in and
 implement the model in PyMC3 and then walk trough what the code is
-actually doing line by line\footnote{The code snippets that we will be showing are a
+doing line by line\footnote{The code snippets that we will be showing are a
 slight simplification of the actual code that was used to calculate the results. The simplification does not mean
 that the code shown is not executable, but parts of it that are related to technical niceties
 (e.g. inter OS compatibility, saving the plots\ldots) are taken out to focus on what is
-important for Bayesian calculations.}.
+most important}.
 
-% TODO need to make the code look cleaner without the footnote getting in the way
+% TODO the last to thing to edit here should be that the following
+% code does not get obscured by the footnote
 \pagebreak
 
 \subsubsection*{Full Model Implementation in PyMC3}
+\bigskip
 
 \begin{pyverbatim}[][fontsize=\footnotesize]
 # load in needed packages
 import pymc3 as pm
 import pandas as pd
 
-# load measurement data and true parameter values
+# read measurement data and the true parameter values
 measurements_df = pd.read_csv("patient_measurements.csv")
 parameters_df = pd.read_csv("patient_parameters.csv")
 
-# convenience variable for easier indexing
+# create convenience index for easy filtering
 patient_idx = measurements_df["patient"]
    
 # define the model
@@ -1791,8 +1802,8 @@ with pm.Model() as single_patient_no_trend_model:
     )
 
     # likelihood is normal distribution with the same amount of dimensions
-    # as the patient has measurements and the means are defined by one of the
-    # treatment means + trend with always the same variance
+    # as the patient has measurements with means defined by the previously
+    # defined vector and all dimensions share the same variance
     likelihood = pm.Normal(
         "y",
         measurement_means,
@@ -1800,15 +1811,15 @@ with pm.Model() as single_patient_no_trend_model:
         observed=measurements_df[patient_idx == 0]["value"],
     )
 
-    # adding the comparison between the treatments
+    # adding the comparison between the treatments for monitoring
     difference = pm.Deterministic(
         "Treatment Difference (A-B)", treatment_a - treatment_b
     )
 
-    # running the model
+    # running the algorithmic estimation process
     trace = pm.sample(800, tune=500, cores=3)
 
-    # Checking diagnostic describing how the MCMC method performed
+    # Checking diagnostic describing how the algorithm performed
     pm.traceplot(
         trace, ["Treatment A", "Treatment B", "Trend", "Gamma"], divergences="top"
     )
@@ -1820,7 +1831,8 @@ with pm.Model() as single_patient_no_trend_model:
     plt.show()
 
  
-# sampling new observations based on posterior estimates (posterior sampling)
+# creating new observations based on our model with sampled
+# posterior estimates (posterior sampling)
 with single_patient_no_trend_model as model:
     post_pred = pm.sample_posterior_predictive(trace, samples=500)
     predictions = post_pred["y"]
@@ -1832,6 +1844,7 @@ draw_posterior_checks(
     parameters_df=parameters_df[parameters_df["patient"] == 0],
 )
 \end{pyverbatim}
+\smallskip
 
 \subsubsection*{Part 1: Loading in the Package and the Data}
 
@@ -1845,11 +1858,11 @@ parameters_df = pd.read_csv("patient_parameters.csv")
 
 patient_idx = measurements_df["patient"]
 \end{pyverbatim}
-\bigskip
+\smallskip
 
 The first thing we of course have to do is to load the packages and get our data. There is
-not much to comment about loading the packages, but lets check out table\
-\ref{measurements} to see how our data looks like:
+not much to comment about loading the packages, but lets see how our data in
+\pyv{measurements_df} looks like:
 
 \bigskip
 \begin{table}[H]
@@ -1873,14 +1886,15 @@ All columns expect the last one are index columns. As is the standard in Python,
 zero-indexed. First column indexes the patient (0-5), second the
 measurement (0-27), third the treatment period (0-3), fourth the block (0-1) and fifth
 and sixth which treatment was applied during the particular measurement (0-1). Last
-column is the value of the measurements. PyMC3 does not require any particular format from the
-data and almost any format is possible as long as you can feed the right values into
+column is contains the values of the measurements. This format was chosen just for
+convenience as PyMC3 does not require any particular format from the
+data as you can feed the right values into
 the right places in the model definition. Also using the Pandas package to handle the
 data as a dataframe is not necessary, but is very convenient.
 
 The \pyv{parameters_df} dataframe shown in table\ \ref{parameters} contains the true parameter values of the patients. These
 can be used check how accurate our predictions actually are. Normally we would of course
-not have access to these values, but as we created the data ourself we do. Each row in
+not have access to these values, but as we created the data ourself, we do. Each row in
 this dataset is a patient and contains the
 true parameter values for each of the parameters we used to create the simulated data.
 Only a couple of the columns included in the dataset are shown here, because the full
@@ -1902,7 +1916,7 @@ parameters_df.columns = ['patient', 'treatment_a', 'treatment_b', 'trend', 'meas
 print(parameters_df.to_latex(index=False))
 \end{pycode}
 \end{table}
-\bigskip
+\smallskip
 
 The last part of the code where we create the variable \pyv{patient_idx} is just for
 convenience so that we need to type less when referring to the data of a particular patient.
@@ -1913,13 +1927,12 @@ convenience so that we need to type less when referring to the data of a particu
 \begin{pyverbatim}[][fontsize=\footnotesize]
 with pm.Model() as single_patient_no_trend_model:
 \end{pyverbatim}
-\bigskip
+\smallskip
 
 PyMC3 models are usually defined within the Python context manager (``with'' statements).
-This is not necessary, but makes the model definition much cleaner as when the model is
-defined in the context manager, all subsequent parts defined within the manager
-(indented parts of the code) are automatically associated with this particular model
-without need for manually defining this.
+This is not necessary, but makes the model definition much cleaner as all parts
+defined within the context (indented parts of the case), are automatically associated
+with this particular model without need for manually defining this for every part.
 
 \subsubsection*{Part 3: Defining the Priors}
 
@@ -1930,23 +1943,22 @@ treatment_b = pm.Normal("Treatment B", mu=10, sigma=1)
 trend = pm.Normal("Trend", mu=0.1, sigma=0.3)
 gamma = pm.HalfCauchy("Gamma", beta=10)
 \end{pyverbatim}
-\bigskip
+\smallskip
 
 Now we start getting to the actual modeling. We start by defining our prior beliefs about
-out the parameter distributions. You could call these distributions the prior
-distributions, but this does not make much sense in PyMC3 as final output are these
-distributions with modified parameters. For both treatments and the trend we use a normal distribution and
+out the parameter distributions. For both treatments and the trend we use a normal distribution and
 for the variance of the error term \(\gamma \) we use a half-Cauchy. For the half-Cauchy
 distribution we don't need to define the location term as it is by default zero, just
 like we want it. Something to note here is that the PyMC3 normal distribution sigma
 parameters expects the standard deviation and not the variance. As all the distributions
-that we are using here are widely used, we can find functions implementing
+that we are using here are well defined and common, we can find functions implementing
 them already built-in PyMC3. It is also possible to define completely custom
 distributions, but unfortunately this is quite complex, as you don't just have to worry
 about the math part, but also all you have to implement all the methods that PyMC3
-relies on when making the calculations\footnote{Because of this complexity the author would recommend using the Stan package for very complex models with lots of weird
-distributions. Although Stan requires to you to write model definition with its own
-language, this hurdle is worth in some cases as you just have
+relies on when making the calculations\footnote{Because of the complexity of defining
+custom distributions the author would recommend using the competing PyStan package in
+cases where inbuilt distributions don't exist. Although Stan requires to you to write
+model definition with its own language, this hurdle is worth in some cases as you just have
 worry about the math and there is no need to consider implementing any helper functions}.
 
 \subsubsection*{Part 4: Defining the Likelihood}
@@ -1969,7 +1981,7 @@ likelihood = pm.Normal(
     observed=measurements_df[patient_idx == 0]["value"],
 )
 \end{pyverbatim}
-\bigskip
+\smallskip
 
 Defining the likelihood is the most difficult part our model definition because of the
 complexity introduced by the varying treatments. Because of this, the likelihood cannot
@@ -1979,7 +1991,8 @@ measurements. We construct the vector of means for this distribution by multiply
 treatment distributions by the treatment indices (1 when
 treatment given, 0 when not) and add the trend multiplied by the index of the
 measurement (\(t\)). So instead of considering
-the observations separately we think of them as a single multidimensional sample from
+the observations as multiple samples from the same distribution, we think of them as a
+single multidimensional sample from
 a multivariate normal distribution. This is not the only possible way to solve the
 problem, but is probably the most convenient. If we would have some
 dependencies between the measurements in our model (e.g. autocorrelation), this approach
@@ -1987,8 +2000,8 @@ would not work. In this case we would have to implement the likelihood function
 ourselves. One thing to note here is that even though we are using a multivariate normal
 distribution, we still use the same PyMC3 function for normal distribution and just give
 it a vector of means that matches the amount of our observations. This strategy works
-with all the inbuilt PyMC3 distributions: you can either have them using one set of
-parameters or a vector of parameters matching the data and PyMC3 will automatically
+with all the inbuilt PyMC3 distributions: you can either have them use a single
+parameter values or a vector of values matching the dimensions of the data and PyMC3 will automatically
 change from using a single dimensional distribution with multiple observations to
 multidimensional distribution with one observation vector.
 
@@ -2000,13 +2013,14 @@ multidimensional distribution with one observation vector.
         "Treatment Difference (A-B)", treatment_a - treatment_b
     )
 \end{pyverbatim}
-\bigskip
+\smallskip
 
 As the estimate we are most interested is not actually any individual parameter, but the
-\emph{difference} between the two treatment parameters, we have to add this comparison separately.
+difference between the two treatment parameters, we have to add this comparison separately.
 We can do this before or after running our model, but here we have decided to do it
-beforehand. As the difference is actually determined by the values of the treatment
-parameters, we have to use PyMC3 pm.deterministic function that calculates the posterior
+beforehand. As the difference is fully determined by the values of the treatment
+parameters and not random, when conditioning on these values, we have to use PyMC3
+pm.deterministic function that calculates the posterior
 by simple subtracting the value of treatment 2 parameter value from treatment 1
 parameter value at each step in the chain.
 
@@ -2016,22 +2030,21 @@ parameter value at each step in the chain.
 \begin{pyverbatim}[][fontsize=\footnotesize]
 trace = pm.sample(draw=800, tune=500, cores=3)
 \end{pyverbatim}
-\bigskip
+\smallskip
 
 Now that we have defined our prior beliefs and our likelihood, we can move on to running the
 model. PyMC3 will now estimate the posterior with an automatically chosen Markov Chain
 Monte Carlo (MCMC) method (see chapter\ \ref{bayesinferencechallenges})
-that moves trough the posterior from point to point. We could also manually choose what
+that samples the distribution defined by likelihood times priors and estimates the
+posterior based on these samples. Instead of relying on PyMC3s automatic selection, we could also manually choose what
 algorithm to use, but unless we see problems when we evaluate the estimation efficiency,
-we should stick with the automatic selection. We also don't need to define the point in the
-posterior distribution where the estimation starts as this is also automatically chosen. This
-we could also define manually, but unless we run into problems, we should not need to.
+we should stick with the default option.
 
 The three parameters that we have to manually define are as follow:
 
 \begin{itemize}
-    \item[] draw = how many moves the MCMC chain should calculate
-    \item[] tune = how many moves the MCMC chain should take before it start to
+    \item[] draw = how many steps the MCMC chain should calculate
+    \item[] tune = how many steps the MCMC chain should take before it starts to
     take the observations into account
     \item[] cores = how many MCMC chains we will calculate in parallel
 \end{itemize}
@@ -2044,21 +2057,27 @@ a number of steps and as its moves trough the posterior its location distributio
 reflect the actual posterior. If we would not have the tuning steps it would be possible
 that the chain starts in a weird position and the first steps it takes don't reflect the
 posterior as it might have to make lots of moves in a certain direction to get to the
-representative parts of the distribution. The more draws and tuning steps we take the
-better the estimation will be, but the more time the calculation will take. Finding the
+representative parts of the distribution. In principal we could use the tuning steps
+also for the calculation as long as we have enough steps in total end product would
+still converge to the same distribution, but it is more efficient to just drop these
+values so that we don't have add more steps to compensate the possible bias introduced by
+them. The more draws and tuning steps we take the better the estimation will be, but the
+more time the calculation will take. Finding the
 right number of draw and tuning steps involves usually some trial and error. It is
 hard to know how many steps you need before you try to run the model. Luckily PyMC3 will
 automatically alert us if it thinks that we need more tuning steps or draws and we can
-also diagnose this from metrics and plots that we will look at after we have run the
+also diagnose this from the metrics and plots that we will look at after we have run the
 model.
 
+% TODO have we used the word chain previously?
+
 As modern CPUs have usually multiple cores, we can speed up the calculation by running
-multiple chains in parallel. Each chain will be independent of each other and each will
+multiple chains in parallel. Each chain is independent of each other and will
 take same amount of draws and tuning steps. As the chains can runs in parallel, having
 multiple chains running can dramatically speed up our estimation. The total number of steps that
 the posterior will be calculated with is the combined draws (not tuning steps) of the
 chains. So in our case we will use 3 cores and have 3 chains (running this on a 4 core
-CPU so we will leave 1 core free for other tasks), in total these chains will make (800 +
+CPU so we will leave 1 core free for other tasks), these chains will make in total (800 +
 700) * 3 = 4500 steps, of which 800 * 3 = 2400 steps will be used for the posterior estimation.
 
 \subsubsection*{Part 7: Checking Algorithm Diagnostics}
@@ -2072,31 +2091,39 @@ pm.traceplot(
 plt.show()
 pm.summary(trace)
 \end{pyverbatim}
-\bigskip
+\smallskip
 
 Now that we have run the model we need to evaluate if the algorithm did a good job with
-the estimation. We can evaluate this by looking at diagnostic plots and from diagnostic
-metrics. Lets first look at the visualizations of the MCMC-chain steps called traceplots:
+the estimation. We can get a sense of this by looking at diagnostic plots and metrics.
+Lets first look at the visualizations of the MCMC-chain steps called traceplots:
 
 \begin{figure}[H]
     \caption{Single Patient Traceplots}\label{traceplots}
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{single_patient_traceplot.pdf}
 \end{figure}
 
-On the right in figure\ \ref{traceplots} we can see the steps taken by each
-chain in our four parameters (remember from chapter\ \ref{bayesinferencechallenges} that
-each chain takes steps in all parameter values simultaneously). These are
-just the steps used for the posterior estimation and don't include the tuning steps. Each
-chain is portrayed with a different color. What we want to see here is that the timeseries
-looks like noise with no obvious patterns\footnote{With this model it is hard to
+On the right in figure\ \ref{traceplots} we can see the timeline of the values of the
+four parameters in the steps taken by each of our
+chains (remember from chapter\ \ref{bayesinferencechallenges} that
+each chain always evaluates all parameters). These are just the steps used for the
+posterior estimation and don't include the
+tuning steps. Each chain is portrayed with a different color. What we want to see
+here is that the timelines looks like random noise around a single value with no obvious
+patterns. If our distributions would be multimodal we would expect to see noise around
+multiple values with maybe occasional noticeable jumps between these values. The one
+thing we don't want to see is drift. If we would
+see any patterns, like the chains moving values moving systematically up and down,
+it would mean that the chains had problems moving trough the posterior and ended up
+taking biased samples. These effects should be most pronounced at the beginning
+steps and if we would see these, we should increase the number of tuning
+steps\footnote{With this model it is hard to
 demonstrate this problem effectively in PyMC3 as not having enough tuning and and
-calculation steps just leads the model to fail outright without any results}. If we would see any patterns, like the chains
-moving values moving systematically up and down, it would mean that the
-chains had problems moving trough the posterior and ended up taking biased samples.
-These effects should be most pronounced at the beginning steps and if we would see
-these, we should increase the number of tuning steps.
+calculation steps just leads the model to fail outright without any results}.
 
-On the right side of the figure, we can see the distribution of the posterior values for each chain. Here we
+% TODO try to do long chain without tuning and only plot the start
+
+On the right side of the figure, we can see the distribution of the posterior values for
+each chain. Here we
 would want to see that distributions from different chains more or less align with
 each other. If this is not the case, it means that the chains got stuck in different
 parts of the posterior. This would also show on the left side plots with the different
@@ -2105,7 +2132,8 @@ other. If we see this problem the solution is once again to increase the tuning 
 
 Besides looking at plots, we can also estimate the success of the estimation from
 diagnostic metrics. PyMC3 has an inbuilt method for printing the common metrics
-(\pyv{pm.summary(trace)}). Below\ \ref{singlepatientdiagnosticmetrics} we can see the output from this methods:
+(\pyv{pm.summary(trace)}). Below\ \ref{singlepatientdiagnosticmetrics} we can see the output
+of this method for one of of the metrics (the full output is too big to display here):
 
 \bigskip
 \begin{figure}[H]
@@ -2116,7 +2144,7 @@ diagnostic metrics. PyMC3 has an inbuilt method for printing the common metrics
 \end{figure}
 \bigskip
 
-The most important metrics here to keep an eye out is \(\hat{R}\) (\pyv{r_hat}), that is short for potential scale
+The metric printed above is most important of the metrics \(\hat{R}\) (\pyv{r_hat}), that is short for potential scale
 reduction statistic. This metrics tells us if
 chains have converged to the equilibrium distribution. The metrics is calculated by
 taking the variance of the drawn values for each chain,
@@ -2125,21 +2153,23 @@ ratio of average of the per chain variance compared to the pooled variance. If t
 chains have converged to a common distribution the value of this metric will be one. If
 the value is higher than one, this indicates that the chains have not converged. Small
 divergences between the chains are not critical and \(\hat{R}\) values less than 1.1 should
-not give cause for concern\ \cite{rhatrule}. In our case \(\hat{R}\) values are 1.0 for
+not give cause for concern\ \cite{rhatrule}. In our case \(\hat{R}\) values are at or
+very close to 1.0 for
 all chains so everything seems to be in order.
 
 If we find problems in the traceplots and diagnostic metrics and increasing the tuning
 steps does not seem to help, we have to consider two things: the
-MCMC algorithm chosen by PyMC3 is not a good match for our model or our model might not
-be properly defined. The first thing is try to manually choose a different algorithm than
-PyMC3 automatically chose (this can be seen from the model computation printout) and seeing
+MCMC estimation algorithm chosen by PyMC3 is not a good match for our model or our model might not
+be properly defined. The first thing is try to manually choose a different algorithm
+manually (the algorithm chosen by PyMC3 can be seen from the model computation printout
+when running the model) and seeing
 if we get better results. If this does not seem to work, we have to go over our model and
 think if the model is in some way improperly defined. This could mean a simple mistake
 in model definition or something more complex like the distributions that we chose for
 our parameters not working well together or not fitting with the data.
 
 One thing that we should not here is that we only looked at diagnostic values for our
-parameters, but not the difference between the treatment means, that we are actually the
+parameters, but not the difference between the treatment means, that we are actually
 most interested in. The reason for this, is that the difference is entirely determined
 by the individual treatment parameters, so if the estimation of these is in order, so
 will be the estimate of their difference.
@@ -2150,7 +2180,7 @@ will be the estimate of their difference.
 \begin{pyverbatim}[][fontsize=\footnotesize]
 pm.plot_posterior(trace)
 \end{pyverbatim}
-\bigskip
+\smallskip
 
 If the estimation looks fine, we can move on to checking the actual results and look at
 the computed posterior distributions\ \ref{singlepatientposteriors}:
@@ -2163,15 +2193,19 @@ the computed posterior distributions\ \ref{singlepatientposteriors}:
 \end{figure}
 \bigskip
 
-The inbuilt PyMC3 method prints the posterior distribution for all of out parameters,
+The inbuilt PyMC3 method prints the posterior distribution for all of our parameters,
 with their posterior mean and highest posterior density interval (HPD) for approximately
-95 \% of the values. We can see that that the even though the posterior means between
+95 \% of the values. Here we see only 94 \% as the amount of steps does not make the
+estimate granular enough and PyMC3 does every want to go over 95 \% even if it would
+round to 95 \%. We can see that even though the posterior means between
 the two treatment options are clearly different, there is quite a lot of overlap for the
 HPD. Luckily we also defined the difference between these two parameters and can see
 this as a separate plot and this gives us the result we are interested in. We can see
 that the mean is positive and the HPD does not include zero, we can quite certain that
 treatment A is a worse option for this patient than treatment B, with the likely values of
 the difference falling between 0.71 and 0.94.
+
+% TODO why is the difference not just the overlap between the individual parameter values?
 
 \subsubsection*{Part 9: Checking Model Fit with Posterior Sampling}
 
@@ -2189,27 +2223,45 @@ draw_posterior_checks(
     plot_name="single_patient_posterior_sampling",
 )
 \end{pyverbatim}
-\bigskip
+\smallskip
 
 Even though we already checked that the estimation seems to be working correctly and saw
 that the posterior estimates clearly favor treatment option B for this patient, there is
-still one important thing that we should check before announcing our results. We should
-make sure that our model is actually a good fit for our data. We could have precise
-results, but if our model does a poor job at reflecting the
-reality, we should not be very excited about these.
+still one important thing that we should check before announcing our results: we should
+make sure that our model is actually a good fit for our data. Even if we have precise
+results, if our model does a poor job at reflecting the
+reality, we should not get too excited.
 
 Checking model fit for Bayesian models can be done with posterior sampling where we generate samples from
 the posterior distributions and for each of these samples we create a simulated dataset based
-on the chosen parameter values. Then we compare these simulated datasets to the actual
+on the chosen parameter values that replicates the experiment. Then we compare these
+simulated datasets to the actual
 data. What we want to see is that actual data looks like a typical case for a simulated
-dataset e.g.\ if our model where the exact way that the data was created, we would not be
-surprised to see the data that we got from the experiment.
+dataset.
+
+The logic behind this can be appreciated by thinking of a comparison between a case
+where the real data is created with mean and a strong trend, but our model only includes the
+mean. Even if our parameter estimates are very precise the data simulated based on our
+model can never match the shape of the real data. On the other hand if we include the trend in our
+model now the model replicates perfectly the data creation process and
+the only difference with the real data and simulated data is that the real data was
+created by the real parameter values, where as the simulated data was created with
+estimated values for these parameters. Now the values of the of the simulated data
+should spread around the real values with a purely random errors determined by the degree
+of uncertainty we have on the posterior values. In the real world creating a model that
+matches the data creation process exactly is rare outside laboratory experiments, but
+the principle still holds: a good model should be a good description of the reality and
+the data created based on its estimates should be hard to distinguish from the real
+data, with little or no systematic errors.
+
+% TODO what about if the our real data is weird and unrepresentative?
 
 PyMC3 has an inbuilt method for taking the posterior samples, and we can use each of
 these samples to recreate the time of measurements and see how well the simulated
 timelines match with the real timeline. This can be seen from figure\ \ref{singlepatientposteriortimeline}.
-All 500 samples are drawn as grey lines and the actual measurement with a red line.
-We can see that the results line up quite nicely.
+All 500 samples are drawn as grey lines with one sample highlighted with a blue line and the actual measurement with a red line.
+We can see that the results line up quite nicely and real data and the example sample
+show very similar behavior.
 
 \bigskip
 \begin{figure}[H]
@@ -2222,13 +2274,14 @@ We can see that the results line up quite nicely.
 For more precise comparison we have written a special function
 \pyv{draw_posteriors()}. We don't go over the code of this function,
 but what it does is to use the datasets created by the PyMC3 inbuilt method and
-calculates the mean of the measurements under each treatment and difference between
-these means from each posterior sample. It then plots these means as a distribution against the mean treatment
-measures and their difference calculated from the
-original data. For the difference between the means it also adds in the actual
+calculates the mean of measurements under each treatment and difference between
+these means from each posterior sample. It then plots the distribution of these means
+against these values measures calculated from the
+original data. For the difference between the means it also plots the actual
 difference of the true parameters. Normally we would not know
-this true value, but in this case we do as we generated the data ourselves. This
-makes it possible to see how accurate the model actually is. The graphs created by this
+this true value, but in this case we do as we generated the data ourselves and have
+access to this parameters. This
+makes it possible to see how accurate the model really is. The graphs created by this
 function can be seen in figure\ \ref{singlepatientposteriorsampling}.
 
 \bigskip
@@ -2239,11 +2292,15 @@ function can be seen in figure\ \ref{singlepatientposteriorsampling}.
 \end{figure}
 \bigskip
 
+% TODO legend should not overlay the graph
+
 We see that the distribution of mean treatment effectiveness calculated from the
 generated datasets matches nicely with the actual mean of the data. This means that our
 model seems to be good enough approximation of reality. Also when we look at the difference in the treatment effectiveness,
 we see that the posterior of difference between the treatments lines very nicely with the
-true parameter difference.
+true parameter difference, so our model also seem unbiased.
+
+% TODO how to address accuracy?
 
 \subsection{Final Results}
 
@@ -2258,6 +2315,7 @@ We have now completed the single patient analysis after going trough all the mod
     \item Making sure that our model is an accurate enough description of reality
 \end{enumerate}
 
+In a real world analysis we would also add step 0: cleaning and exploring the data.
 Based on our results we can say that for this patient treatment B is recommended over treatment A with
 treatment B with the most probable difference being 0.82 measurement points in favor of treatment B. We can also easily communicate
 the uncertainty in our estimation by with the HPD by saying that the true difference of
