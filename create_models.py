@@ -476,6 +476,23 @@ with pm.Model() as non_hierarchical_model:
 
     pm.plot_posterior(single_patient_trace)
 
+# %%
+
+# posterior sampling
+with non_hierarchical_model as model:
+    non_hierarchical_post_pred = pm.sample_posterior_predictive(
+        non_hierarchical_trace, samples=500
+    )
+    non_hierarchical_predictions = non_hierarchical_post_pred["y"]
+
+# %%
+
+draw_posterior_checks(
+    predictions=non_hierarchical_predictions,
+    measurements_df=measurements_df,
+    parameters_df=parameters_df,
+    plot_name="non_hierarchical_model_posterior_sampling",
+)
 
 # %%
 
@@ -644,5 +661,83 @@ plt.show()
 
 
 # %%
+
+# Model accuracy comparison
+
+fig, ax = plt.subplots(figsize=(8, 5))
+
+offset = 0.18
+
+for patient in range(patients_n):
+
+    ax.scatter(
+        x=non_hierarchical_trace["Treatment Difference (A-B)"][:, patient].mean(),
+        y=patient + 1 + offset,
+        c=patient_colors[patient],
+        marker="o",
+        s=50,
+    )
+
+    ax.scatter(
+        x=hierarchical_trace["Treatment Difference (A-B)"][:, patient].mean(),
+        y=patient + 1 - offset,
+        c=patient_colors[patient],
+        marker="X",
+        s=50,
+    )
+
+    ax.scatter(
+        x=parameters_df[parameters_df["patient_index"] == patient]["treatment1"]
+        - parameters_df[parameters_df["patient_index"] == patient]["treatment2"],
+        y=patient + 1,
+        c=patient_colors[patient],
+        marker="d",
+        s=50,
+    )
+
+
+legend_elements = [
+    Line2D(
+        [0],
+        [0],
+        marker="o",
+        color="w",
+        label="Single Patient Model",
+        markerfacecolor="darkgrey",
+        markersize=10,
+    ),
+    Line2D(
+        [0],
+        [0],
+        marker="X",
+        color="w",
+        label="Hierarchical Model",
+        markerfacecolor="darkgrey",
+        markersize=10,
+    ),
+    Line2D(
+        [0],
+        [0],
+        marker="d",
+        color="w",
+        label="True Parameter Value",
+        markerfacecolor="darkgrey",
+        markersize=10,
+    ),
+]
+
+plt.grid()
+plt.legend(handles=legend_elements)
+ax.set_yticklabels([])
+ax.set_xlabel("Treatment Effect Difference (A-B)")
+ax.set_ylabel("Patient")
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+
+plt.tight_layout()
+plt.savefig(
+    os.path.join(visualization_path, "model_accuracy_comparison.pdf"), bbox_inches="tight",
+)
+plt.show()
 
 # %%
