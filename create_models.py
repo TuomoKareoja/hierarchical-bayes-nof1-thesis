@@ -129,6 +129,8 @@ with single_patient_no_trend_model as model:
     )
     single_patient_predictions = single_patient_post_pred["y"]
 
+# %%
+
 draw_posterior_checks(
     predictions=single_patient_predictions,
     measurements_df=measurements_df[patient_index == 0],
@@ -234,7 +236,7 @@ with pm.Model() as hierarchical_with_trend_model:
     pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
 
     pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.01)
-    pop_trend_sd = pm.HalfCauchy("Population Trend SD", beta=1)
+    pop_trend_sd = pm.HalfCauchy("Population Trend SD", beta=0.1)
 
     # separate parameter for each patient
     pat_treatment_a = pm.Normal(
@@ -359,7 +361,8 @@ with hierarchical_with_trend_model as model:
     )
     hierarchical_predictions = hierarchical_post_pred["y"]
 
-# TODO why the picture is too small?
+# %%
+
 draw_posterior_checks(
     predictions=hierarchical_predictions,
     measurements_df=measurements_df,
@@ -639,5 +642,7 @@ plt.savefig(
 )
 plt.show()
 
+
+# %%
 
 # %%
