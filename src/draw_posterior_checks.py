@@ -1,3 +1,4 @@
+# %%
 import os
 
 import matplotlib.pyplot as plt
@@ -61,9 +62,7 @@ def draw_posterior_checks(
             x=0.09,
             y=0.9,
             s="Patient {}".format(patient + 1),
-            # horizontalalignement="center",
-            # verticalalignement="center",
-            transform=ax1.transAxes
+            transform=ax1.transAxes,
         )
         ax1.spines["top"].set_visible(False)
         ax1.spines["right"].set_visible(False)
@@ -114,6 +113,10 @@ def draw_posterior_checks(
         )
         ax3.spines["top"].set_visible(False)
         ax3.spines["right"].set_visible(False)
+        
+        # drawing the legends for the first patient at the top of the graph
+        if patient == 0:
+            ax3.legend(bbox_to_anchor=(-1.15, 1.15, 1.0, 1.15), loc=8, ncol=3)
 
     if len(parameters_df) == 1:
         ax1 = axes[0]
@@ -128,8 +131,10 @@ def draw_posterior_checks(
     ax1.set_title("Treatment 1")
     ax2.set_title("Treatment 2")
     ax3.set_title("Treatment 1 - Treatment 2")
-    ax3.legend()
     plt.savefig(
         os.path.join(visualization_path, plot_name + str(".pdf")), bbox_inches="tight",
     )
     plt.show()
+
+
+# %%
