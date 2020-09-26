@@ -96,7 +96,6 @@ with pm.Model() as single_patient_no_trend_model:
     pm.traceplot(
         single_patient_trace,
         ["Treatment A", "Treatment B", "Trend", "Gamma"],
-        divergences="top",
     )
     plt.savefig(
         os.path.join(visualization_path, "single_patient_traceplot.pdf"),
@@ -229,10 +228,10 @@ plt.show()
 with pm.Model() as hierarchical_with_trend_model:
 
     # population priors
-    pop_treatment_a_mean = pm.Normal("Population Treatment A Mean", mu=10, sigma=0.3)
+    pop_treatment_a_mean = pm.Normal("Population Treatment A Mean", mu=10, sigma=1)
     pop_treatment_a_sd = pm.HalfCauchy("Population Treatment A Sd", beta=1)
 
-    pop_treatment_b_mean = pm.Normal("Population Treatment B Mean", mu=10, sigma=0.3)
+    pop_treatment_b_mean = pm.Normal("Population Treatment B Mean", mu=10, sigma=1)
     pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
 
     pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.01)
@@ -255,7 +254,7 @@ with pm.Model() as hierarchical_with_trend_model:
         "Trend", mu=pop_trend_mean, sigma=pop_trend_sd, shape=patients_n,
     )
     # variance is not hierarchical
-    pat_gamma = pm.HalfCauchy("Gamma", beta=5, shape=patients_n,)
+    pat_gamma = pm.HalfCauchy("Gamma", beta=10, shape=patients_n,)
 
     measurement_means = (
         pat_treatment_a[patient_index] * measurements_df["treatment1_indicator"]
@@ -280,7 +279,7 @@ with pm.Model() as hierarchical_with_trend_model:
     )
 
     hierarchical_trace = pm.sample(
-        1000, tune=700, cores=3, random_seed=[seed, seed + 1, seed + 2]
+        3000, tune=2500, cores=3, target_accept=0.9, random_seed=[seed, seed + 1, seed + 2]
     )
 
     pm.traceplot(
@@ -438,8 +437,8 @@ plt.show()
 
 with pm.Model() as non_hierarchical_model:
 
-    treatment_a = pm.Normal("Treatment A", mu=10, sigma=1, shape=patients_n)
-    treatment_b = pm.Normal("Treatment B", mu=10, sigma=1, shape=patients_n)
+    treatment_a = pm.Normal("Treatment A", mu=10, sigma=2, shape=patients_n)
+    treatment_b = pm.Normal("Treatment B", mu=10, sigma=2, shape=patients_n)
     trend = pm.Normal("Trend", mu=0.1, sigma=0.3, shape=patients_n)
     # common variance parameter defining the error
     gamma = pm.HalfCauchy("Gamma", beta=1, shape=patients_n)
@@ -471,7 +470,6 @@ with pm.Model() as non_hierarchical_model:
     pm.traceplot(
         non_hierarchical_trace,
         ["Treatment A", "Treatment B", "Trend", "Gamma"],
-        divergences="top",
     )
 
     pm.plot_posterior(single_patient_trace)
@@ -666,7 +664,9 @@ plt.show()
 
 fig, ax = plt.subplots(figsize=(8, 5))
 
-offset = 0.18
+offset = 0
+marker_size = 75
+
 
 for patient in range(patients_n):
 
@@ -674,16 +674,18 @@ for patient in range(patients_n):
         x=non_hierarchical_trace["Treatment Difference (A-B)"][:, patient].mean(),
         y=patient + 1 + offset,
         c=patient_colors[patient],
+        edgecolors="w",
         marker="o",
-        s=50,
+        s=marker_size,
     )
 
     ax.scatter(
         x=hierarchical_trace["Treatment Difference (A-B)"][:, patient].mean(),
         y=patient + 1 - offset,
         c=patient_colors[patient],
+        edgecolors="w",
         marker="X",
-        s=50,
+        s=marker_size,
     )
 
     ax.scatter(
@@ -691,8 +693,9 @@ for patient in range(patients_n):
         - parameters_df[parameters_df["patient_index"] == patient]["treatment2"],
         y=patient + 1,
         c=patient_colors[patient],
+        edgecolors="w",
         marker="d",
-        s=50,
+        s=marker_size,
     )
 
 
@@ -726,17 +729,17 @@ legend_elements = [
     ),
 ]
 
-plt.grid()
+plt.grid(axis="x")
 plt.legend(handles=legend_elements)
-ax.set_yticklabels([])
 ax.set_xlabel("Treatment Effect Difference (A-B)")
 ax.set_ylabel("Patient")
 ax.spines["top"].set_visible(False)
 ax.spines["right"].set_visible(False)
 
-plt.tight_layout()
+# plt.tight_layout()
 plt.savefig(
-    os.path.join(visualization_path, "model_accuracy_comparison.pdf"), bbox_inches="tight",
+    os.path.join(visualization_path, "model_accuracy_comparison.pdf"),
+    bbox_inches="tight",
 )
 plt.show()
 
