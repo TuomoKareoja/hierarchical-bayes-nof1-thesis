@@ -58,7 +58,7 @@ fig, ((ax1, ax2, ax5), (ax3, ax4, ax6)) = plt.subplots(nrows=2, ncols=3, figsize
 # treatment1
 x = np.linspace(
     scipy.stats.norm.ppf(
-        0.00000001, loc=population_treatment1_mean, scale=population_treatment1_sd
+        0.00000000000000001, loc=population_treatment1_mean, scale=population_treatment1_sd
     ),
     scipy.stats.norm.ppf(
         0.999, loc=population_treatment1_mean, scale=population_treatment1_sd
@@ -69,7 +69,8 @@ y = scipy.stats.norm.pdf(
 )
 
 ax1.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
-ax1.set_xlim(8.8, 10.4)
+ax1.set_xlim(9.2, 10.3)
+ax1.set_ybound(lower=0)
 ax1.spines["top"].set_visible(False)
 ax1.spines["right"].set_visible(False)
 ax1.spines["left"].set_visible(False)
@@ -94,10 +95,10 @@ ax1.legend(
 # TREATMENT EFFECT
 x = np.linspace(
     scipy.stats.norm.ppf(
-        0.001, loc=population_treatment2_mean, scale=population_treatment2_sd
+        0.00000001, loc=population_treatment2_mean, scale=population_treatment2_sd
     ),
     scipy.stats.norm.ppf(
-        0.99, loc=population_treatment2_mean, scale=population_treatment2_sd,
+        0.999999999999999, loc=population_treatment2_mean, scale=population_treatment2_sd,
     ),
 )
 y = scipy.stats.norm.pdf(
@@ -105,7 +106,8 @@ y = scipy.stats.norm.pdf(
 )
 
 ax3.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
-ax3.set_xlim(8.8, 10.4)
+ax3.set_xlim(9.2, 10.3)
+ax3.set_ybound(lower=0)
 ax3.spines["top"].set_visible(False)
 ax3.spines["right"].set_visible(False)
 ax3.spines["left"].set_visible(False)
@@ -125,6 +127,7 @@ y = scipy.stats.halfcauchy.pdf(x, loc=0, scale=population_measurement_error_scal
 
 ax2.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
 ax2.set_xlim(0, 0.58)
+ax2.set_ybound(lower=0)
 ax2.spines["top"].set_visible(False)
 ax2.spines["right"].set_visible(False)
 ax2.spines["left"].set_visible(False)
@@ -138,10 +141,10 @@ for value, color in zip(parameters_df["measurement_error_sd"], patient_colors):
 # AUTOCORRELATION
 x = np.linspace(
     scipy.stats.beta.ppf(
-        0.0001, a=population_autocorrelation_alpha, b=population_autocorrelation_beta
+        0.001, a=population_autocorrelation_alpha, b=population_autocorrelation_beta
     ),
     scipy.stats.beta.ppf(
-        0.9999, a=population_autocorrelation_alpha, b=population_autocorrelation_beta,
+        0.999, a=population_autocorrelation_alpha, b=population_autocorrelation_beta,
     ),
 )
 y = scipy.stats.beta.pdf(
@@ -149,7 +152,8 @@ y = scipy.stats.beta.pdf(
 )
 
 ax4.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
-ax4.set_xlim(0.25, 0.42)
+# ax4.set_xlim(0.25, 0.42)
+ax4.set_ybound(lower=0)
 ax4.spines["top"].set_visible(False)
 ax4.spines["right"].set_visible(False)
 ax4.spines["left"].set_visible(False)
@@ -175,6 +179,9 @@ y = scipy.stats.norm.pdf(
 
 ax5.plot(x, y, color=population_color, alpha=population_alpha, lw=2)
 ax5.set_xlim(-0.005, 0.045)
+ax5.set_ybound(lower=0)
+
+ax4.spines["top"].set_visible(False)
 ax5.spines["top"].set_visible(False)
 ax5.spines["right"].set_visible(False)
 ax5.spines["left"].set_visible(False)
