@@ -60,9 +60,9 @@ patient_colors = ["red", "green", "cyan", "orange", "brown", "black"]
 
 with pm.Model() as single_patient_no_trend_model:
 
-    treatment_a = pm.Normal("Treatment A", mu=10, sigma=1)
-    treatment_b = pm.Normal("Treatment B", mu=10, sigma=1)
-    trend = pm.Normal("Trend", mu=0.1, sigma=0.3)
+    treatment_a = pm.Normal("Treatment A", mu=10, sigma=2)
+    treatment_b = pm.Normal("Treatment B", mu=10, sigma=2)
+    trend = pm.Normal("Trend", mu=0.2, sigma=0.5)
     # common variance parameter defining the error
     gamma = pm.HalfCauchy("Gamma", beta=10)
 
@@ -94,8 +94,7 @@ with pm.Model() as single_patient_no_trend_model:
     )
 
     pm.traceplot(
-        single_patient_trace,
-        ["Treatment A", "Treatment B", "Trend", "Gamma"],
+        single_patient_trace, ["Treatment A", "Treatment B", "Trend", "Gamma"],
     )
     plt.savefig(
         os.path.join(visualization_path, "single_patient_traceplot.pdf"),
@@ -109,7 +108,11 @@ with pm.Model() as single_patient_no_trend_model:
     with open(
         os.path.join(visualization_path, "single_patient_diag_metrics.tex"), "w",
     ) as file:
-        file.write(summary_metrics_df[["r_hat"]].to_latex())
+        file.write(
+            summary_metrics_df[["ess_bulk", "ess_mean", "ess_tail", "r_hat"]]
+            .drop("Treatment Difference (A-B)")
+            .to_latex()
+        )
 
     # posteriors should look reasonable
     pm.plot_posterior(single_patient_trace)
@@ -228,13 +231,13 @@ plt.show()
 with pm.Model() as hierarchical_with_trend_model:
 
     # population priors
-    pop_treatment_a_mean = pm.Normal("Population Treatment A Mean", mu=10, sigma=1)
+    pop_treatment_a_mean = pm.Normal("Population Treatment A Mean", mu=10, sigma=3)
     pop_treatment_a_sd = pm.HalfCauchy("Population Treatment A Sd", beta=1)
 
-    pop_treatment_b_mean = pm.Normal("Population Treatment B Mean", mu=10, sigma=1)
+    pop_treatment_b_mean = pm.Normal("Population Treatment B Mean", mu=10, sigma=3)
     pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
 
-    pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.01)
+    pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.05)
     pop_trend_sd = pm.HalfCauchy("Population Trend SD", beta=0.1)
 
     # separate parameter for each patient
@@ -279,7 +282,7 @@ with pm.Model() as hierarchical_with_trend_model:
     )
 
     hierarchical_trace = pm.sample(
-        3000, tune=2500, cores=3, target_accept=0.9, random_seed=[seed, seed + 1, seed + 2]
+        3000, tune=2500, cores=3, random_seed=[seed, seed + 1, seed + 2],
     )
 
     pm.traceplot(
@@ -316,11 +319,14 @@ with pm.Model() as hierarchical_with_trend_model:
         pm.summary(hierarchical_trace, kind="diagnostics")
     )
     print(summary_metrics_df)
-    # TODO only keep the most important metrics to have the table with the page
     with open(
         os.path.join(visualization_path, "hierarchical_model_diag_metrics.tex"), "w",
     ) as file:
-        file.write(summary_metrics_df[["r_hat"]].to_latex())
+        file.write(
+            summary_metrics_df[~summary_metrics_df.index.str.contains("Difference")][
+                ["ess_bulk", "ess_mean", "ess_tail", "r_hat"]
+            ].to_latex()
+        )
 
     pm.plot_posterior(
         hierarchical_trace,
@@ -374,7 +380,7 @@ draw_posterior_checks(
 # TIMELINE
 
 
-fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(10, 6))
+fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(10, 6), sharex=True, sharey=True)
 
 for patient, color, ax in zip(
     measurements_df["patient_index"].unique(), patient_colors, axs.ravel()
@@ -468,8 +474,7 @@ with pm.Model() as non_hierarchical_model:
     )
 
     pm.traceplot(
-        non_hierarchical_trace,
-        ["Treatment A", "Treatment B", "Trend", "Gamma"],
+        non_hierarchical_trace, ["Treatment A", "Treatment B", "Trend", "Gamma"],
     )
 
     pm.plot_posterior(single_patient_trace)
@@ -633,7 +638,7 @@ plt.show()
 
 # %%
 
-fig, ax = plt.subplots(figsize=(8, 5))
+fig, ax = plt.subplots(figsize=(6, 3))
 
 for patient in range(patients_n):
 
