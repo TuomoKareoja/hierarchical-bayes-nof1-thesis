@@ -259,7 +259,7 @@ normally distributed terms \(\gamma_b\) represents random block effects,
 \(\delta_{p(b)}\) random treatment period effects and \(\epsilon_{t(p(b))}\) random within
 period errors. We could also choose one of the blocks as a reference and set
 \(\gamma_1 = 0\) and assume that within each block the between period effects
-follow the same pattern, e.g.\ the difference between treatment period one and
+follow the same pattern, i.e.\ the difference between treatment period one and
 two is the same within each block. The random effects between blocks and treatment
 periods could represent for example the random variations in the motivation of the patient and possible
 changes in treating personnel within each block and treatment period. The random
@@ -1067,6 +1067,8 @@ solution to how we should create our priors, we have to make decisions case by c
 keeping in mind the existence of strong prior information, the needs of our model and
 what makes sense to us and our target audience.
 
+% TODO add an example about how to choose variance prior
+
 \section{Why Bayesian Inference Fits N-of-1 Studies}\label{whybayes}
 
 As was mentioned before, both frequentist and Bayesian inference can be used to
@@ -1222,7 +1224,7 @@ Bayesian
 models as trees. In the top of the tree we have prior values that define the shape of
 prior distribution next level down, from these distributions come the parameters that
 define the data creation process at the bottom of the tree. Lets take an example
-where we have \(p\) patients with \(n\) measurements and, to make things simple just
+where we have \(p\) patients with \(n\) measurements and, to make things simple, just
 one treatment option. We can model this by a simple two-parameter model:
 
 \begin{def}\label{}
@@ -1274,7 +1276,6 @@ normal distribution. The variance parameters is more difficult and there are mul
 reasonable distributions to choose, but half-Cauchy distribution is generally
 recommended for reasons we don't have space to go into here\ \cite{variancepriors}.
 
-% TODO where is the best place to introduce logic of choosing the prior distributions?
 
 Even though in this model each patient shares the same prior parameters, the estimates of the patient-level parameters
 are only affected by the data of the patient in question as the shared prior parameter values are set
@@ -1341,13 +1342,11 @@ estimates.
 
 \section{Benefits of Hierarchical Models}
 
-% TODO check that e.g. and i.e. are used appropriately
-
 The kinds of multilayered dependencies introduced by hierarchical models are useful in many ways.
 Firstly, the dependencies can meaningful for the application, i.e.\ we can
 model the treatment effect for a single patient as an instance from a
 broader population distribution of this effectiveness. The population-level is not just
-a mathematical curiosity, but it has a meaningful interpretation and the estimates we
+a mathematical curiosity here, but it has a meaningful interpretation and the estimates we
 get for the population-level parameters are interesting by themselves. Secondly, because
 of the dependencies across parameters, all the data can now jointly inform all the
 parameter estimates. As there is now more data used for the lower-level estimates trough
@@ -1429,8 +1428,6 @@ found anyway, so we will leave it at this. It is notable that we could add even
 more layers to the model and just apply the same rules we used here to write the formula
 out. Bayes formula makes no limitations on how complex and deep our hierarchical model
 can be.
-
-% TODO what else do I need to add to this chapter?
 
 \chapter{Example of a Hierarchical Bayesian Analysis Using Simulated Data}
 
@@ -1992,24 +1989,29 @@ complexity introduced by the varying treatments. Because of this, the likelihood
 be implemented as a simple normal distribution. We solve this problem by instead using a
 multivariate normal distribution with as many dimensions as the patient has
 measurements. We construct the vector of means for this distribution by multiplying the
-treatment distributions by the treatment indices (1 when
+treatment distributions by the treatment indicators (1 when
 treatment given, 0 when not) and add the trend multiplied by the index of the
 measurement (\(t\)). So instead of considering
 the observations as multiple samples from the same distribution, we think of them as a
 single multidimensional sample from
-a multivariate normal distribution. This is not the only possible way to solve the
+a multivariate normal distribution. The key here is that every measurement will give
+information about only of the treatment parameters as the indicator value sets the
+the value to zero for the treatment that was not administered during the
+measurement that the dimension is representing.
+
+This is not the only possible way to solve the
 problem, but is probably the most convenient. If we would have some
-dependencies between the measurements in our model (e.g. autocorrelation), this approach
+dependencies between the measurements in our model (e.g.\ due to autocorrelation), this approach
 would not work. In this case we would have to implement the likelihood function
-ourselves. One thing to note here is that even though we are using a multivariate normal
+ourselves.
+
+One technical detail to note here is that even though we are using a multivariate normal
 distribution, we still use the same PyMC3 function for normal distribution and just give
 it a vector of means that matches the amount of our observations. This strategy works
 with all the inbuilt PyMC3 distributions: you can either have them use a single
 parameter value or a vector of values matching the dimensions of the data and PyMC3 will automatically
 change from using a single dimensional distribution with multiple observations to
 multidimensional distribution with one observation vector.
-
-% TODO explain that how we use te prior means for multiple observations
 
 \subsubsection*{Part 5: Defining the Parameter Comparison}
 
@@ -2146,17 +2148,16 @@ of this method for two of the main metrics (the full output is too big to displa
 \end{table}
 \smallskip
 
-% TODO add effective sample size explanations
 % TODO check that explanation matches the one in the bayes problems chapter
 
-The two metrics displayed in the table are effective sample size metrics (\pyv{ess_*})
+The metrics displayed in the table are effective sample size metrics (\pyv{ess_*})
 and potential scale reduction statistic \(\hat{R}\) (\pyv{r_hat}). The effective sample
-size metrics describe how many independent draws from the posterior our are calculated steps
+size metrics describe how many independent draws from the posterior our calculated steps
 represent. The more autocorrelation there is between the draws, the less effective the
 sampling is. As the autocorrelation affects the estimation of different parameters
-differently the metric has multiple variants. \pyv{ess_bulk} tries to be a general
-diagnostic estimating the effectiveness of the sampling in general\
-\cite{essbulk}, while \pyv{ess_mean} is for the estimation of the mean and
+differently the metric has multiple variants. \pyv{ess_bulk} tries to be a
+diagnostic estimating the effectiveness of the sampling in general\cite{essbulk},
+while \pyv{ess_mean} is for the estimation of the mean and
 \pyv{ess_tail} is for estimating the 5 \% and 95 \% quantiles. We can see that with all
 of these variants our sample is quite large, but considerably smaller than the 2400
 steps we took. The \(\hat{R}\)-metric
@@ -2182,7 +2183,8 @@ also make the initial movements of the chain better, decreasing the time that th
 need to converge to the posterior distribution. We could also try to increase the
 parameter \pyv{target_accept} that defines the target acceptance rate for the steps
 that chain takes. Increasing this value from the default 0.8 to 0.9 or 0.95 makes the
-steps smaller, but lessens the change that chain gets stuck. If this does not help we
+steps smaller and increases autocorrelation, but lessens the change that chain gets
+stuck. If this does not help we
 can think about reparametrizing our model. We could change the distributions and prior
 values used, simplify our model by getting of possible unimportant variables and making
 some variables deterministic by estimating their value straight from the data (e.g.
@@ -2199,6 +2201,8 @@ parameters, but not the difference between the treatment means, that we are actu
 most interested in. The reason for this, is that the difference is entirely determined
 by the individual treatment parameters, so if the estimation of these is in order, so
 will be the estimate of their difference.
+
+% TODO is this true
 
 \subsubsection*{Part 8: Checking the Posterior}
 
@@ -2222,7 +2226,7 @@ the computed posterior distributions shown in figure\ \ref{singlepatientposterio
 The inbuilt PyMC3 method prints the posterior distribution for all of our parameters,
 with their posterior mean and highest posterior density interval (HPD) for approximately
 95 \% of the values. We can see that even though the posterior means between
-the two treatment options are clearly different, there is some a lot of overlap. When
+the two treatment options are clearly different, there is some overlap. When
 trying to estate the difference of the parameters we should not trust the posteriors of
 the individual parameters, as this does not take into account the possible correlations
 between these. For this reason we have defined the difference between these two
@@ -2233,8 +2237,6 @@ the difference falling between 0.33 and 0.79.
 
 % TODO comment about the other parameters
 % TODO why is treatment A and B HPD rounded?
-% TODO add the real parameter values for the parameters
-% TODO why is the difference not just the overlap between the individual parameter values?
 
 \subsubsection*{Part 9: Checking Model Fit with Posterior Sampling}
 
