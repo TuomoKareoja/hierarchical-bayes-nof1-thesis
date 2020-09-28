@@ -115,7 +115,7 @@ with pm.Model() as single_patient_no_trend_model:
         )
 
     # posteriors should look reasonable
-    pm.plot_posterior(single_patient_trace)
+    pm.plot_posterior(single_patient_trace, ref_val=0, credible_interval=0.95)
     plt.savefig(
         os.path.join(visualization_path, "single_patient_posteriors.pdf"),
         bbox_inches="tight",
@@ -336,6 +336,7 @@ with pm.Model() as hierarchical_with_trend_model:
             "Population Treatment Difference (A-B)",
             "Population Trend Mean",
         ],
+        credible_interval=0.95,
     )
     plt.savefig(
         os.path.join(
@@ -346,7 +347,7 @@ with pm.Model() as hierarchical_with_trend_model:
     plt.show()
 
     pm.plot_posterior(
-        hierarchical_trace, ["Treatment Difference (A-B)"],
+        hierarchical_trace, ["Treatment Difference (A-B)"], credible_interval=0.95
     )
     plt.savefig(
         os.path.join(
@@ -477,7 +478,7 @@ with pm.Model() as non_hierarchical_model:
         non_hierarchical_trace, ["Treatment A", "Treatment B", "Trend", "Gamma"],
     )
 
-    pm.plot_posterior(single_patient_trace)
+    pm.plot_posterior(single_patient_trace, credible_interval=0.95)
 
 # %%
 
