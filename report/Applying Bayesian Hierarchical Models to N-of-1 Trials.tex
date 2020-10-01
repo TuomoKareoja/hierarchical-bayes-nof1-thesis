@@ -827,21 +827,23 @@ to go beyond arithmetic methods and solve the problem algorithmically.
 
 \section{Challenges of Bayesian Inference}\label{bayesinferencechallenges}
 
-Although the Bayes formula is conceptually simple, but when actually utilizing
-it we run into two big difficulties. First is the common case when the
+Although the Bayes formula is conceptually simple, when utilizing
+it we run into two big difficulties. First is the fact that
 probability distributions of the prior and/or the likelihood or their product
-are not well-defined distributions with known properties. This can make the
+are often not well-defined distributions with known properties. This can make the
 integral in the marginal likelihood impossible to solve analytically like we did
 above. With discrete distributions we can circumvent the problem by just counting the
 likelihood times prior for every value combination and then obtaining the posterior
 probabilities by dividing each of these values with their combined sum. Unfortunately
-this becomes impractical very quickly when the number of parameters combinations grows
-and we are left with the same challenge that we should somehow be able to solve the
-marginal likelihood. The second problem is how we should define our priors.
+even here this becomes impractical quickly when the number of parameters combinations grows
+To be able to use the bayes formula outside a narrow field of application we need to be able to solve the
+problem of the marginal likelihood. The second problem is how we should define our priors.
 If we have prior knowledge, we need to be able to
 formulate our beliefs in a precise mathematic form and even when we don't have prior knowledge we still
 need to come up with a prior, but in this case it has to be defined so that it has
-minimal effects on the posterior distribution.
+minimal effects on the posterior distribution. When using informative priors we have to
+ask ourselves are these truly justified and with uninformative priors we have to deal
+with complex mathematic question as what prior is truly uninformative is often not straightforward.
 
 \subsection{Dealing with the Marginal Likelihood}\label{marginallikehoodproblems}
 
@@ -866,10 +868,10 @@ beliefs as we have to be able to express them in the form of the conjugate funct
 be able conduct Bayesian inference in cases where can't conform to these demands we need
 to turn from analytic to algorithmic solutions.
 
-The basis for all algorithmic solutions to the problem is the fact
+The basis for all algorithmic solutions to the problem is the fact that,
 as the marginal likelihood is calculated over all possible parameter values, it is
-not dependent on particular values of the parameter and is thus constant across
-them. Therefore we can already know that the posterior will follow a distribution
+not dependent on particular values of the parameter and is thus a constant value.
+Therefore we can already know that the posterior will follow a distribution
 with a shape that is defined by the likelihood times prior:
 
 \begin{def}\label{bayespropto}
@@ -879,9 +881,10 @@ with a shape that is defined by the likelihood times prior:
 \end{def}
 
 Now if we could take a representative sample of values of this distribution we could
-obtain and estimate of the posterior distribution by dividing the sampled values by
-their sum. We can think of this as estimating what is the probability of getting a 6 on
-suspicious die, by throwing it multiple times and counting which percentage of the
+obtain and estimate of the posterior distribution by dividing the times we obtain a
+certain value (or a value range) by the total number of samples. We can think of this
+as estimating what is the probability of getting a 6 on
+suspicious die by throwing it multiple times and counting which percentage of the
 throws we get a 6. Doing this kind sampling would be easy if the distribution would have reconcilable shape like
 normal distribution, but in this case we could already calculate an analytical
 solution. The real problem is, how can we get a representative sample from an arbitrary
@@ -907,6 +910,7 @@ Monte Carlo Markov Chain algorithms (MCMC) goes as follows:
                   p_{move\ to\ new\ location} = \min \bigg(\frac{P(D|\Theta = proposed\ set)P(\Theta = proposed\ set)}{P(D|\Theta = current\ set)P(\Theta = current\ set)}, 1 \bigg)
               \end{equation}
           \end{def}
+
           In other words, if the value calculated with the proposed parameter
           value set is higher than the value for the current set, we always move
           to the new proposed location and if the value
@@ -921,11 +925,10 @@ Monte Carlo Markov Chain algorithms (MCMC) goes as follows:
 
 \end{enumerate}
 
-After a sufficient number of repeats of this process we will end up with list of values.
-These values will be representative sample of the distribution defined by the prior time
-likelihood. When we divide the values by their sum we are left with estimate of the
-posterior probabilities of our chosen parameter combination. With enough samples these
-values give us a good estimate of the entire posterior distribution.
+After a repeat this process multiple times we will end up with list of values,
+that are a sample of the distribution defined by the prior time
+likelihood. With enough samples these values give us a good estimate of the entire
+posterior distribution.
 
 Why does this work? The crucial part in the algorithm is the step 3. Consider a case
 where we have just one parameter that can take two different values. Now the probability
@@ -976,13 +979,16 @@ position in the distribution where we will consider to move. In principal any ki
 random value picker works here and we will get a proper sample eventually. The problem is
 that with a bad algorithm this could take a long time. What we would want to have is a
 way to create proposed steps that are rejected as rarely as possible and that the
-correlation between the current value and the proposed value to be as small as possible.
-Both of these lower the autocorrelation between consecutive samples
-which leads to more efficient estimates by increasing the effective sample size which is
-the number of steps divided by the autocorrelation. Why this is important can be
-intuited by thinking of comparison between truly random sample from a distribution and
+jump of from one value to another is as big as possible. These are goals are in
+conflict, so the algorithm has to find a some optimal balance between them.
+Having less rejection and taking bigger steps both lead to lower the autocorrelation
+between consecutive samples which leads to more efficient estimates by increasing the
+effective sample size. There are different ways to calculate this metrics, but roughly
+these all measure the number of steps divided by the autocorrelation between the steps.
+Why this is important can be intuited by thinking of comparison between truly random sample from a distribution and
 sample where sampled values are only accepted if they are within a certain distance of the
-previous sampled value. It is clear that values created with the former method are much better for
+previous sampled value or we take the same value again. It is clear that values created
+with the former method are much better for
 estimating the parameters of the distribution as the value from the later method might
 end up bunched in only small part of the distribution if the amount of samples is not
 high enough.
@@ -993,7 +999,9 @@ current widely used solutions are technically much too complex to cover here. Th
 current ``industry standard'' is an an algorithm called no-u-turn-Sampler (NUTS)\ \cite{nuts}
 that could be heuristically described as choosing the values by rolling a frictionless
 ball on terrain defined by the inverse of our distribution while at the same time
-avoiding inefficient u-turns\ \cite{kruschke}. The technicalities how this works
+avoiding inefficient u-turns\ \cite{kruschke}. The algorithm can dynamically adjust the
+size of the steps it takes to maintain a step target acceptance rate and the estimate of
+the posterior gets better the steps are made bigger. The technical nitty-gritty detailing how this works
 in practice are not for the faint of heart.
 
 \begin{figure}[H]
@@ -1059,6 +1067,19 @@ must be between 50 and 300 cm). The other way is to start with strong informativ
 priors and then broaden these to take into account the uncertainty of
 how applicable our priors knowledge is to the question at hand.
 
+% TODO add this in
+
+% We view any noninformative or weakly-informative prior distribution as inherently
+% provisional—after the model has been fit, one should look at the posterior distribution
+% and see if it makes sense. If the posterior distribution doesnot make sense, this
+% implies
+% that additional prior knowledge is available that has not been included in the model,
+% and that contradicts the assumptions of the prior distribution that has been used.
+% It isthen appropriate to go back and alter the prior distributionto be more consistent
+% withthis external knowledge.
+
+\cite{variancepriors}
+
 Because of how complex defining priors can get, this problem can act as a limiter on
 how complex Bayesian models we can build. The more complex model, the more priors we
 have to define and the more prior information and beliefs we could codify and
@@ -1068,6 +1089,10 @@ keeping in mind the existence of strong prior information, the needs of our mode
 what makes sense to us and our target audience.
 
 % TODO add an example about how to choose variance prior
+
+% TODO how about using exponential distribution for hierarchical variance priors
+
+% TODO what are prior predictive checks
 
 \section{Why Bayesian Inference Fits N-of-1 Studies}\label{whybayes}
 
@@ -2236,7 +2261,6 @@ treatment A is a worse option for this patient than treatment B, with the likely
 the difference falling between 0.33 and 0.79.
 
 % TODO comment about the other parameters
-% TODO why is treatment A and B HPD rounded?
 
 \subsubsection*{Part 9: Checking Model Fit with Posterior Sampling}
 
@@ -2875,9 +2899,6 @@ their possible dependencies.
 \end{figure}
 \bigskip
 
-% TODO add more digits to treatment effects HPD
-% TODO use 95 % HPD
-
 Next we turn to the patient-level estimates in figure\
 \ref{hierarchicalmodelpatientposteriors}. Here we will focus just on the
 posterior estimates of the differences of the treatments as these estimates are our
@@ -2892,8 +2913,6 @@ all patients treatment B can be reliably recommended.
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{hierarchical_model_patient_level_posteriors.pdf}
 \end{figure}
 \bigskip
-
-% TODO use 95 % HPD
 
 \subsubsection*{Part 7: Checking Model Fit with Posterior Sampling}
 
