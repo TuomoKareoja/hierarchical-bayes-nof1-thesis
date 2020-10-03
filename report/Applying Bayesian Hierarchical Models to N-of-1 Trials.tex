@@ -1779,7 +1779,6 @@ important.}.
 
 \subsubsection*{Full Model Implementation in PyMC3}
 \bigskip
-
 \begin{pyverbatim}[][fontsize=\footnotesize]
 # load in needed packages
 import pymc3 as pm
@@ -1796,10 +1795,10 @@ patient_idx = measurements_df["patient"]
 with pm.Model() as single_patient_model:
 
     # defining our prior beliefs of the distributions of parameters
-    treatment_a = pm.Normal("Treatment A", mu=10, sigma=1)
-    treatment_b = pm.Normal("Treatment B", mu=10, sigma=1)
-    trend = pm.Normal("Trend", mu=0.1, sigma=0.3)
-    gamma = pm.HalfCauchy("Gamma", beta=10)
+    treatment_a = pm.Normal("Treatment A", mu=10, sigma=2)
+    treatment_b = pm.Normal("Treatment B", mu=10, sigma=2)
+    trend = pm.Normal("Trend", mu=0.1, sigma=0.5)
+    gamma = pm.HalfCauchy("Gamma", beta=1)
 
     # creating a vector defining the expected means of the observations
     # which are defined by one of the treatment means + trend
@@ -1825,17 +1824,17 @@ with pm.Model() as single_patient_model:
     )
 
     # running the algorithmic estimation process
-    trace = pm.sample(800, tune=500, cores=3)
+    trace = pm.sample(draws=800, tune=500, cores=3)
 
     # Checking diagnostic describing how the algorithm performed
     pm.traceplot(
-        trace, ["Treatment A", "Treatment B", "Trend", "Gamma"], divergences="top"
+        trace, var_names=["Treatment A", "Treatment B", "Trend", "Gamma"]
     )
     plt.show()
-    pm.summary(trace)
+    pm.summary(trace, kind="diagnostics")
 
     # checking the posterior distributions
-    pm.plot_posterior(trace)
+    pm.plot_posterior(trace, credible_interval=0.95)
     plt.show()
 
  
@@ -1869,7 +1868,8 @@ patient_idx = measurements_df["patient"]
 \smallskip
 
 The first thing we of course have to do is to load the required packages and get our data. There is
-not much to comment about loading the packages, but lets see how our data looks like:
+not much to comment about loading the packages, but lets see how our data in
+\pyv{measurements_df} looks like:
 
 \bigskip
 \begin{table}[H]
@@ -1896,11 +1896,12 @@ and sixth which treatment was applied during the particular measurement (0-1). L
 column contains the values of the measurements. This format was chosen just for
 convenience as PyMC3 does not require any particular format from the
 data as you can feed the right values into
-the right places in the model definition. Also using the Pandas package to handle the
+the right places in the model definition. Also using the pandas package to handle the
 data as a dataframe is not necessary, but is very convenient.
 
-The \pyv{parameters_df} dataframe shown in table\ \ref{parameters} contains the true parameter values of the patients. These
-can be used check how accurate our predictions actually are. With real world data we would
+The \pyv{parameters_df} dataframe shown in table\ \ref{parameters} contains the true
+parameter values of the patients. These can be used check how accurate our predictions
+actually are. With real world data we would
 not have access to these values, but as we created the data ourself, we do and we should
 take advantage of that. Each row in this dataset is a patient and contains the
 true parameter values for each of the parameters we used to create the simulated data.
@@ -1945,10 +1946,10 @@ with this model without the need to manually define this.
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
-    treatment_a = pm.Normal("Treatment A", mu=10, sigma=1)
-    treatment_b = pm.Normal("Treatment B", mu=10, sigma=1)
-    trend = pm.Normal("Trend", mu=0.1, sigma=0.3)
-    gamma = pm.HalfCauchy("Gamma", beta=10)
+    treatment_a = pm.Normal("Treatment A", mu=10, sigma=2)
+    treatment_b = pm.Normal("Treatment B", mu=10, sigma=2)
+    trend = pm.Normal("Trend", mu=0.1, sigma=0.5)
+    gamma = pm.HalfCauchy("Gamma", beta=1)
 \end{pyverbatim}
 \smallskip
 
@@ -2003,9 +2004,7 @@ single multidimensional sample from
 a multivariate normal distribution. The key here is that every measurement will give
 information about only of the treatment parameters as the indicator value sets the
 the value to zero for the treatment that was not administered during the
-measurement that the dimension is representing.
-
-This is not the only possible way to solve the
+measurement that the dimension is representing. This is not the only possible way to solve the
 problem, but is probably the most convenient. If we would have some
 dependencies between the measurements in our model (e.g.\ due to autocorrelation), this approach
 would not work. In this case we would have to implement the likelihood function
@@ -2033,10 +2032,10 @@ As the estimate we are most interested is not actually any individual parameter,
 difference between the two treatment parameters, we have to add this comparison separately.
 We can do this before or after running our model, but here we have decided to do it
 beforehand. As the difference is fully determined by the values of the treatment
-parameters and not random, when conditioning on these values, we have to use PyMC3
-pm.deterministic function that calculates the posterior
+parameters and not random, when conditioning on these values, we have to use PyMC3s
+\pyv{pm.deterministic} function and calculate the posterior
 by simple subtracting the value of treatment 2 parameter value from treatment 1
-parameter value at each step in the chain.
+parameter value.
 
 \subsubsection*{Part 6: Running the Model}
 
@@ -2047,12 +2046,12 @@ parameter value at each step in the chain.
 \smallskip
 
 Now that we have defined our prior beliefs and our likelihood, we can move on to running the
-model. PyMC3 will now estimate the posterior with an automatically chosen Markov Chain
-Monte Carlo (MCMC) method (see chapter\ \ref{bayesinferencechallenges})
+model. PyMC3 will now estimate the posterior with the NUTS sampler,
 that samples the distribution defined by likelihood times priors and estimates the
-posterior based on these samples. Instead of relying on PyMC3s automatic selection, we could also manually choose what
-algorithm to use, but unless we see problems when we evaluate the estimation efficiency,
-we should stick with the default option. The three parameters that we have to manually define are as follow:
+posterior based on these samples. If we want to manually tune the sampling parameters or
+use a completely different sampling method, PyMC3 offers a wide range of options, but
+unless we see problems when we evaluate the estimation efficiency,
+we should stick with the default options. The three parameters that we have to manually define are as follow:
 
 \begin{itemize}
     \item[] draw = how many steps the chain should calculate
@@ -2063,15 +2062,15 @@ we should stick with the default option. The three parameters that we have to ma
 
 The total steps taken by each chain is draw+tune. The reason for the tuning steps is
 that the starting position of the chain is probably biased. We would want the starting
-position to be a sample from the posterior so that its probability of it being in a certain
-point would be defined by the posterior. We can do this by letting the chain first take
+position to be a random sample from the posterior so that it could be considered a true
+sample. We can do this by letting the chain first take
 a number of steps and as its moves trough the posterior its location distribution will start to
 reflect the actual posterior. If we would not have the tuning steps it would be possible
 that the chain starts in a weird position and the first steps it takes don't reflect the
 posterior as it might have to make lots of moves in a certain direction to get to the
 representative parts of the distribution. In principal we could use the tuning steps
-also for the calculation as long as we have enough steps in total end product would
-still converge to the same distribution, but it is more efficient to just drop these
+also for the calculation as long as we have enough steps as the product would
+still eventually converge to the same distribution, but it is more efficient to just drop these
 values so that we don't have add more steps to compensate the possible bias introduced by
 them. The more draws and tuning steps we take the better the estimation will be, but the
 more time the calculation will take. Finding the
@@ -2080,8 +2079,6 @@ hard to know how many steps you need before you try to run the model. Luckily Py
 automatically alert us if it thinks that we need more tuning steps or draws and we can
 also diagnose this from the metrics and plots that we will look at after we have run the
 model.
-
-% TODO have we used the word chain previously?
 
 As modern CPUs have usually multiple cores, we can speed up the calculation by running
 multiple chains in parallel. Each chain is independent of each other and will
@@ -2097,7 +2094,7 @@ CPU so we will leave 1 core free for other tasks), these chains will make in tot
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
     pm.traceplot(
-            trace, ["Treatment A", "Treatment B", "Trend", "Gamma"]
+            trace, var_names=["Treatment A", "Treatment B", "Trend", "Gamma"]
         )
     plt.show()
     pm.summary(trace)
@@ -2127,15 +2124,13 @@ distribution. If we would see something like this,
 it would mean that the chains had problems moving trough the posterior and ended up
 taking biased samples. These effects should be most pronounced at the beginning
 steps and if we would see these, we should increase the number of tuning
-steps\footnote{With this model it is hard to
-demonstrate this problem effectively as not having enough tuning and
-calculation steps just leads the PyMC3 to fail outright without any results}.
+steps.
 
-On the right side of the figure, we can see the distribution of the posterior values for
-each chain. Here we
-would want to see that distributions from different chains more or less align with
+On the left side of the figure, we can see the distribution of the sampled values for
+each chain. Here we would want to see that distributions from different chains more or
+less align with
 each other. If this is not the case, it means that the chains got stuck in different
-parts of the posterior or our tuning steps where not enough to diminish the effect of
+parts of the posterior or our tuning steps were not enough to diminish the effect of
 different staring points. This issue would also show on the left side plots with the different
 chains staying in different parts of the posterior or being distinguishable from each
 other. If we see this problem the solution is once again to increase the tuning steps.
@@ -2154,8 +2149,6 @@ of this method for two of the main metrics (the full output is too big to displa
 \end{table}
 \smallskip
 
-% TODO check that explanation matches the one in the bayes problems chapter
-
 The metrics displayed in the table are effective sample size metrics (\pyv{ess_*})
 and potential scale reduction statistic \(\hat{R}\) (\pyv{r_hat}). The effective sample
 size metrics describe how many independent draws from the posterior our calculated steps
@@ -2163,8 +2156,8 @@ represent. The more autocorrelation there is between the draws, the less effecti
 sampling is. As the autocorrelation affects the estimation of different parameters
 differently the metric has multiple variants. \pyv{ess_bulk} tries to be a
 diagnostic estimating the effectiveness of the sampling in general\cite{essbulk},
-while \pyv{ess_mean} is for the estimation of the mean and
-\pyv{ess_tail} is for estimating the 5 \% and 95 \% quantiles. We can see that with all
+while \pyv{ess_mean} is for estimation the mean and
+\pyv{ess_tail} for estimating the 5 \% and 95 \% quantiles. We can see that with all
 of these variants our sample is quite large, but considerably smaller than the 2400
 steps we took. The \(\hat{R}\)-metric
 tells us if the chains have converged to a equilibrium distribution. The metric is calculated by
@@ -2195,26 +2188,22 @@ can think about reparametrizing our model. We could change the distributions and
 values used, simplify our model by getting of possible unimportant variables and making
 some variables deterministic by estimating their value straight from the data (e.g.
 variance). There is also the third option: we could change the MCMC algorithm used. This
-rarely the right choice as the NUTS sampler is superior to the older Metropolis-Hastings
-and Gibbs sampler in almost any situation\footnote{PyMC3 also support variational
-inference which is even more effective than NUTS, but it is meant for calculating approximate
-solutions for really complex models.}.
+rarely the right choice as the NUTS sampler is superior to the older samplers in almost
+every situation\footnote{PyMC3 also support variational
+inference which is even more effective than NUTS, but it is only for calculating approximate
+solutions.}.
 
-% TODO have we mentioned these samplers before?
-
-One thing that we should not here is that we only looked at diagnostic values for our
-parameters, but not the difference between the treatment means, that we are actually
+One thing that we should note here is that we only looked at diagnostic values for our
+parameters, but not the difference between the treatment means which we are actually
 most interested in. The reason for this, is that the difference is entirely determined
 by the individual treatment parameters, so if the estimation of these is in order, so
 will be the estimate of their difference.
-
-% TODO is this true
 
 \subsubsection*{Part 8: Checking the Posterior}
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
-    pm.plot_posterior(trace)
+    pm.plot_posterior(trace, credible_interval=0.95)
 \end{pyverbatim}
 \smallskip
 
@@ -2231,17 +2220,16 @@ the computed posterior distributions shown in figure\ \ref{singlepatientposterio
 
 The inbuilt PyMC3 method prints the posterior distribution for all of our parameters,
 with their posterior mean and highest posterior density interval (HPD) for approximately
-95 \% of the values. We can see that even though the posterior means between
+95 \% of the values\footnote{The default HPD in PyMC3 plots is 94 \% just to underline that the common
+95 \% standard is arbitrary.}. We can see that even though the posterior means between
 the two treatment options are clearly different, there is some overlap. When
-trying to estate the difference of the parameters we should not trust the posteriors of
+trying to estimate the difference of the parameters we should not trust the posteriors of
 the individual parameters, as this does not take into account the possible correlations
 between these. For this reason we have defined the difference between these two
 parameters and can use this to give us the result we are interested in. We can see
-that as the mean is positive and the HPD does not include zero, we can be quite certain that
+that as the mean is positive and the HPD does not include zero, so we can be quite certain that
 treatment A is a worse option for this patient than treatment B, with the likely values of
-the difference falling between 0.33 and 0.79.
-
-% TODO comment about the other parameters
+the difference falling between 0.3 and 0.8.
 
 \subsubsection*{Part 9: Checking Model Fit with Posterior Sampling}
 
@@ -2267,7 +2255,7 @@ make sure that our model is actually a good fit for our data. Even if we have pr
 results, if our model does a poor job at reflecting the reality, we should not get too excited.
 
 Checking model fit for Bayesian models can be done with posterior sampling. We start by generating samples from
-the posterior distributions (in our case 500 samples) and for each of these samples create a simulated dataset based
+the posterior distributions (in our case 500 samples) and for each of these samples we create a simulated dataset based
 on the chosen parameter values that replicates the experiment. Then we compare these
 simulated datasets to the actual data. What we want to see is that actual data looks
 like a typical case for a simulated dataset.
@@ -2289,11 +2277,13 @@ data, with little or no systematic errors\footnote{Of course this might not be t
 real data is a true outlier.}.
 
 PyMC3 has an inbuilt method for taking the posterior samples and we can use each of
-these samples to recreate the time of measurements and see how well the simulated
-timelines match with the real timeline. This can be seen from figure\ \ref{singlepatientposteriortimeline}.
+these samples. The function needs the original model so we use it in the context manager
+to give it access to this. With the simulated samples we can recreate a timeline of
+measurements and see how well the simulated timelines match with the real data.
+This can be seen from figure\ \ref{singlepatientposteriortimeline}.
 All 500 samples are drawn as grey lines with one sample highlighted with a blue line and
 the actual measurement with a red line. We can see that the results line up quite
-nicely with sampled values spread around values of the real data.
+nicely with sampled values spread around the values of the real measurements.
 
 \bigskip
 \begin{figure}[H]
@@ -2348,7 +2338,7 @@ Based on our results, we can say that for patient 1 treatment B is recommended o
 with the most probable difference in treatment effect effectiveness being 0.55
 measurement points in favor of treatment B. We can also easily communicate
 the uncertainty in our estimation by with the HPD by saying that the true difference of
-the treatments is with 95 \% probability between 0.33 and 0.79. As we have the full
+the treatments is with 95 \% probability between 0.3 and 0.8. As we have the full
 posterior difference distribution we can also visually show these results with a graph,
 which is the clinical setting probably the most advisable solution. The important thing
 to underline here is that we are talking about actual probabilities and not likelihoods,

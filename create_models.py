@@ -115,9 +115,7 @@ with pm.Model() as single_patient_no_trend_model:
         )
 
     # posteriors should look reasonable
-    pm.plot_posterior(
-        single_patient_trace, credible_interval=0.95, round_to=3
-    )
+    pm.plot_posterior(single_patient_trace, credible_interval=0.95, round_to=3)
     plt.savefig(
         os.path.join(visualization_path, "single_patient_posteriors.pdf"),
         bbox_inches="tight",
