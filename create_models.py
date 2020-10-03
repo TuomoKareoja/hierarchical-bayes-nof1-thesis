@@ -64,7 +64,7 @@ with pm.Model() as single_patient_no_trend_model:
     treatment_b = pm.Normal("Treatment B", mu=10, sigma=2)
     trend = pm.Normal("Trend", mu=0.2, sigma=0.5)
     # common variance parameter defining the error
-    gamma = pm.HalfCauchy("Gamma", beta=10)
+    gamma = pm.HalfCauchy("Gamma", beta=1)
 
     # measurements are created from both priors, with a indicator setting the
     # values to 0 if the treatment is not applied at the particular observation
