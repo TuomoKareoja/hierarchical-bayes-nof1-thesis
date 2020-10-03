@@ -231,33 +231,38 @@ plt.show()
 with pm.Model() as hierarchical_with_trend_model:
 
     # population priors
-    pop_treatment_a_mean = pm.Normal("Population Treatment A Mean", mu=10, sigma=3)
-    pop_treatment_a_sd = pm.HalfCauchy("Population Treatment A Sd", beta=1)
+    pop_treatment_a_mean = pm.Normal("Population Treatment A Mean", mu=10, sigma=1)
+    pop_treatment_a_sd = pm.HalfCauchy("Population Treatment A Sd", beta=2)
 
-    pop_treatment_b_mean = pm.Normal("Population Treatment B Mean", mu=10, sigma=3)
-    pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
+    pop_treatment_b_mean = pm.Normal("Population Treatment B Mean", mu=10, sigma=1)
+    pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=2)
 
-    pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.05)
-    pop_trend_sd = pm.HalfCauchy("Population Trend SD", beta=0.1)
+    pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.2, sigma=0.2)
+    pop_trend_sd = pm.HalfCauchy("Population Trend SD", beta=0.5)
+
+    pat_treatment_a_offset = pm.Normal(
+        "Treatment A Offset", mu=0, sigma=1, shape=patients_n
+    )
+    pat_treatment_b_offset = pm.Normal(
+        "Treatment B Offset", mu=0, sigma=1, shape=patients_n
+    )
+    pat_trend_offset = pm.Normal("Trend Offset", mu=0, sigma=1, shape=patients_n)
 
     # separate parameter for each patient
-    pat_treatment_a = pm.Normal(
+    pat_treatment_a = pm.Deterministic(
         "Treatment A",
-        mu=pop_treatment_a_mean,
-        sigma=pop_treatment_a_sd,
-        shape=patients_n,
+        pop_treatment_a_mean + pat_treatment_a_offset * pop_treatment_a_sd,
     )
-    pat_treatment_b = pm.Normal(
+    pat_treatment_b = pm.Deterministic(
         "Treatment B",
-        mu=pop_treatment_b_mean,
-        sigma=pop_treatment_b_sd,
-        shape=patients_n,
+        pop_treatment_b_mean + pat_treatment_b_offset * pop_treatment_b_sd,
     )
-    pat_trend = pm.Normal(
-        "Trend", mu=pop_trend_mean, sigma=pop_trend_sd, shape=patients_n,
+    pat_trend = pm.Deterministic(
+        "Trend", pop_trend_mean + pat_trend_offset * pop_trend_sd
     )
+
     # variance is not hierarchical
-    pat_gamma = pm.HalfCauchy("Gamma", beta=10, shape=patients_n,)
+    pat_gamma = pm.HalfCauchy("Gamma", beta=1, shape=patients_n,)
 
     measurement_means = (
         pat_treatment_a[patient_index] * measurements_df["treatment1_indicator"]
@@ -447,7 +452,7 @@ with pm.Model() as non_hierarchical_model:
 
     treatment_a = pm.Normal("Treatment A", mu=10, sigma=2, shape=patients_n)
     treatment_b = pm.Normal("Treatment B", mu=10, sigma=2, shape=patients_n)
-    trend = pm.Normal("Trend", mu=0.1, sigma=0.3, shape=patients_n)
+    trend = pm.Normal("Trend", mu=0.2, sigma=0.5, shape=patients_n)
     # common variance parameter defining the error
     gamma = pm.HalfCauchy("Gamma", beta=1, shape=patients_n)
 

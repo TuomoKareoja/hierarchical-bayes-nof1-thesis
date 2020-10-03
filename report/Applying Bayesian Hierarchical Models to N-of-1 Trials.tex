@@ -2346,10 +2346,12 @@ circumventing complicate definitions and having intuitively understandable resul
 
 \section{Analyzing Multiple Trials With Hierarchical Models}\label{pooling}
 
-Lets next add in all the other patients and connect the trials with a hierarchical
-model to pool the data from multiple patients. When analyzing the results of this model
-we will pay special attention on how the posterior parameters estimates were compared to the single patient
-model where data was not pooled.
+Repeating the single patient model for all patients is completely viable strategy for
+getting estimates for all patients, but we can do better by making the model
+hierarchical and utilizing intelligent pooling of patient data. To do this we need to
+modify our model to include population-level distribution and define the priors for this
+level. The new parameters add complexity to the model and we need to make some changes
+in how we implement the model to ensure efficient sampling.
 
 \subsection{Defining the Model}\label{hiermodel}
 
@@ -2369,9 +2371,8 @@ condition. \(\epsilon_{tj} \sim N(0,\tau_j^2) \) is the error term at \(t\) and
 \(\rho_j\) is the correlation between consecutive errors.
 
 To make this model hierarchical we now add the population-level distributions which
-the patient-level parameters are drawn from and the prior distributions for the
-parameters our prior beliefs about the population-level distributions. We add hierarchy for all the
-parameters except the patient-level measurement error, as
+the patient-level parameters are drawn from and the priors for this parameter layer.
+We add hierarchy for all the parameters except the patient-level measurement error, as
 we are not really interested in the population-level of this parameter and adding it
 would make the model unnecessarily complex.
 
@@ -2433,12 +2434,24 @@ would make the model unnecessarily complex.
     $};
 \end{tikzpicture}
 
-% This needs be cleared up and you need to understand do we have to use a scale
-% parameter
+% This needs be cleared up and you need to understand do we have to use a scale parameter
 
 As the priors are defined on the population-level we have to think a bit differently when defining the
 parameters of these distributions as we are now talking about
-a different level of analysis. Once again we should turn to fictional previous studies.
+a different level of analysis.
+
+means are means
+
+std of means are standard errors multiplied by 2
+
+mention t-distribution and use it?
+
+scale is the standard deviation of the patients * 2
+
+Offset article \cite{offset}
+
+
+Once again we should turn to fictional previous studies.
 For the population-level mean of the treatment effects and the trend we should look at the
 group-level means of the these values calculated in different studies. We can use the
 mean of these values as the prior for population mean and their standard deviation for
@@ -2446,8 +2459,6 @@ the standard deviation. Like was the case in single patient model we should broa
 standard deviation a bit as we are not that sure how applicable the existing studies are in our case.
 
 For the scale parameters of the population-level standard deviations.
-
-% TODO How to define the variance from existing data?
 
 For the mean of the population-level trend we stick with a mean of 0.2 and a standard
 deviation of 0.1. This means that we think it is very certain that generally patients
@@ -2460,21 +2471,17 @@ model are summarized in table\ \ref{hierarchicalmodelpriorvalues}.
     \caption{Hierarchical Model Prior Values}\label{hierarchicalmodelpriorvalues}
     \begin{align}\label{}
         \text{population treatment A mean mean prior: } & \mu_{\mu_{\theta}} = 10 \nonumber \\
-        \text{population treatment A mean standard deviance prior: } & \sigma_{\mu_{\theta}} = 0.3 \nonumber \\
-        \text{population treatment A standard deviance prior: } & \gamma_{\sigma_{\theta}} = 1 \nonumber \\
+        \text{population treatment A mean standard deviance prior: } & \sigma_{\mu_{\theta}} = 1 \nonumber \\
+        \text{population treatment A standard deviance prior: } & \gamma_{\sigma_{\theta}} = 2 \nonumber \\
         \text{population treatment B mean mean prior: } & \mu_{\mu_{\eta}} = 10 \nonumber \\
-        \text{population treatment B mean standard deviance prior: } & \sigma_{\mu_{\eta}} = 0.3 \nonumber \\
-        \text{population treatment B standard deviance prior: } & \gamma_{\sigma_{\eta}} = 1 \nonumber \\
+        \text{population treatment B mean standard deviance prior: } & \sigma_{\mu_{\eta}} = 1 \nonumber \\
+        \text{population treatment B standard deviance prior: } & \gamma_{\sigma_{\eta}} = 2 \nonumber \\
         \text{population trend mean mean prior: } & \mu_{\mu_{\beta}} = 0.2 \nonumber \\
-        \text{population trend mean standard deviance prior: } & \sigma_{\mu_{\beta}} = 0.1 \nonumber \\
-        \text{population trend standard deviance prior: } & \gamma_{\sigma_{\beta}} = 0.1 \nonumber \\
+        \text{population trend mean standard deviance prior: } & \sigma_{\mu_{\beta}} = 0.2 \nonumber \\
+        \text{population trend standard deviance prior: } & \gamma_{\sigma_{\beta}} = 0.5 \nonumber \\
         \text{measurement error scale prior: } & \gamma_{\tau} = 1 \nonumber
     \end{align}
 \end{table}
-
-% TODO make sure we use reasonable priors
-
-% TODO should we have all examples with uninformative priors
 
 \subsection{Implementing the Model in PyMC3}
 
@@ -2484,56 +2491,57 @@ more on the differences with the single patient model.
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
-
-with pm.Model() as hierarchical_model:
+with pm.Model() as hierarchical_with_trend_model:
 
     # population priors
-    pop_treatment_a_mean = pm.Normal(
-        "Population Treatment A Mean", mu=10, sigma=2
-    )
-    pop_treatment_a_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
-    pop_treatment_b_mean = pm.Normal(
-        "Population Treatment B Mean", mu=10, sigma=2
-    )
-    pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
-    pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.01)
-    pop_trend_sd = pm.HalfCauchy("Population Trend Sd", beta=0.1)
+    pop_treatment_a_mean = pm.Normal("Population Treatment A Mean", mu=10, sigma=1)
+    pop_treatment_a_sd = pm.HalfCauchy("Population Treatment A Sd", beta=2)
+    pop_treatment_b_mean = pm.Normal("Population Treatment B Mean", mu=10, sigma=1)
+    pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=2)
+    pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.2, sigma=0.2)
+    pop_trend_sd = pm.HalfCauchy("Population Trend SD", beta=0.5)
 
-    # separate parameter for each patient
-    pat_treatment_a = pm.Normal(
+    # modeling patient difference from population with offset parameters
+    pat_treatment_a_offset = pm.Normal(
+        "Treatment A Offset", mu=0, sigma=1, shape=patients_n
+    )
+    pat_treatment_b_offset = pm.Normal(
+        "Treatment B Offset", mu=0, sigma=1, shape=patients_n
+    )
+    pat_trend_offset = pm.Normal("Trend Offset", mu=0, sigma=1, shape=patients_n)
+
+    # separate deterministic parameter for each patient
+    pat_treatment_a = pm.Deterministic(
         "Treatment A",
-        mu=pop_treatment_a_mean,
-        sigma=pop_treatment_a_sd,
-        shape=6,
+        pop_treatment_a_mean + pat_treatment_a_offset * pop_treatment_a_sd,
     )
-    pat_treatment_b = pm.Normal(
+    pat_treatment_b = pm.Deterministic(
         "Treatment B",
-        mu=pop_treatment_b_mean,
-        sigma=pop_treatment_b_sd,
-        shape=6,
+        pop_treatment_b_mean + pat_treatment_b_offset * pop_treatment_b_sd,
     )
-    pat_trend = pm.Normal(
-        "trend",
-        mu=pop_trend_mean,
-        sigma=pop_trend_sd,
-        shape=6,
-    )
-    # not hierarchical
-    pat_gamma = pm.HalfCauchy(
-        "Gamma", beta=1, shape=6,
+    pat_trend = pm.Deterministic(
+        "Trend", pop_trend_mean + pat_trend_offset * pop_trend_sd
     )
 
+    # variance is not hierarchical
+    pat_gamma = pm.HalfCauchy("Gamma", beta=1, shape=patients_n,)
+
+    # creating a vector defining the expected means of the observations
+    # which are defined by one of the treatment means + trend
     measurement_means = (
-        pat_treatment_a[patient_idx] * measurements_df["treatment_a"]
-        + pat_treatment_b[patient_idx] * measurements_df["treatment_a"]
-        + pat_trend[patient_idx] * measurements_df["measurement"]
+        pat_treatment_a[patient_index] * measurements_df["treatment1_indicator"]
+        + pat_treatment_b[patient_index] * measurements_df["treatment2_indicator"]
+        + pat_trend[patient_index] * measurements_df["measurement_index"]
     )
 
+    # likelihood is multivariate normal distribution with the same amount of dimensions
+    # as the patients has measurements with means defined by the previously
+    # defined vector and the variance vector
     likelihood = pm.Normal(
         "y",
         measurement_means,
-        sigma=pat_gamma[patient_idx],
-        observed=measurements_df["value"],
+        sigma=pat_gamma[patient_index],
+        observed=measurements_df["measurement"],
     )
 
     # adding the comparison between the treatments
@@ -2545,57 +2553,60 @@ with pm.Model() as hierarchical_model:
         "Treatment Difference (A-B)", pat_treatment_a - pat_treatment_b
     )
 
-    trace = pm.sample(800, tune=300, cores=3)
+    # running the model
+    trace = pm.sample(draws=3000, tune=2500, cores=3)
 
-    # checking traceplots separately for population and patients
+    # Checking diagnostic describing how the algorithm performed
     pm.traceplot(
         trace,
-        [
+        var_names=[
             "Population Treatment A Mean",
             "Population Treatment A Sd",
             "Population Treatment B Mean",
             "Population Treatment B Sd",
             "Population Trend Mean",
             "Population Trend SD",
-            "Population Gamma",
         ],
     )
     plt.show()
     pm.traceplot(
-        trace, ["Treatment A", "Treatment B", "Trend", "Gamma"],
+        trace,
+        var_names=["Treatment A", "Treatment B", "Trend", "Gamma"],
     )
     plt.show()
-    pm.summary(trace)
+    pm.summary(hierarchical_trace, kind="diagnostics")
 
-    # plotting selected posteriors
+    # checking the posterior distributions
     pm.plot_posterior(
         trace,
-        [
+        var_names=[
             "Population Treatment A Mean",
             "Population Treatment B Mean",
-            "Population Trend Mean",
             "Population Treatment Difference (A-B)",
+            "Population Trend Mean",
         ],
+        credible_interval=0.95,
     )
     plt.show()
     pm.plot_posterior(
         trace,
-        [
-            "Treatment Difference (A-B)",
-        ],
+        var_names=["Treatment Difference (A-B)"],
+        credible_interval=0.95,
     )
     plt.show()
 
-# posterior sampling
-with hierarchical_model as model:
-    post_pred = pm.sample_posterior_predictive(trace, samples=500)
-    predictions = post_pred["y"]
+# creating new observations based on our model with sampled
+with hierarchical_with_trend_model as model:
+    post_pred = pm.sample_posterior_predictive(
+        trace, samples=500
+    )
+    predictions = hierarchical_post_pred["y"]
 
+# visualizing posterior samples to check the model's match with reality
 draw_posterior_checks(
     predictions=predictions,
     measurements_df=measurements_df,
     parameters_df=parameters_df,
-    plot_name="hierarchical_model_posterior_sampling",
 )
 \end{pyverbatim}
 \bigskip
@@ -2606,16 +2617,12 @@ draw_posterior_checks(
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
-    pop_treatment_a_mean = pm.Normal(
-        "Population Treatment A Mean", mu=10, sigma=2
-    )
-    pop_treatment_a_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
-    pop_treatment_b_mean = pm.Normal(
-        "Population Treatment B Mean", mu=10, sigma=2
-    )
-    pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=1)
-    pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.1, sigma=0.01)
-    pop_trend_sd = pm.HalfCauchy("Population Trend Sd", beta=1)
+    pop_treatment_a_mean = pm.Normal("Population Treatment A Mean", mu=10, sigma=1)
+    pop_treatment_a_sd = pm.HalfCauchy("Population Treatment A Sd", beta=2)
+    pop_treatment_b_mean = pm.Normal("Population Treatment B Mean", mu=10, sigma=1)
+    pop_treatment_b_sd = pm.HalfCauchy("Population Treatment B Sd", beta=2)
+    pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.2, sigma=0.2)
+    pop_trend_sd = pm.HalfCauchy("Population Trend SD", beta=0.5)
 \end{pyverbatim}
 \bigskip
 
@@ -2627,29 +2634,30 @@ inbuilt in PyMC3, so no complex procedures are needed here.
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
-    pat_treatment_a = pm.Normal(
+    pat_treatment_a_offset = pm.Normal(
+        "Treatment A Offset", mu=0, sigma=1, shape=patients_n
+    )
+    pat_treatment_b_offset = pm.Normal(
+        "Treatment B Offset", mu=0, sigma=1, shape=patients_n
+    )
+    pat_trend_offset = pm.Normal("Trend Offset", mu=0, sigma=1, shape=patients_n)
+
+    pat_treatment_a = pm.Deterministic(
         "Treatment A",
-        mu=pop_treatment_a_mean,
-        sigma=pop_treatment_a_sd,
-        shape=6,
+        pop_treatment_a_mean + pat_treatment_a_offset * pop_treatment_a_sd,
     )
-    pat_treatment_b = pm.Normal(
+    pat_treatment_b = pm.Deterministic(
         "Treatment B",
-        mu=pop_treatment_b_mean,
-        sigma=pop_treatment_b_sd,
-        shape=6,
+        pop_treatment_b_mean + pat_treatment_b_offset * pop_treatment_b_sd,
     )
-    pat_trend = pm.Normal(
-        "trend",
-        mu=pop_trend_mean,
-        sigma=pop_trend_sd,
-        shape=6,
+    pat_trend = pm.Deterministic(
+        "Trend", pop_trend_mean + pat_trend_offset * pop_trend_sd
     )
-    pat_gamma = pm.HalfCauchy(
-        "Gamma", beta=1, shape=6,
-    )
+    pat_gamma = pm.HalfCauchy("Gamma", beta=1, shape=patients_n,)
 \end{pyverbatim}
 \smallskip
+
+% TODO explain the reason for offsets
 
 When defining the patient-level we run into bigger differences compared to the single
 patient model. As every parameter has to be defined for each patient, every distribution
@@ -2708,7 +2716,7 @@ want to use different standard deviations for different patients.
 
 \bigskip
 \begin{pyverbatim}[][fontsize=\footnotesize]
-    trace = pm.sample(draw=1000, tune=700, cores=3)
+    trace = pm.sample(draws=3000, tune=2500, cores=3)
 \end{pyverbatim}
 \bigskip
 
@@ -2727,7 +2735,7 @@ just by patient parameters, but also the population parameters.
 \begin{pyverbatim}[][fontsize=\footnotesize]
     pm.traceplot(
         trace,
-        [
+        var_names=[
             "Population Treatment A Mean",
             "Population Treatment A Sd",
             "Population Treatment B Mean",
@@ -2738,10 +2746,11 @@ just by patient parameters, but also the population parameters.
     )
     plt.show()
     pm.traceplot(
-        trace, ["Treatment A", "Treatment B", "Trend", "Gamma"],
+        trace,
+        var_names=["Treatment A", "Treatment B", "Trend", "Gamma"],
     )
     plt.show()
-    pm.summary(trace)
+    pm.summary(hierarchical_trace, kind="diagnostics")
 \end{pyverbatim}
 \bigskip
 
@@ -2812,18 +2821,20 @@ an equilibrium distribution.
 \begin{pyverbatim}[][fontsize=\footnotesize]
     pm.plot_posterior(
         trace,
-        [
+        var_names=[
             "Population Treatment A Mean",
             "Population Treatment B Mean",
             "Population Treatment Difference (A-B)",
             "Population Trend Mean",
         ],
+        credible_interval=0.95,
     )
     plt.show()
     pm.plot_posterior(
-        trace, ["Treatment Difference (A-B)"]
+        trace,
+        var_names=["Treatment Difference (A-B)"],
+        credible_interval=0.95,
     )
-    pm.plot_posterior(trace)
     plt.show()
 \end{pyverbatim}
 \smallskip
@@ -2897,7 +2908,6 @@ draw_posterior_checks(
     predictions=predictions,
     measurements_df=measurements_df,
     parameters_df=parameters_df,
-    plot_name="hierarchical_model_posterior_sampling",
 )
 \end{pyverbatim}
 \smallskip
@@ -3141,6 +3151,10 @@ Where to find information about model comparison?
     Aki Vehtari, Andrew Gelman, Daniel Simpson, Bob Carpenter, Paul-Christian Bürkner:
     Rank-normalization, folding, and localization: An improved $\widehat {R} $ for
     assessing convergence of MCMC. Bayesian Analysis, 2020.
+
+    \bibitem{offset}
+    Michael Betancourt, Mark Girolami: Hamiltonian Monte Carlo for hierarchical models.
+    Current trends in Bayesian methodology with applications 79.30 2015;2-4.
 
     \bibitem{github}
     Tuomo Kareoja: https://github.com/TuomoKareoja/hierarchical-bayes-nof1-thesis,
