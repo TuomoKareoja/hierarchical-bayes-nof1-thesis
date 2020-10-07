@@ -71,7 +71,7 @@ consideration\ \cite{nofone}. By comparing the measurements taken during differe
 treatment regimes over multiple blocks, the most suitable treatment option can
 be chosen for the particular patient studied.
 
-In the following pages, we will walk trough a concise explanation of the
+In the following pages, we will walk through a concise explanation of the
 experimental design of N-of-1 trials and how we can statistically model them,
 given the kinds of challenges their design poses. We then follow up with how to
 apply Bayesian inference with these models to estimate the effectiveness of different
@@ -79,7 +79,7 @@ treatments, highlighting how Bayesian methods can give needed flexibility when
 running N-of-1 trials by not relying on hypothesis testing tied to a
 prespecified study design. We then consider the case when there are multiple
 similar N-of-1 trials and show how it is possible to pool the information from
-these with hierarchical Bayesian methods, without loosing sight of the goal of
+these with hierarchical Bayesian methods, without losing sight of the goal of
 N-of-1 trials: to find the best treatment for each individual
 patient. Finally, we end by with a complete example of analyzing multiple N-of-1
 trials with hierarchical Bayesian methods with Python and PyMC3-package using
@@ -116,7 +116,7 @@ Another problem with RCTs is the peculiarity of their participants. It is
 a common practice to accept patients to RCTs only if they don't suffer from any
 medical issue besides the one that is being studied. This lack of comorbidity
 makes it easier to get clear results by removing confounding factors, but at the
-same time this lowers the external validity of the results, because in the real
+same time, this lowers the external validity of the results, because in the real
 world patients often suffer from multiple medical issues simultaneously. Because of this, it might be possible that even when the scientific
 literature provides clear results about the relative effectiveness of different
 treatments, these results don't generalize that well to the kinds of
@@ -143,7 +143,7 @@ prevent treatment interactions that could make it difficult to analyze the
 results or could be dangerous to the patient. If the treatments being studied
 allow it, N-of-1 trial can also use the double-blind method, where both the patient
 and the person administering the treatment don't know which treatment is currently used, and placebo
-treatment, where one of the treatments only resembles treatment, but does not
+treatment, where one of the treatments only resembles treatment but does not
 contain any active ingredient (pharmacological or otherwise).
 
 In figure\ \ref{examplenof1schema} is a schema of a more complex N-of-1 trial with three treatments A, B and C,
@@ -175,7 +175,7 @@ would seem to make n-of-1 trials applicable to many situations, but there are
 also multiple factors restricting their use.
 
 Firstly, N-of-1 trials can only be used to study illnesses that are chronic,
-progress slowly, and are at least somewhat stable. Also the treatment options
+progress slowly, and are at least somewhat stable. Additionally, the treatment options
 available must have noticeable treatment responses within a short timeframe.
 Running the trials needs time to complete and fast-changing illness or slowly
 effecting treatment make it either impossible to distinguish true effects from
@@ -187,7 +187,7 @@ the treatment.\ \cite{nofone}
 
 Secondly, running N-of-1 trials is costly because of added expenses of training
 the medical staff in the method, running the trial with all its measurements and
-analyzing the data. This is means that it can be hard to find cases where using
+analyzing the data. This means that it can be hard to find cases where using
 this method is cost-effective and studies assessing the cost and benefits of these trials
 have given mixed results\ \cite{costs}.
 
@@ -195,26 +195,26 @@ These limitations have kept the use of N-of-1 trials rare in clinical use, even
 though they could potentially both increase the life quality of the patients and
 lower the healthcare costs by finding the most suitable medications to patients that
 might end up potentially using them for years. This state of affairs might be
-changing fast though. Aging and environmental factors are changing the worlds'
+changing fast though. Ageing and environmental factors are changing the worlds'
 disease burden so that a growing proportion of it is constituted by chronic
 diseases\ \cite{diseaseburden}, of which common ones like non-acute cardiovascular
-diseases and diabetes are excellent candidates for N-of-1 trials. Also the cost
+diseases and diabetes are excellent candidates for N-of-1 trials. Also, the costs
 of administering N-of-1 trials are dropping with the advent of cheap and reliable
 health sensors like smartwatches and connected blood pressure monitors. For
-example in diabetic patients it is now possible to get real-time readings of
+example, it is now possible to get real-time readings of
 blood insulin levels with minimal effort from the patient\ \cite{cgm}. These
 ongoing changes mean that the popularity of this method could potentially rise
 significantly in the future.
 
-\chapter{Statistical Modeling of N-of-1 Trials}\label{modeling}
+\chapter{Statistical modelling of N-of-1 Trials}\label{modelling}
 
 Even though the data created by the N-of-1 trials resembles traditional time
 series data with autocorrelation between observations and repeated measurements
-from the same study unit, there are additional complexities rising from the structure of
+from the same study unit, additional complexities arise from the structure of
 repeating treatment periods. Trying to take into account all
 the peculiarities of the study design could end up with a model that is too complicated to
 the small amount of data generated by a single study, so one must consider
-carefully what factors actually need to be incorporated into the model.
+carefully what factors need to be incorporated into the model.
 
 Simplest model that we could employ is to just count the number of blocks where
 a treatment is considered ``better'' than others. The precise definition of
@@ -238,7 +238,7 @@ these factors into account, more complex models are in order.
 
 \section{Basic Models}\label{conti}
 
-Before going further we make the assumption that the measurements we are dealing with are continuous
+Before going further we assume that the measurements we are dealing with are continuous
 as this is probably the most common case. Lets first look at a model where
 we assume that there are no time-trends and no autocorrelation between
 measurements. Let \(y_{mbpt}\) represent the outcome measured while on treatment
@@ -255,17 +255,17 @@ N(0,\sigma^2_{\delta})\), and \(\epsilon_{t(p(b))} \sim
 N(0,\sigma^2_{\epsilon})\)
 
 This model assumes all treatment effects \(\mu_m\) to be constant. Within the
-normally distributed terms \(\gamma_b\) represents random block effects,
+normally distributed terms, \(\gamma_b\) represents random block-effects,
 \(\delta_{p(b)}\) random treatment period effects and \(\epsilon_{t(p(b))}\) random within
 period errors. We could also choose one of the blocks as a reference and set
 \(\gamma_1 = 0\) and assume that within each block the between period effects
-follow the same pattern, i.e.\ the difference between treatment period one and
-two is the same within each block. The random effects between blocks and treatment
+follow the same pattern, i.e.\ he difference between treatment period one and
+two is the same within each block. The random-effects between blocks and treatment
 periods could represent for example the random variations in the motivation of the patient and possible
 changes in treating personnel within each block and treatment period. The random
 within period errors represents the measurement error of single measurements
 within treatment periods. The relative size of these terms is important
-for effective design of the trial, because they determine if it is more
+for effective design of the trial because they determine if it is more
 beneficial for the statistical power of the study to add more measurements,
 treatment periods or blocks.
 
@@ -281,7 +281,7 @@ model\ \ref{allerrors} can be greatly simplified by dropping \(\gamma_b\) and
 
 This simple model could be considered a starting point in modelling a successful trial where
 the treatments and measurements were administered consistently, there were no big changes to the staff interacting
-with patient and no modifications to any other procedures were made during
+with the patient and no modifications to any other procedures were made during
 the trial.
 
 \section{Incorporating time-trends into the model}\label{timetrends}
@@ -305,7 +305,7 @@ is the residual error at time \(t\). More complex time-trends can be introduced
 by modifying the slope, for example by adding the term \(\beta_2 t^2\) to
 introduce a quadratic trend.
 
-Another time dependent effect to take into consideration is period effects.
+Another time-dependent effect to take into consideration is period effects.
 There might be some part of the trial that falls within a period that we presume
 to have its own effect. An example of this kind of effect is if we study asthma
 medications and part of the trial falls within the pollen season. A simple way
@@ -339,7 +339,7 @@ time \(t \) in regard to time:
 In general, systematic and complex time-related effects are difficult to
 deal with in N-of-1 studies as the amount of data created is typically small
 and complex parametrization can quickly lead to models that too complex to efficiently
-estimate. Some of this problem can avoided by good experiment design (for example not
+estimate. Some of these problems can be avoided by good experiment design (for example not
 conducting trials where we expect any period effects), but unfortunately this does not
 help with illnesses that progress in complicated fashion and with the time-dependent
 treatment effects related to this progress.
@@ -349,7 +349,7 @@ treatment effects related to this progress.
 A common occurrence in time-series data is the autocorrelation between
 measurements so that there is some similarity between observations defined by a
 function of the time lag between them. Often a good first response to this problem
-is to add a time-trend to the model like we did previously. This
+is to add a time-trend to the model as we did previously. This
 often removes a substantial proportion of the autocorrelation that could be
 caused for example by the natural progression of the disease\ \cite{stat}.
 Unfortunately, in N-of-1 trials the carryover effects
@@ -358,13 +358,13 @@ complex autocorrelation patterns that are hard to remove with just a simple time
 
 Carryover effects refer to the lingering effects of the treatment even after it
 has been stopped. This can make the treatment effects in the next treatment period
-with a different treatment seem larger than they actually are or smaller in the
+with a different treatment seem larger than they really are or smaller in the
 unfortunate, and hopefully rare, case where the previous treatment was actually
 harmful. Carryover effects also encompass the effects of interactions between
 sequential treatments, which could even be dangerous depending on the nature of
 the treatments. On the other hand treatment effects that manifest slowly can
 often give the opposite effect of carryover effects by making the treatments
-look less effective than they really are during the first measurements of each
+look less effective than they truly are during the first measurements of each
 treatment period.\cite{stat}
 
 To deal with these more devious sources of autocorrelation in our model we can
@@ -384,7 +384,7 @@ can be adjusted to include more a complex lag by adding more error terms with
 bigger lag and including more \(\rho \) terms to denote the correlations between
 them (\(\rho_1\epsilon_{t-1} + \ldots + \rho_x\epsilon_{t-x}\)).
 
-In autoregressive models approach we express the autocorrelation in the
+With autoregressive models, we express the autocorrelation in the
 measurements themselves so that the measurement at time \(t\) is a function of
 the measurement at \(t-1\):
 
@@ -399,7 +399,7 @@ also include more than just one lag by adding more lagged terms and correlation
 terms. Although it can make more intuitive sense to make the whole observation
 dependent on the previous observation, it is important to recognize that in this
 case the treatment effects \(\mu_m\) must be interpreted differently as they are
-in this case conditioned on previous measurements.
+conditioned on previous measurements.
 
 Moving average models and autoregressive models are often combined by using both
 methods of taking the autocorrelation into account simultaneously (ARMA-models), but as
@@ -407,7 +407,7 @@ amount of data produced in N-of-1 studies if often so small, taking this approac
 complex.
 
 Although we can try to solve problems created by the carryover effect and the slow
-manifestation of treatment effect with modeling, a better way could be to take
+manifestation of treatment effect with modelling, a better way could be to take
 measures to mitigate the effects in the study design itself. By having a long
 enough washout period between different treatments, we can minimize the
 carryover effect. If there are no harmful interactions between the treatment the
@@ -415,7 +415,7 @@ next treatment can be started within the washout period so that we minimize the
 problem of slow treatment effects. If there are interactions to be taken into
 consideration, the first few measurements at the beginning of each treatment
 period could also just be dropped. By doing this we are of course throwing away
-data, but we must be remember that if the measurements at the beginning of the
+data, but we must remember that if the measurements at the beginning of the
 treatment period are mangled, this will also mangle our parameter estimates.
 Trying to take these effects into account in our model will probably not
 eliminate these effects completely and will increase the complexity of our
@@ -423,9 +423,9 @@ model.
 
 \section{Non-continuous Measurements}\label{noncontinuous}
 
-Up to this point we have assumed that the measurement used are continuous, but
-we could of course have measurements that are binary, counts of events or
-categorical. With these kinds of measurement the models need to reformatted so that
+Up to this point, we have assumed that the measurement used are continuous, but
+we could have measurements that are binary, counts of events or
+categorical. With these kinds of measurements the models need to reformatted so that
 they don't presume normal distributions. Despite this, the models don't
 have to differ much from the models presented above and the principals covered
 before can be applied.
@@ -475,12 +475,12 @@ express the model in terms of the probability \(p_t\):
 \end{def}
 
 We notice that there are no error terms in this model. This is because we are
-not modeling individual observations, but the expected value of these values, which in
+not modelling individual observations, but the expected value of these values, which in
 this case is the probability of observing the event under treatment used at time \(t\).
 Even though there are random variations in the individual observations,
 when we talk about their expected value, there is just a single value with no
 random errors. Apart from this difference, we can see that we find the same model
-from the denominator that we used when modeling a continuous measurement with a
+from the denominator that we used when modelling a continuous measurement with a
 linear time-trend in model\ \ref{simpletimetrend}, but without the
 aforementioned error term. This means that to build the models described before,
 we would just insert the right side of the equations into the denominator, apart
@@ -546,7 +546,7 @@ the exponent:
     \end{equation}
 \end{def}
 
-The general pattern here is that, even in the case when the measurement are not
+The general pattern here is that, even in the case when the measurements are not
 continuous, all the modelling principals we introduced earlier still apply. The way we
 think about how different parameters affect our measurements does not have to change,
 even though the models need to be expressed differently.
@@ -564,8 +564,8 @@ fixed parts of nature, we conceptualize them as probability distributions that
 express our internal uncertainty about their true values.
 
 Although both of these inference methods work for all the models covered before,
-there are several factors that favor the use of Bayesian inference in N-of-1
-studies related to their design and use context. But before talking about these factors,
+several factors favour the use of Bayesian inference in N-of-1
+studies because of to their design and use context. But before talking about these factors,
 we need to understand how Bayesian inference works.
 
 \section{Principles of Bayesian Inference}\label{whybayes}
@@ -585,11 +585,11 @@ event \(A\) happening. If this number is greater than 1, then event \(B\)
 happening makes event \(A\) more likely and if it less than 1 is is less likely.
 If the quotient is 1, event \(B\) gives no information about the probability of
 event \(A\). Breaking the quotient down further \(P(B|A)\), called the likelihood, is the reverse of the posterior and tells us how believable it is to
-see the event \(B\) given that event \(A\) happened. Finally \(P(B)\) in the denominator is called marginal likelihood and tells us the probability of
+see the event \(B\) given that event \(A\) happened. Finally, \(P(B)\) in the denominator is called marginal likelihood and tells us the probability of
 observing event \(B\) with or without event \(A\).
 
-Instead of events, in our case we want to formulate the theorem with parameters
-\(\Theta \) and the data \(D\), so that we get can estimate the posterior
+In our our case, instead of events, we want to formulate the theorem with parameters
+\(\Theta \) and the data \(D\), so that we get an estimate the posterior
 probability (or likelihood in case of continuous parameter values) of our
 parameters having certain values:
 
@@ -652,7 +652,7 @@ which are values we define ourself based on our previous knowledge and beliefs:
     \end{equation}
 \end{def}
 
-We could of course choose whatever distribution best matches our previous
+We could, of course, choose whatever distribution best matches our previous
 knowledge and uncertainty about the parameter, but by using a normal distribution
 for prior when the likelihood also follows a normal distribution, we get some
 nice algebraic properties that we will soon see.
@@ -822,28 +822,28 @@ see that the posterior probability is actually a normal distribution with mean
 So we ended up with a posterior distribution that has the shape of a normal
 distribution. The trick where we ignored the marginal likelihood can be used
 anywhere, but the fact that we could arithmetically solve that the posterior
-follows a well-defined distribution is not a general occurrence. Usually we need
+follows a well-defined distribution is not a general occurrence. Usually, we need
 to go beyond arithmetic methods and solve the problem algorithmically.
 
 \section{Challenges of Bayesian Inference}\label{bayesinferencechallenges}
 
 Although the Bayes formula is conceptually simple, when utilizing
 it we run into two big difficulties. First is the fact that
-probability distributions of the prior and/or the likelihood or their product
+probability distributions of the prior, the likelihood or their product
 are often not well-defined distributions with known properties. This can make the
-integral in the marginal likelihood impossible to solve analytically like we did
-above. With discrete distributions we can circumvent the problem by just counting the
+integral in the marginal likelihood impossible to solve analytically as we did
+above. With discrete distributions, we can circumvent the problem by just counting the
 likelihood times prior for every value combination and then obtaining the posterior
-probabilities by dividing each of these values with their combined sum. Unfortunately
+probabilities by dividing each of these values with their combined sum. Unfortunately,
 even here this becomes impractical quickly when the number of parameters combinations grows
-To be able to use the bayes formula outside a narrow field of application we need to be able to solve the
+To be able to use the Bayes formula outside a narrow field of application we need to be able to solve the
 problem of the marginal likelihood. The second problem is how we should define our priors.
 If we have prior knowledge, we need to be able to
 formulate our beliefs in a precise mathematic form and even when we don't have prior knowledge we still
-need to come up with a prior, but in this case it has to be defined so that it has
+need to come up with a prior, but in this case, it has to be defined so that it has
 minimal effects on the posterior distribution. When using informative priors we have to
 ask ourselves are these truly justified and with uninformative priors we have to deal
-with complex mathematic question as what prior is truly uninformative is often not straightforward.
+with fact that what prior is truly uninformative is often not straightforward.
 
 \subsection{Dealing with the Marginal Likelihood}\label{marginallikehoodproblems}
 
@@ -857,15 +857,15 @@ form as the prior distribution. A good example of this is our example above (\re
 distribution for the prior when the likelihood is also normally distributed. If
 the likelihood function belongs to the exponential family of distributions, there
 exists at least one corresponding conjugate prior distribution (often also in
-the exponential family). For likelihood functions outside the exponential family
+the exponential family). For likelihood functions outside the exponential family,
 there are some cases where a conjugate prior exists, but these are rare.
 
 The conjugate function method makes the denominator analytically solvable, but it
 is in practice very limiting. First, we need to restrict ourselves when
-modeling to only use models that create a suitable likelihood function with an existing
+modelling to only use models that create a suitable likelihood function with an existing
 conjugate prior. Second, it limits our options in defining our prior
 beliefs as we have to be able to express them in the form of the conjugate function. To
-be able conduct Bayesian inference in cases where can't conform to these demands we need
+be able to conduct Bayesian inference in cases where can't conform to these demands we need
 to turn from analytic to algorithmic solutions.
 
 The basis for all algorithmic solutions to the problem is the fact that,
@@ -881,12 +881,12 @@ with a shape that is defined by the likelihood times prior:
 \end{def}
 
 Now if we could take a representative sample of values of this distribution we could
-obtain and estimate of the posterior distribution by dividing the times we obtain a
+obtain an estimate of the posterior distribution by dividing the times we obtain a
 certain value (or a value range) by the total number of samples. We can think of this
 as estimating what is the probability of getting a 6 on
 suspicious die by throwing it multiple times and counting which percentage of the
-throws we get a 6. Doing this kind sampling would be easy if the distribution would have
-recognizable shape like normal distribution, but in this case we could already calculate an analytical
+throws we get a 6. Doing this kind of sampling would be easy if the distribution would have
+recognizable shape like a normal distribution, but in this case, we could already calculate an analytical
 solution. The real problem is, how can we get a representative sample from an arbitrary
 distribution. The general outline for the group of algorithms trying to solve this problem called
 Monte Carlo Markov Chain algorithms (MCMC) goes as follows:
@@ -917,23 +917,23 @@ Monte Carlo Markov Chain algorithms (MCMC) goes as follows:
           two values.
     \item Generate a random number between 0 and 1 and move to the proposed
           location in the parameter space if the number is lower than the
-          probability that we calculated in the previous step. Otherwise we stay
+          probability that we calculated in the previous step. Otherwise, we stay
           in the same place.
-    \item Mark down the values of our current location in the parameter space.
+    \item Mark the parameter values of our current location in the parameter space.
     \item Repeat from step 2.
 
 \end{enumerate}
 
-After a repeat this process multiple times we will end up with list of values,
+After a repeat this process multiple times we will end up with a list of values,
 that are a sample of the distribution defined by the prior time
 likelihood. With enough samples these values give us a good estimate of the entire
 posterior distribution.
 
-Why does this work? The crucial part in the algorithm is the step 3. Consider a case
+Why does this work? The crucial part in the algorithm is step 3. Consider a case
 where we have just one parameter that can take two different values. Now the probability
 of moving from one value to the other matches the relative values of the
 target distribution and that means if value A is twice as probable as value B (if we don't know the
-actual probability yet), the chance of moving from A to B is 50 \% and chance of moving
+actual probability yet), the chance of moving from A to B is 50 \% and a chance of moving
 from B to A is 100 \%. When we run the process of jumping from one to another, eventually each of our two values
 will be visited proportionally to its value so we would expect the value to be A in 66
 \% of cases and B in 33 \% of cases. We can demonstrate that this really happens with a short Python
@@ -978,29 +978,29 @@ position in the distribution where we will consider to move. In principal any ki
 random value picker works here and we will get a proper sample eventually. The problem is
 that with a bad algorithm this could take a long time. What we would want to have is a
 way to create proposed steps that are rejected as rarely as possible and that the
-jump from one value to another is as big as possible. These are goals are in
-conflict, so the algorithm has to find a some optimal balance between them.
+jump from one value to another is as big as possible. These goals are in
+conflict, so the algorithm has to find some optimal balance between them.
 Having less rejection and taking bigger steps both lead to lower the autocorrelation
 between consecutive samples which in turn leads to more efficient estimates by increasing the
 effective sample size. There are different ways to calculate this effective sample size, but roughly
 these all measure the number of steps divided by the autocorrelation between the steps.
-Why this is an important can be intuited by thinking of comparison between truly random sample from a distribution and
-sample where sampled values are only accepted if they are within a certain distance of the
+Why this is an important can be intuited by thinking of comparison between a truly
+random sample from a distribution and a sample where sampled values are only accepted if they are within a certain distance of the
 previous sampled value or we take the same value again. It is clear that values created
 with the former method are much better for
 estimating the parameters of the distribution as the value from the later method might
-end up bunched in only small part of the distribution if the amount of samples is not
+end up bunched in only a small part of the distribution if the amount of samples is not
 high enough.
 
 Some of the simpler algorithms used for solving the problem of step proposal are still easily explainable, but
 this part of the algorithm has seen some major improvement in recent years and the
 current widely used solutions are technically much too complex to cover here. The
-current ``industry standard'' is an an algorithm called no-u-turn-Sampler (NUTS)\ \cite{nuts}
+current ``industry standard'' is an algorithm called no-u-turn-Sampler (NUTS)\ \cite{nuts}
 that could be heuristically described as choosing the values by rolling a frictionless
 ball on terrain defined by the inverse of our distribution while at the same time
 avoiding inefficient u-turns\ \cite{kruschke}. The algorithm can dynamically adjust the
-size of the steps it takes to maintain a targeted step acceptance rate and the as estimate of
-the posterior gets better the steps are made bigger as more probable values will be
+size of the steps it takes to maintain a targeted step acceptance rate and, as estimates of
+the posterior gets better, the steps are made bigger as more probable values will be
 picked. Understanding how this works in practice is not an exercise for the faint of heart.
 
 \begin{figure}[H]
@@ -1013,11 +1013,11 @@ To make it concrete how modern clever modern value proposal algorithms are we
 have we have visualized the first 100 steps taken by the aforementioned NUTS sampler
 when estimating two parameters (figure\ \ref{traceexample}). The starting value is
 marked with a black X and the markers turn from red to yellow as the chain progresses.
-We can see that there seem to be a clear correlation between the parameters and our
+We can see that there seems to be a clear correlation between the parameters and our
 sample is already reflecting that. If we look at the sizes the steps that the algorithm
 takes, we can see that these are larger in the less probable parts of the distribution.
-This means that the proposed step also depend on where on distribution the current position
-is located. With this intelligent sampling the chain traverses more
+This means that the proposed step also depends on where on distribution the current position
+is located. With this intelligent sampling method, the chain traverses more
 quickly in distribution and makes the sampling much more efficient than with older more
 simple methods.
 
@@ -1520,7 +1520,7 @@ condition. \(\epsilon_{tj} \sim N(0,\tau_j^2) \) is the error term at \(t\) and
 \(\rho_j\) is the correlation between consecutive errors.
 
 This data generating model has both a trend and a lag-1-autocorrelation. The trend we
-are going to be modeling later, but also modeling autocorrelation would make the model
+are going to be modelling later, but also modelling autocorrelation would make the model
 too complex for the limited amount observations we will be dealing with. This way the example tries to be more realistic
 by having the data generation function to be of such complexity that it cannot be
 fully modeled and some decisions have to be made on how to try to approximate
@@ -1950,7 +1950,7 @@ with this model without the need to manually define this.
 \end{pyverbatim}
 \smallskip
 
-Now we start getting to the actual modeling. We start by defining our prior beliefs about
+Now we start getting to the actual modelling. We start by defining our prior beliefs about
 out the parameter distributions. For both treatments and the trend we use a normal distribution and
 for the variance of the error term \(\gamma \) we use a half-Cauchy. For the half-Cauchy
 distribution we don't need to define the location term as it is by default zero.
@@ -2490,7 +2490,7 @@ with pm.Model() as hierarchical_with_trend_model:
     pop_trend_mean = pm.Normal("Population Trend Mean", mu=0.2, sigma=0.16)
     pop_trend_sd = pm.HalfCauchy("Population Trend SD", beta=0.8)
 
-    # modeling patient difference from population with offset parameters
+    # modelling patient difference from population with offset parameters
     pat_treatment_a_offset = pm.Normal(
         "Treatment A Offset", mu=0, sigma=1, shape=patients_n
     )
