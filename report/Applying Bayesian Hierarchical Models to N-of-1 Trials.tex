@@ -15,6 +15,7 @@
 \usepackage{booktabs}
 \usepackage{bookmark}
 \usepackage{float}
+\usepackage{pstricks}
 
 \usetikzlibrary{matrix}
 
@@ -153,7 +154,8 @@ treatment period and washout periods between treatments:
 \begin{figure}[H]
     \centering
     \caption{Example of an N-of-1 Experiment Design}\label{examplenof1schema}
-    \includegraphics{n-of-1_schema.pdf}
+    \bigskip
+    \includegraphics[width=\textwidth]{n-of-1_schema.pdf}
 \end{figure}
 
 The stated aim of N-of-1 trials is quite different from RCTs: where the latter
@@ -1493,7 +1495,7 @@ disease and not curing it. Based on this information we come up with the followi
 \begin{figure}[H]
     \centering
     \caption{Experiment Design for a Single Patient Study}\label{singlepatientexperimentdesign}
-    \centering
+    \bigskip
     \includegraphics{design_for_simulated_experiment.pdf}
 \end{figure}
 
