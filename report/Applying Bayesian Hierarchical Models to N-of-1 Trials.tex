@@ -103,7 +103,7 @@ try to apply its results to individual patients in clinical practice.
 Knowing the best treatment on average might not help much in finding the right
 treatment for a particular patient if the variability in treatment effectiveness
 between patients is high. Although we can use covariates like age, gender, or
-a certain gene variant to explain the variance between patients in RCT:s, there
+a certain gene variant to explain the variance between patients in RCTs, there
 can still be lots of unexplained between-patient variance left. Some
 of this variance is of course caused by random factors like measurement error,
 but a significant part might be caused by real differences between the patients\ \cite{HTE1, HTE2, HTE3, HTE4}.
@@ -119,11 +119,11 @@ makes it easier to get clear results by removing confounding factors, but at the
 same time, this lowers the external validity of the results, because in the real
 world patients often suffer from multiple medical issues simultaneously. Because of this, it might be possible that even when the scientific
 literature provides clear results about the relative effectiveness of different
-treatments, these results don't generalize that well to the kinds of
+treatments, these results don't generalize well to the kinds of
 patients the clinical practitioner sees daily in her office.\ \cite{HTE1}
 
 N-of-1 trials can be used to patch the holes in the knowledge that RCTs cannot
-fill by changing the focus of the study from group averages to the individual
+fill by changing the focus of the study from group averages to individual
 patients. In N-of-1 studies, instead of comparing groups with different treatments,
 the comparisons are made across time with a single patient using different
 treatments. In this design multiple treatments are tried sequentially in periods
@@ -133,13 +133,13 @@ arranged in a random or balanced order to take
 into account time-related effects. A simple example would be an ABBA design that
 includes two blocks within which the two treatments A and B are assigned in a
 balanced order. Measurements are taken throughout the study and, depending on the
-ease of measuring the outcome of interest, this could mean anything
+ease of measuring the outcome of interest, this could mean anything from
 once per treatment period to continuous monitoring (e.g.\ heart rate).
 
 Depending on the treatments considered, there might also be a so-called
 ``washout'' period between treatments, where the patient does not receive any
-treatment, and her state is allowed to return to baseline. Washout periods are used to
-prevent treatment interactions that could make it difficult to analyze the
+treatment and her state is allowed to return to baseline. Washout periods are used to
+prevent treatment interactions that would make it difficult to analyze the
 results or could be dangerous to the patient. If the treatments being studied
 allow it, N-of-1 trial can also use the double-blind method, where both the patient
 and the person administering the treatment don't know which treatment is currently used, and placebo
@@ -152,14 +152,14 @@ treatment period and washout periods between treatments:
 
 \begin{figure}[H]
     \centering
-    \caption{Example of a N-of-1 Experiment Design}\label{examplenof1schema}
+    \caption{Example of an N-of-1 Experiment Design}\label{examplenof1schema}
     \includegraphics{n-of-1_schema.pdf}
 \end{figure}
 
 The stated aim of N-of-1 trials is quite different from RCTs: where the latter
 tries to generalize results to the population and find which treatment is best in
-general, the N-of-1 trial tries to only generalize to the patient in question.
-This means that whereas comorbidity and other factors that cause systematic
+general, the N-of-1 trial does not try to generalize beyond the patient in question.
+This means that, whereas comorbidity and other factors that cause systematic
 variation between the patients in treatment outcomes are a problem in RCTs,
 these are not an issue in N-of-1 trials because there is no need to generalize
 beyond the one patient. There is also often no actual need to know what is
@@ -171,16 +171,16 @@ treatment options but no prior knowledge of which of these would be
 best, when there is known to be considerable variability between patients in
 treatment efficacy, or when there is reason to doubt that the results from
 scientific literature generalize to the patient in question\ \cite{nofone}. This
-would seem to make n-of-1 trials applicable to many situations, but there are
+would seem to make N-of-1 trials applicable to many situations, but there are
 also multiple factors restricting their use.
 
 Firstly, N-of-1 trials can only be used to study illnesses that are chronic,
 progress slowly, and are at least somewhat stable. Additionally, the treatment options
 available must have noticeable treatment responses within a short timeframe.
-Running the trials needs time to complete and fast-changing illness or slowly
-effecting treatment make it either impossible to distinguish true effects from
+Running the trials takes time and fast-changing illness or slow
+treatment onset would make it either impossible to distinguish true effects from
 the natural progression of the disease or make the length of the trials
-impractically long. N-of-1 trials are also unsuitable for testing of
+impractically long. N-of-1 trials are also unsuitable for testing
 preventative treatments because the effects of these treatments are often
 impossible to assess without comparisons to other patients who are not receiving
 the treatment.\ \cite{nofone}
@@ -194,7 +194,7 @@ have given mixed results\ \cite{costs}.
 These limitations have kept the use of N-of-1 trials rare in clinical use, even
 though they could potentially both increase the life quality of the patients and
 lower the healthcare costs by finding the most suitable medications to patients that
-might end up potentially using them for years. This state of affairs might be
+might end up using them for years. This state of affairs might be
 changing fast though. Ageing and environmental factors are changing the worlds'
 disease burden so that a growing proportion of it is constituted by chronic
 diseases\ \cite{diseaseburden}, of which common ones like non-acute cardiovascular
@@ -204,7 +204,7 @@ health sensors like smartwatches and connected blood pressure monitors. For
 example, it is now possible to get real-time readings of
 blood insulin levels with minimal effort from the patient\ \cite{cgm}. These
 ongoing changes mean that the popularity of this method could potentially rise
-significantly in the future.
+significantly in the coming years.
 
 \chapter{Statistical modelling of N-of-1 Trials}\label{modelling}
 
@@ -239,7 +239,7 @@ these factors into account, more complex models are in order.
 \section{Basic Models}\label{conti}
 
 Before going further we assume that the measurements we are dealing with are continuous
-as this is probably the most common case. Lets first look at a model where
+as this is probably the most common case. Let's first look at a model where
 we assume that there are no time-trends and no autocorrelation between
 measurements. Let \(y_{mbpt}\) represent the outcome measured while on treatment
 \(m\) within treatment block \(b\) within treatment period \(p\) at time \(t\).
@@ -288,8 +288,8 @@ the trial.
 
 As the symptoms of the patient might not be completely stable (e.g.\ because
 symptoms get worse with the progression of the disease) adding some kind of
-time-trend to the model is usually advisable. We can modify the simple model\ \ref{oneerror} from previous chapter to include a linear time-trend by adding an
-intercept and slope of the time-trend. In this case the model can expressed more
+time-trend to the model is usually advisable. We can modify the simple model\ \ref{oneerror} from previous Chapter to include a linear time-trend by adding an
+intercept and slope of the time-trend. In this case the model can be expressed more
 concisely just in terms of the measurement \(y_t\) taken at time \(t\), where
 time is indexed from the start of the study:
 
@@ -338,8 +338,8 @@ time \(t \) in regard to time:
 
 In general, systematic and complex time-related effects are difficult to
 deal with in N-of-1 studies as the amount of data created is typically small
-and complex parametrization can quickly lead to models that too complex to efficiently
-estimate. Some of these problems can be avoided by good experiment design (for example not
+and complex parametrization can quickly lead to models that are impossible to estimate
+effectively. Some of these problems can be avoided by good experiment design (for example not
 conducting trials where we expect any period effects), but unfortunately this does not
 help with illnesses that progress in complicated fashion and with the time-dependent
 treatment effects related to this progress.
@@ -369,7 +369,7 @@ treatment period.\cite{stat}
 
 To deal with these more devious sources of autocorrelation in our model we can
 take two routes: moving average models and autoregressive models. In moving
-average models the error is represented as depending on the previous error(s), by
+average models the error is represented as depending on the previous error(s) by
 expressing the measurement at time \(t\) as function of one or more previous
 errors:
 
@@ -379,8 +379,8 @@ errors:
     \end{equation}
 \end{def}where \(\mu_m\) is the effect of the treatment given at time t, \(\rho
 \) is the correlation between consecutive errors and all errors \(\epsilon_t \sim
-N(0,\sigma^2) \). Instead of making the measurement dependent on just the previous error the model
-can be adjusted to include more a complex lag by adding more error terms with
+N(0,\sigma^2) \). Instead of making the measurement dependent on just the previous error, the model
+can be adjusted to include a more complex lag by adding more error terms with
 bigger lag and including more \(\rho \) terms to denote the correlations between
 them (\(\rho_1\epsilon_{t-1} + \ldots + \rho_x\epsilon_{t-x}\)).
 
@@ -397,18 +397,18 @@ the measurement at \(t-1\):
 \sim N(0,\sigma^2)\) is the error term. Like with moving average model we could
 also include more than just one lag by adding more lagged terms and correlation
 terms. Although it can make more intuitive sense to make the whole observation
-dependent on the previous observation, it is important to recognize that in this
-case the treatment effects \(\mu_m\) must be interpreted differently as they are
+dependent on the previous observation as we do here, it is important to recognize
+that then treatment effects \(\mu_m\) must be interpreted differently as they are
 conditioned on previous measurements.
 
 Moving average models and autoregressive models are often combined by using both
 methods of taking the autocorrelation into account simultaneously (ARMA-models), but as
-amount of data produced in N-of-1 studies if often so small, taking this approach might not be advisable as it might make the model unnecessarily
-complex.
+amount of data produced in N-of-1 studies if often so small, taking this approach might
+not be advisable as it might make the model too complex.
 
-Although we can try to solve problems created by the carryover effect and the slow
-manifestation of treatment effect with modelling, a better way could be to take
-measures to mitigate the effects in the study design itself. By having a long
+Although we can try to solve the problems created by the carryover effect and the slow
+manifestation of treatment effect with modelling, a better way could be to mitigate the
+effects with the study design itself. By having a long
 enough washout period between different treatments, we can minimize the
 carryover effect. If there are no harmful interactions between the treatment the
 next treatment can be started within the washout period so that we minimize the
@@ -416,19 +416,19 @@ problem of slow treatment effects. If there are interactions to be taken into
 consideration, the first few measurements at the beginning of each treatment
 period could also just be dropped. By doing this we are of course throwing away
 data, but we must remember that if the measurements at the beginning of the
-treatment period are mangled, this will also mangle our parameter estimates.
+treatment period are mangled, these will also mangle our parameter estimates.
 Trying to take these effects into account in our model will probably not
-eliminate these effects completely and will increase the complexity of our
+eliminate them completely and will increase the complexity of our
 model.
 
 \section{Non-continuous Measurements}\label{noncontinuous}
 
 Up to this point, we have assumed that the measurement used are continuous, but
 we could have measurements that are binary, counts of events or
-categorical. With these kinds of measurements the models need to reformatted so that
+categorical. With these kinds of measurements the models need to be reformatted so that
 they don't presume normal distributions. Despite this, the models don't
 have to differ much from the models presented above and the principals covered
-before can be applied.
+before can still be applied.
 
 To modify previously presented models to work when measurements are not
 continuous, we need to formulate them as generalized linear models. We do
@@ -443,7 +443,7 @@ the model, rather than needing the measurements themselves to do so. We need to
 do this to prevent the models from giving impossible predictions, i.e.\ negative
 counts or probabilities.
 
-Lets start with an binary outcome measurements. In this case the
+Let's start with binary outcome measurements. In this case the
 measurements \(y\) at time \(t\) follow the Bernoulli distribution \(y_t \sim
 Bernoulli(p)\) where the the expected value of the distribution is the
 probability \(p\) of observing the event in measurement \(y_t\). In this case
@@ -474,7 +474,7 @@ express the model in terms of the probability \(p_t\):
     \end{equation}
 \end{def}
 
-We notice that there are no error terms in this model. This is because we are
+One thing to pay attention here is that there are no error terms in the model. This is because we are
 not modelling individual observations, but the expected value of these values, which in
 this case is the probability of observing the event under treatment used at time \(t\).
 Even though there are random variations in the individual observations,
@@ -483,8 +483,8 @@ random errors. Apart from this difference, we can see that we find the same mode
 from the denominator that we used when modelling a continuous measurement with a
 linear time-trend in model\ \ref{simpletimetrend}, but without the
 aforementioned error term. This means that to build the models described before,
-we would just insert the right side of the equations into the denominator, apart
-from the between measurements error term.
+we would just insert the right side of the equations into the denominator,
+leaving out the measurements error term.
 
 With numbers of events as measurements, instead of expressing the model in terms
 of time, we can express it in terms of periods \(p\) that are of equal length
@@ -508,7 +508,7 @@ events:
 
 \begin{def}\label{oneerror}
     \begin{equation}
-        \lambda_t=e^{\beta_0 + \beta_1 t + \mu_t},
+        \lambda_p=e^{\beta_0 + \beta_1 t + \mu_p},
     \end{equation}
 \end{def}where we now have the familiar linear model formula in the exponent on
 the right side of the equation.
@@ -526,7 +526,7 @@ basic model as before:
 
 \begin{def}\label{oneerror}
     \begin{equation}
-        \log_e\bigg({\frac{P(y_t \leq j)}{1 - P(y_t \leq j)}}\bigg)=\beta_0 + \beta_1 t + \mu_t,
+        \log_e\bigg({\frac{P(y_t \leq j)}{1 - P(y_t \leq j)}}\bigg)=\beta_0 + \beta_1 t + \mu_p,
     \end{equation}
 \end{def}where \(\beta_0\) is the intercept, \(\beta_1\) the slope of the time
 trend and \(\mu_t\) the effect of the treatment given during time \(t\). By
@@ -553,15 +553,14 @@ even though the models need to be expressed differently.
 
 \chapter{Bayesian Estimation}\label{bayes}
 
-Now that we have some models defined, we need to move into the next part of the
-analysis and give estimates to the parameters in these models. There
+Now that we have some models defined, we need to give estimates to the parameters in these models. There
 are two broad ways to approach this task by using two different definitions of
 probability. The first is frequentist inference, where we consider the ``true''
-parameters of our model fixed, but unknown, and randomness only applies to the
+parameters of our model fixed, but unknown, and probability only applies to the
 process of creating our data. The second way is Bayesian inference, where we
 consider the data as fixed and instead of thinking about the parameters as
 fixed parts of nature, we conceptualize them as probability distributions that
-express our internal uncertainty about their true values.
+express our uncertainty about their true values.
 
 Although both of these inference methods work for all the models covered before,
 several factors favour the use of Bayesian inference in N-of-1
@@ -578,18 +577,18 @@ an event conditional on another event:
         P(A|B) = \frac{P(B|A)P(A)}{P(B)},
     \end{equation}
 \end{def}where \(A\) and \(B\) are events and \(P(B)\) \(\neq \) 0. \(P(A|B)\) is the conditional probability of event \(A\) happening given that
-event \(B\) happened and is called the posterior. \(P(A)\) is our initial
+event \(B\) and is called the posterior. \(P(A)\) is our initial
 probability estimate for the event \(A\) called the prior. The quotient
 \(\frac{P(B|A)}{P(B)}\) represent how much information event \(B\) gives about
-event \(A\) happening. If this number is greater than 1, then event \(B\)
-happening makes event \(A\) more likely and if it less than 1 is is less likely.
+event \(A\). If this number is greater than 1, then event \(B\)
+makes event \(A\) more likely and if it less than 1 event \(B\) makes event \(A\) less likely.
 If the quotient is 1, event \(B\) gives no information about the probability of
 event \(A\). Breaking the quotient down further \(P(B|A)\), called the likelihood, is the reverse of the posterior and tells us how believable it is to
 see the event \(B\) given that event \(A\) happened. Finally, \(P(B)\) in the denominator is called marginal likelihood and tells us the probability of
 observing event \(B\) with or without event \(A\).
 
-In our our case, instead of events, we want to formulate the theorem with parameters
-\(\Theta \) and the data \(D\), so that we get an estimate the posterior
+In our case, instead of events, we want to formulate the theorem with parameters
+\(\Theta \) and the data \(D\), so that we get an estimate of the posterior
 probability (or likelihood in case of continuous parameter values) of our
 parameters having certain values:
 
@@ -613,27 +612,26 @@ the given treatment and a random error \(\epsilon \) at time \(t\):
         y_t = \mu_t + \epsilon_t,
     \end{equation}
 \end{def}where \(\epsilon_{t} \sim N(0,\sigma^2)\). In this case when we want to estimate the parameters of the effects of the
-treatments \(\mu_m\). For simplicity lets assume that only one treatment was
+treatments \(\mu_m\). For simplicity let's assume that only one treatment was
 given so \(\mu_t\) is constant. Let's refer to this treatment effect simply as
 \(\mu \). According to our model single observations follow a normal
 distribution defined by constant \(\mu \) and the error term \(\epsilon_t \). As
 our model assumes that the observations \(y_t\) are independent (no
-autocorrelation included in the model) individual observations are defined as
-\(y_t \sim N(\mu,\sigma^2) \) and the likelihood term in the bayesian formula is
+autocorrelation included in the model) individual observations follow a normal
+distribution \(y_t \sim N(\mu,\sigma^2) \) and the likelihood term in the bayesian formula is
 a simple product of the probability density functions of a normal distribution
-with mean \(\mu \) and variance \(\sigma^2 \) that the observations are
-independent:
+with mean \(\mu \) and variance \(\sigma^2 \):
 
 \begin{def}\label{}
     \begin{equation}\label{}
         P(Y|\mu, \sigma)
         =
-        \prod_{Y}
+        \prod_{t=1}^{n}
         \frac{1}
         {{\sqrt {2\pi \sigma^2} }}
         \exp{ \left \{ \frac{-(y_t-\mu)^2} {2\sigma^2} \right \} },
     \end{equation}
-\end{def}where \(Y\) represents all the observations.
+\end{def}
 
 To avoid the complexity of dealing with multiple unknown variables we assume
 that \(\sigma \) is known. We will later come back to the case of multiple
@@ -663,7 +661,7 @@ the data we observed over possible values of our unknown parameter \(\int
 P(Y|\mu,\sigma^2)P(\mu) d\mu \), we can see that as we integrate over all the possible
 values of \(\mu \) and \(\sigma^2\) is known, this term is constant. This means that the marginal likelihood does
 not affect the shape of the posterior distribution, So the shape of posterior
-distribution is defined by just by the likelihood and the prior \(P(\mu|Y)
+distribution is defined just by the likelihood and the prior \(P(\mu|Y)
 \propto P(Y|\mu, \sigma^2)P(\mu) \). With some arithmetic manipulation we can
 see that the posterior probability is actually a normal distribution with mean
 \(\lambda_1 = \delta_1^2 \left( \lambda_0 \delta_0^{-2} + \sum_{t=1}^{n} y_t \sigma^{-2}
@@ -829,21 +827,21 @@ to go beyond arithmetic methods and solve the problem algorithmically.
 
 Although the Bayes formula is conceptually simple, when utilizing
 it we run into two big difficulties. First is the fact that
-probability distributions of the prior, the likelihood or their product
-are often not well-defined distributions with known properties. This can make the
+probability distributions of the likelihood (likelihood times prior) are often not
+well-defined distributions with known properties. This makes the
 integral in the marginal likelihood impossible to solve analytically as we did
 above. With discrete distributions, we can circumvent the problem by just counting the
 likelihood times prior for every value combination and then obtaining the posterior
 probabilities by dividing each of these values with their combined sum. Unfortunately,
-even here this becomes impractical quickly when the number of parameters combinations grows
+even here this becomes quickly impractical when the number of parameter combinations grows.
 To be able to use the Bayes formula outside a narrow field of application we need to be able to solve the
 problem of the marginal likelihood. The second problem is how we should define our priors.
 If we have prior knowledge, we need to be able to
-formulate our beliefs in a precise mathematic form and even when we don't have prior knowledge we still
+formulate our beliefs in a precise mathematic form. Even when we don't have prior knowledge we still
 need to come up with a prior, but in this case, it has to be defined so that it has
 minimal effects on the posterior distribution. When using informative priors we have to
-ask ourselves are these truly justified and with uninformative priors we have to deal
-with fact that what prior is truly uninformative is often not straightforward.
+ask ourselves if are these truly justified and with uninformative priors we have to deal
+with fact that determining what prior is truly uninformative is often not straightforward.
 
 \subsection{Dealing with the Marginal Likelihood}\label{marginallikehoodproblems}
 
@@ -864,9 +862,9 @@ The conjugate function method makes the denominator analytically solvable, but i
 is in practice very limiting. First, we need to restrict ourselves when
 modelling to only use models that create a suitable likelihood function with an existing
 conjugate prior. Second, it limits our options in defining our prior
-beliefs as we have to be able to express them in the form of the conjugate function. To
-be able to conduct Bayesian inference in cases where can't conform to these demands we need
-to turn from analytic to algorithmic solutions.
+beliefs as we have to be able to express them in the form of a conjugate distribution. To
+be able to conduct Bayesian inference in cases where we can't conform to these demands we need
+to turn to algorithmic solutions.
 
 The basis for all algorithmic solutions to the problem is the fact that,
 as the marginal likelihood is calculated over all possible parameter values, it is
@@ -889,12 +887,12 @@ throws we get a 6. Doing this kind of sampling would be easy if the distribution
 recognizable shape like a normal distribution, but in this case, we could already calculate an analytical
 solution. The real problem is, how can we get a representative sample from an arbitrary
 distribution. The general outline for the group of algorithms trying to solve this problem called
-Monte Carlo Markov Chain algorithms (MCMC) goes as follows:
+Monte Carlo Markov Chain (MCMC) goes as follows:
 
 \begin{enumerate}
     \item Pick a set of values for our parameters as our starting position in
           the parameter space. The starting location has to be a plausible set
-          of values. As we can know that
+          of values. As we know that
           \(P(D|\Theta)P(\Theta)\) has the same shape as our posterior, if
           the value of this function is zero when we put our set of
           parameter values in it, these values are impossible and should not be
@@ -910,9 +908,9 @@ Monte Carlo Markov Chain algorithms (MCMC) goes as follows:
               \end{equation*}
           \end{def}
 
-          In other words, if the value calculated with the proposed parameter
+          In other words, if the likelihood times priors calculated with the proposed parameter
           value set is higher than the value for the current set, we always move
-          to the new proposed location, and if the value
+          to the new proposed location and if the value
           is lower we move there with a probability defined by the ratio of the
           two values.
     \item Generate a random number between 0 and 1 and move to the proposed
@@ -924,7 +922,7 @@ Monte Carlo Markov Chain algorithms (MCMC) goes as follows:
 
 \end{enumerate}
 
-After a repeat this process multiple times we will end up with a list of values,
+After repeating this process multiple times we will end up with a list of values,
 that are a sample of the distribution defined by the prior time
 likelihood. With enough samples these values give us a good estimate of the entire
 posterior distribution.
@@ -968,31 +966,33 @@ print(f"probability A: {prob_a} \%, probability B: {prob_b} \%")
 \stdoutpythontex
 \bigskip
 
-This logic extends to the case when we have
-continuous values and also the case where we have multiple parameters. The formal proof
-of this process is somewhat involved so we will skip it here, but interested readers are
-advised to check chapter 7 in John Kruschke's Doing Bayesian Data Analysis\ \cite{kruschke}.
+This logic extends to the case where we have
+continuous values and also the case with multiple parameters. The formal proof
+of this process is somewhat involved so we will skip it here and interested readers are
+advised to check Chapter 7 in John Kruschke's Doing Bayesian Data Analysis\ \cite{kruschke}.
 
 The second critical part of the algorithm is step 2 where we randomly create a new
 position in the distribution where we will consider to move. In principal any kind of
-random value picker works here and we will get a proper sample eventually. The problem is
+random value picker works here as long as the it still possible to cover the whole
+posterior distribution with sequential steps. The problem is
 that with a bad algorithm this could take a long time. What we would want to have is a
-way to create proposed steps that are rejected as rarely as possible and that the
+way to create proposed steps that are rejected as rarely as possible and where the
 jump from one value to another is as big as possible. These goals are in
 conflict, so the algorithm has to find some optimal balance between them.
 Having less rejection and taking bigger steps both lead to lower the autocorrelation
 between consecutive samples which in turn leads to more efficient estimates by increasing the
-effective sample size. There are different ways to calculate this effective sample size, but roughly
+effective sample size. There are different ways to calculate this metric, but roughly
 these all measure the number of steps divided by the autocorrelation between the steps.
-Why this is an important can be intuited by thinking of comparison between a truly
+Why this is important can be intuited by thinking of comparison between a truly
 random sample from a distribution and a sample where sampled values are only accepted if they are within a certain distance of the
 previous sampled value or we take the same value again. It is clear that values created
 with the former method are much better for
 estimating the parameters of the distribution as the value from the later method might
 end up bunched in only a small part of the distribution if the amount of samples is not
-high enough.
+high enough. But the larger the value range for the next value is (i.e. proposed step
+size), the closer the limited sampling method will match the truly random samples.
 
-Some of the simpler algorithms used for solving the problem of step proposal are still easily explainable, but
+The simpler algorithms used for solving the problem of step proposal are still easily explainable, but
 this part of the algorithm has seen some major improvement in recent years and the
 current widely used solutions are technically much too complex to cover here. The
 current ``industry standard'' is an algorithm called no-u-turn-Sampler (NUTS)\ \cite{nuts}
@@ -1009,14 +1009,14 @@ picked. Understanding how this works in practice is not an exercise for the fain
     \includegraphics{trace_draw_example.pdf}
 \end{figure}
 
-To make it concrete how modern clever modern value proposal algorithms are we
-have we have visualized the first 100 steps taken by the aforementioned NUTS sampler
+To make it concrete how modern modern value proposal algorithms work, we
+have visualized the first 100 steps taken by the aforementioned NUTS sampler
 when estimating two parameters (figure\ \ref{traceexample}). The starting value is
 marked with a black X and the markers turn from red to yellow as the chain progresses.
 We can see that there seems to be a clear correlation between the parameters and our
 sample is already reflecting that. If we look at the sizes the steps that the algorithm
 takes, we can see that these are larger in the less probable parts of the distribution.
-This means that the proposed step also depends on where on distribution the current position
+This means that the proposed step size also depends on where on distribution the current position
 is located. With this intelligent sampling method, the chain traverses more
 quickly in distribution and makes the sampling much more efficient than with older more
 simple methods.
@@ -1027,10 +1027,10 @@ For the Bayesian formula to work we have to define a prior and this can be
 trickier than it seems at first glance. Ideally the prior would codify our prior
 beliefs and knowledge, but trying to rigorously codify everything we
 know is often impractical, because of how complex this gets and we should aim lower as we are
-anyway working with a model that is a simplified representation of reality\ \cite{gelman}. Even if
+anyway working with a model that should be a simplified representation of reality\ \cite{gelman}. Even if
 we aim for a more limited goal, codifying our existing knowledge and beliefs
 to mathematic formulas can be a tricky business. It gets even more
-tricky when we consider that we are doing the study not just to convince ourselves
+tricky when we consider that we are often doing the study not just to convince ourselves
 but also other people and we should try to capture the beliefs of our target audience.
 Unless this target audience is easily available for questions and is highly mathematically minded,
 this leads to multiple layers of uncertainty as we try to guess what others
@@ -1040,15 +1040,15 @@ To avoid this hurdle the other option is to try to define some non-informative
 priors that ``let the data speak for itself'', but this approach also has
 problems. Firstly, defining priors that have no effects on the posterior can be mathematically
 very difficult when we move beyond simple models and if we would need
-to invest a lot of time finding these priors we should instead probably spend this time
+to invest a lot of time finding these priors, we should instead probably spend this time
 to define proper informed priors. Second, non-informative priors do not always
-seem so non-informative, when we actually know something about the issue.
+seem so non-informative when we actually know something about the issue.
 Consider a case where are trying to predict if a patient has a rare disease
-and we assign a uniform prior from 0 to 1 as this seems non-informative. This
+and we assign a uniform prior from 0 to 1 as this seems maximally non-informative. This
 prior will have the effect of moving the posteriors towards the
-possibility of the patient having the disease. So if we definitely know
+possibility of the patient having the disease and the results could be nonsensical. So if we definitely know
 something about the phenomenon, a non-informative prior can work against these
-beliefs and give nonsensical results.\ \cite{gelman}
+beliefs and give weird results.\ \cite{gelman}
 
 Considered more broadly, chasing after truly non-informative prior is also
 somewhat of a fool's errand if the data really has ``something to say''.
@@ -1068,8 +1068,8 @@ priors and then broaden these to take into account the uncertainty of
 how applicable our priors knowledge is to the question at hand. A model defined in this
 way should always be considered as provisional and we should pay close attention to the
 reasonability of the posterior estimates. If the estimates don't make sense, this means
-that we need to add stronger prior information, which we must hold to be able to say
-that posterior is not making sense. This process should be repeated until we end up with
+that we need to add stronger prior information, which we must hold as we would not be
+able to evaluate the prior like this. This process should be repeated until we end up with
 a model with just enough prior information to produce reasonable estimates.
 
 Because of how complex defining priors can get, this problem can act as a limiter on
@@ -1084,12 +1084,12 @@ what makes sense to us and our target audience.
 
 As was mentioned before, both frequentist and Bayesian inference can be used to
 estimate the parameter values of the types of models we described
-in chapter\ \ref{modelling}. The choice between these two methods is not just a
+in Chapter\ \ref{modelling}. The choice between these two methods is not just a
 technical one as both come with different conceptions about the nature of probability
 and these have serious implications on how we should interpret the results and run the studies.
 Unfortunately for frequentist inference, its assumptions fit the reality of running
-N-of-1 trials poorly, and its results, can be hard to communicate to a lay
-audience (doctors and patients). Because of these issues, Bayesian inference
+N-of-1 trials poorly, and its results can be hard to communicate to a lay
+audience (in our case doctors and patients). Because of these issues, Bayesian inference
 can usually be recommended over frequentist inference when analyzing and
 communicating the results of N-of-1 studies, even though it comes it with its'
 own complexities that we previously went over.
@@ -1119,7 +1119,7 @@ kind of distribution should we compare our results against? The length of the tr
 seems to now hinge in some undefined way from the results of the first 10 coin tosses
 that made us decide to keep tossing the coin some more. For frequentist inference to
 work our experiment design has to be clearly defined beforehand and we cannot make
-unexpected changes to the experiment based on the data we have or any other factors.
+unexpected changes to the experiment based on the data we get or any other factors.
 
 This demand for predefined experiment designs is problematic in N-of-1 studies
 used in a clinical setting. There might be cases when some treatment clearly seems
@@ -1130,13 +1130,13 @@ rigour. There might also be a situation where a couple of treatments seem
 promising, but the rest seem completely useless, and we would want to change the
 design of the experiment on the fly to focus just on the promising treatments.
 These changes to the predefined experimental design will brake frequentist
-assumptions and make accurate inferences with this method impossible.
+assumptions and make getting non-biased inferences with this method impossible.
 
 The option to stop the study or change the experimental design can be
 incorporated to frequentist inference if we predefine the rules for when to
 stop the experiment and under what circumstances the design should be altered
 and how. Then we need to take these rules into account when performing the estimation
-calculations which adds complexity is but is still possible. The problem is that it is
+calculations which adds complexity but is still possible. The problem is that it is
 questionable if we can stick to these rules because of
 the human element: we would need to convince the patient that she should
 stop the experiment only in these predefined circumstances. This seems quite
@@ -1152,18 +1152,18 @@ the current experiment. The changes to the experimental design modify what data
 we get out of it, but don't break any assumptions of Bayesian inference. This
 adaptability is a big benefit when applying N-of-1 designs in a clinical setting, as
 the unpredictable nature of the patients and treatment effects and all the other
-practical considerations that could force changes to our experiment design don't
+practical considerations that force changes to our experiment design don't
 break the assumptions of the inference method.
 
 \subsection{Richness and Communicability of the Estimates}\label{whybayes}
 
-In N-of-1 studies, much consideration has to be given to the communication of the
-results, both to the patient and the clinician administering the experiment. We
+In N-of-1 studies much consideration has to be given to the communication of the
+results both to the patient and the clinician administering the experiment. We
 would like to portray not just the estimates of the effects of the treatments,
 but also the uncertainty associated with these estimates. In frequentist
 inference, we communicate these with maximum likelihood estimates, confidence
-intervals and p-values. Maximum likelihood estimates are point estimates and perfectly
-understandable, but don't communicate any uncertainty by themselves. With confidence
+intervals and p-values. Maximum likelihood estimates are point estimates of the most
+likely value and easily understandable, but don't communicate any uncertainty by themselves. With confidence
 intervals, we can communicate uncertainty but don't actually mark the most likely
 values of the estimate. A 95 \% confidence interval is often interpreted wrongly
 as including the true value of the parameter with 95 \% change, but the real
@@ -1178,10 +1178,9 @@ are hard to grasp. The second frequentist tool for communicating uncertainty
 are p-values of hypothesis tests. We might define a null hypothesis that the
 parameters of the effects of different treatments are equal and calculate the
 likelihood to obtain the data or a more extreme version of it if this is indeed the
-case. This would give us a more easily communicable way to portray the probability
-to obtain the data if the null hypothesis is true. If the p-value is low we could
-say with confidence that there are real differences between the effectiveness of
-the treatments. The problem is that this actually gives us very little useful
+case. This would give us a more easily communicable way to portray the uncertainty
+associated with results. If the p-value is low we could say with confidence that there are
+real differences between the effectiveness of the treatments. The problem is that this actually gives us very little useful
 information, as we would also like to how big the differences in the treatments' effectiveness
 could realistically be.
 
@@ -1209,13 +1208,13 @@ fine, but one might wonder if these separate trials could somehow be combined. O
 course, we could pool the data and run a group-based
 analysis about what treatments seems to be the best in general, but there is a better
 way that keeps true to the goal of N-of-1 experiments of finding the best treatment for
-each individual patient by using hierarchical models. In these models the
+each individual patient by using Bayesian hierarchical models. In these models the
 patient-level parameters are connected by imaging them as coming from a higher level
 distribution. In the case of N-of-1 studies, we can think of a population-level distribution
 where the patient-level parameters are drawn from. This makes lots of sense as it is
 clear that, for example in the case of drug effectiveness, different people have different
-effects, but these effects follow a distribution so that very high or very low values are
-uncommon. In a sense having a common prior for
+effects, but these effects should follow some distribution with most people clustering around a
+shared mode. In a sense having a common prior for
 all patient-level parameters can already be thought as defining this population-level
 distribution, but the difference is that, whereas the prior
 is set in stone, the population-level
@@ -1224,9 +1223,10 @@ parameters with uncertainty included and thus it is possible that our beliefs (p
 estimates) about this distribution will be changed by the data. Just like in the case of
 informative shared prior,
 the estimates of this population-level distribution can draw the
-patient-level estimates closer together, but as the distribution is itself is now
-estimated from the data, the strength of this effect depends on how similar the
-observations from different patients are.
+patient-level estimates closer together by making values from the distribution centre less
+likely, but now the distribution is itself
+estimated from the data and the strength of this effect depends on how similar the
+observations from different and patients really are.
 
 \section{How to Make a Model Hierarchical?}
 
@@ -1234,7 +1234,7 @@ The practicalities of hierarchical models are easier to explain if we conceptual
 Bayesian
 models as trees. In the top of the tree we have prior values that define the shape of
 prior distribution next level down, from these distributions come the parameters that
-define the data creation process at the bottom of the tree. Lets take an example
+define the data creation process at the bottom of the tree. Let's take an example
 where we have \(p\) patients with \(n\) measurements and, to make things simple, just
 one treatment option. We can model this by a simple two-parameter model:
 
@@ -1244,7 +1244,7 @@ one treatment option. We can model this by a simple two-parameter model:
     \end{equation}
 \end{def}where \(\theta_j\) represents the effect of the treatment for patient $j$ and
 \(\epsilon_{tj} \sim N(0,\tau_j^2)\) is the error term for patient $j$ at observation
-taken on time $t$. Now lets look at this model as a tree graph:
+taken on time $t$. Now let's look at this model as a tree graph:
 
 \bigskip
 \begin{equation}\label{unpooledmodelexampletree}
@@ -1288,12 +1288,12 @@ recommended when we have some prior information is available\ \cite{varianceprio
 
 Even though in this model each patient shares the same prior parameters, the estimates of the patient-level parameters
 are only affected by the data of the patient in question as the shared prior parameter values are set
-beforehand and are not affected by the data. You can think this as a model where we have
+beforehand and are not affected by the data. You can think this as a model in which we have
 perfect knowledge of the population-level distribution where the patient-level
 parameters are drawn from and we describe this information with our priors.
 To introduce flexibility about the population-level we need to
 change the model so that the current prior-level is also being estimated based on
-the data. We can accomplish this by changing the priors from a set of values to distributions
+the data. We can accomplish this by changing the previous prior level from a set of values to distributions
 that are themselves defined by a new higher level prior values:
 
 \bigskip
@@ -1332,7 +1332,7 @@ that are themselves defined by a new higher level prior values:
 
 Now instead of drawing the treatment-related patient-level parameters straight from distributions defined
 by the priors, these are drawn from the population-level distributions. As the
-parameters of the population-level distributions are now not set in stone, they are
+parameters of the population-level distributions are now longer set in stone, they are
 estimated based on the data and this way data from one patient can affect the estimates
 of another patient by changing our beliefs of this shared layer.
 
@@ -1365,8 +1365,8 @@ shrinkage in hierarchical models causes lower-level parameters to shift toward t
 of the higher-level distribution. This does not mean that
 estimates are always just pulled closer together, because if the higher-level
 distribution has multiple modes, then the low-level parameter values cluster
-more tightly around these modes, which might pull some
-low-level parameter estimates apart instead of together. The greatest thing
+more tightly around these modes, which might push some
+low-level parameter estimates apart instead of pulling them together. The greatest thing
 is, that as we don't explicitly set the parameter values of the higher-level
 distributions, the amount of shrinkage is informed by the data so that
 similar observed data points from lower-level distributions lead to ``tighter''
@@ -1399,7 +1399,7 @@ probability of \(A\) on condition \(B\) is just the probability of \(A\) if \(A\
 \end{equation}
 \smallskip
 
-Now lets see what happens when we apply write are our previously defined hierarchical
+Now let's see what happens when we include are our previously defined hierarchical
 model\ \ref{hierarhicalmodelexampletree} in the Bayes formula\
 \ref{bayeswithparams} and apply these rules:
 
@@ -1444,7 +1444,7 @@ analysis of multiple N-of-1 trials, where we first analyze one trial separately 
 combine multiple trials by using a hierarchical model. For the analysis, we use Python and PyMC3 library\ \cite{pymc3} built
 for probabilistic programming. We will not go over each part of the code used, but focus only
 on the critical parts where we see how the principals we went over in the
-previous chapters look like when implemented in practice. For those who want to see the
+previous Chapters look like when implemented in practice. For those who want to see the
 full code, it is available from a GitHub repository\ \cite{github} with instructions on how
 to run it.
 
@@ -1462,11 +1462,11 @@ posteriors and see if this data looks like our original dataset.
 
 \section{Defining the Experiment}
 
-Lets first describe our experiment design, as this is critical for understanding
+Let's first describe our experiment design, as this is critical for understanding
 everything that comes later. Imagine that we have 6 patients that all suffer from the
 same medical condition to which there are two treatment options available (A and
 B). We know from the
-literature that there is clear patient-level variation in which treatment works better
+literature that there is lots of patient-level variation in which treatment works better
 so we decide to test this with N-of-1 trials. We know that both of the treatments act
 very fast and that there are no known problems with interaction effects between them.
 The state of the condition can also be easily measured at home so no visits to
@@ -1477,7 +1477,7 @@ worsening with or without the treatment and the treatment is more for slowing do
 disease and not curing it. Based on this information we come up with the following experiment design:
 
 \begin{itemize}
-    \item The trial will run for 4 weeks with 2 weeks on each treatment
+    \item The trial will run for 4 weeks with 2 weeks spent on each treatment
     \item Treatment periods will be one week long
     \item The week-long treatment periods will be organized into two blocks, each of
     containing one treatment period on treatment A and another on treatment B
@@ -1492,7 +1492,8 @@ disease and not curing it. Based on this information we come up with the followi
 
 \begin{figure}[H]
     \centering
-    \caption{Experiment Design for a Single Patient}\label{singlepatientexperimentdesign}
+    \caption{Experiment Design for a Single Patient Study}\label{singlepatientexperimentdesign}
+    \centering
     \includegraphics{design_for_simulated_experiment.pdf}
 \end{figure}
 
@@ -1503,7 +1504,7 @@ As there should not be any interaction effects between the treatments, the treat
 effect onset is immediate and there is no washout period, this is a fairly simple
 task. The benefit of having a relatively simple data generating process is that later it
 is easier to compare the estimated results from our models with the actual parameters
-values. We will not go over the code that creates the data in detail but concentrate on
+values. We will not go over the code used to create the data in detail but concentrate on
 the mathematical model that it is based on. The full code can be found in the GitHub repository
 \cite{github}. For simulating each observation at time \(t\) for patient \(j\) we use the following model:
 
@@ -1520,7 +1521,7 @@ condition. \(\epsilon_{tj} \sim N(0,\tau_j^2) \) is the error term at \(t\) and
 This data generating model has both a trend and a lag-1-autocorrelation. The trend we
 are going to be modelling later, but also modelling autocorrelation would make the model
 too complex for the limited amount observations we will be dealing with. This way the example tries to be more realistic
-by having the data generation function to be of such complexity that it cannot be
+by having the data generating function to be of such complexity that it cannot be
 fully modelled and some decisions have to be made on how to try to approximate
 the process with a simplified version of reality.
 
@@ -1649,15 +1650,15 @@ we should expect to get the same recommendation, but with more specificity.
     \includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{patient1_timeline.pdf}
 \end{figure}
 
-Normally before we would start with a more extensive exploration of the data, but as teaching preliminary analysis
+Normally we would start with a more extensive exploration of the data, but as teaching preliminary analysis
 is not the focus here and we have created the data ourself and so know exactly what kind
 of distribution it follows and that there are no missing values or outliers, we will
-skip this step here. For analyzing any real-world data this proper data exploration would be \emph{mandatory}.
+skip this step here. For analyzing any real-world data, proper data exploration would be \emph{mandatory}.
 
 \subsection{Defining the Model}
 
-We use a model with the two treatment parameters and error term and a trend\ \ref{singlepatientmodel}. We could
-start with a more simple model without the trend, but we know that there is a trend in
+In our model we include the two treatment parameters, an error term and a trend\ (\ref{singlepatientmodel}). We could
+start with a simpler model without the trend, but we know that there is a trend in
 the data and we don't have the space to go deeper into model comparisons, so we start
 with this more complicated model:
 
@@ -1676,8 +1677,8 @@ This means that our likelihood function will have to be a bit special as using a
 normal distribution will not do. We will see that this will cause us some headaches
 later when we implement the model in PyMC3.
 
-Next, we go to choose the prior distributions for our model. We choose
-normal distributions for the treatment effect parameters and the trend as it makes sense to think
+Next, we go to choose the prior distributions for our model. We choose a
+normal distributions for the treatment effects and the trend as it makes sense to think
 that these would depend on multiple independent biological and social
 factors and the central limit theorem tells us the that
 the parameters should then be normally distributed. For the variance of the error
@@ -1719,7 +1720,7 @@ prior of variance when we have some prior information\ \cite{variancepriors}.
 Now that we have our model defined we should think about what kind of values we should
 give to our prior parameters. Let's say there exists a prior study with 25 participants
 that evaluated the same treatments. The obvious priors for the treatment effects means
-are the means calculated from this previous study, this number being 10 for both
+are the means calculated from this previous study, this number being (hypothetically) 10 for both
 treatments. The same method can be applied to get the prior for the mean of the trend. For
 the standard deviations of treatment effects and trend, we can use the standard deviation
 of the patient treatment and trend means for the patients from the existing study. As we
@@ -1731,7 +1732,7 @@ distribution is the median of the distribution, we can use the median of
 the standard deviation of the existing patient-level measurements after a similar model that we
 are using is fitted to the data. Once again we should broaden this number to reflect our uncertainty of the
 applicability of the prior studies, so we double this number from 0.5 to 1.
-The set prior values can be seen in table\ \ref{singlelpatientmodelpriorvalues}.
+The chosen prior values can be seen in table\ \ref{singlelpatientmodelpriorvalues}.
 
 \begin{table}[H]
     \caption{Single Patient Model Prior Values}\label{singlelpatientmodelpriorvalues}
@@ -1759,8 +1760,7 @@ implementing the approximation method
 ourself. But now that we have entered the territory of algorithmic solutions, we have
 introduced a new hurdle, namely checking that the algorithm works for our
 model and gives us good approximations. On top of this, we should check that our model is a good
-approximation of reality. We will go over how these problems manifest themselves and
-how we can deal with them when these problems pop up, so lets us just jump in and
+approximation of reality. We will go over how  we can deal with them when they pop up, so let's just jump in and
 implement the model in PyMC3 and afterwards walk through what the code is
 doing line by line\footnote{The code snippets shown are a
 slight simplification of the actual code that was used. This does not mean
@@ -1883,12 +1883,11 @@ print(measurements_df.head(10).to_latex(index=False))
 \bigskip
 
 All columns except the last one are index columns. As is the standard in Python, everything
-zero-indexed. The first column indexes the patient (0-5), second the
-measurement (0-27), third the treatment period (0-3), fourth the block (0-1) and fifth
-and sixth which treatment was applied during the particular measurement (0-1). The last
+zero-indexed. The first column indexes the patient (0--5), second the
+measurement (0-27), third the treatment period (0--3), fourth the block (0--1) and fifth
+and sixth which treatment was applied during the particular measurement (0--1). The last
 column contains the values of the measurements. This format was chosen just for
-convenience as PyMC3 does not require any particular format from the
-data as you can feed the right values into
+convenience as PyMC3 does not require any particular format as long as you can feed the right values into
 the right places in the model definition. Also using the pandas package to handle the
 data as a dataframe is not necessary, but is very convenient.
 
@@ -1932,8 +1931,8 @@ with pm.Model() as single_patient_model:
 
 PyMC3 models are usually defined within the Python context manager (``with'' statements).
 This is not necessary but makes the model definition much cleaner as all parts
-defined within the context (indented parts of the case), are automatically associated
-with this model without the need to manually define this.
+defined within the context (indented parts of the code), are automatically associated
+with the model without the need to manually define this.
 
 \subsubsection*{Part 3: Defining the Priors}
 
@@ -1952,15 +1951,15 @@ for the variance of the error term \(\gamma \) we use a half-Cauchy. For the hal
 distribution we don't need to define the location term as it is by default zero.
 Something to note here is that the PyMC3 normal distribution sigma
 parameter takes in the standard deviation and not the variance. As all the distributions
-that we are using here are well common and well defined, we can find functions implementing
-them already built-in PyMC3. It is also possible to define completely custom
+that we are using here are common and well defined, we can find inbuilt functions implementing
+them already in PyMC3. It is also possible to define completely custom
 distributions, but unfortunately this is quite complex, as you don't just have to worry
-about the math part, but also all you have to implement all the helper methods that PyMC3
-relies on when making the calculations\footnote{Because of the complexity of defining
+about the mathematical part, but also all you have to implement all the helper methods that PyMC3
+relies on\footnote{Because of the complexity of defining
 custom distributions the author would recommend using the competing PyStan package in
 cases where inbuilt distributions don't exist. Although Stan requires you to write
-model definition with its own language, this hurdle is worth it most some cases as you can focus
-more the mathematic without need to consider replicating inbuilt helper methods}.
+model definition with its own language, this hurdle is worth it in most some cases as you can focus
+more on the mathematical side without the need to consider replicating poorly documented helper methods}.
 
 \subsubsection*{Part 4: Defining the Likelihood}
 
@@ -2004,12 +2003,12 @@ would not work. In this case, we would have to implement the likelihood function
 ourselves.
 
 One technical detail to note here is that even though we are using a multivariate normal
-distribution, we still use the same PyMC3 function for normal distribution and just give
+distribution we still use the same PyMC3 function for normal distribution and just give
 it a vector of means that matches the number of our observations. This strategy works
 with all the inbuilt PyMC3 distributions: you can either have them use a single
 parameter value or a vector of values matching the dimensions of the data and PyMC3 will automatically
 change from using a single-dimensional distribution with multiple observations to
-multidimensional distribution with one observation vector.
+multidimensional distribution with one observation.
 
 \subsubsection*{Part 5: Defining the Parameter Comparison}
 
@@ -2025,10 +2024,11 @@ As the estimate we are most interested is not any individual parameter, but the
 difference between the two treatment parameters, we have to add this comparison separately.
 We can do this before or after running our model, but here we have decided to do it
 beforehand. As the difference is fully determined by the values of the treatment
-parameters and not random, when conditioning on these values, we have to use PyMC3s
+parameters we have to use PyMC3s
 \pyv{pm.deterministic} function and calculate the posterior
 by simply subtracting the value of treatment 2 parameter value from treatment 1
-parameter value.
+parameter value after sample from the posterior. This makes sure that the possible
+dependencies between these parameters are taken into account.
 
 \subsubsection*{Part 6: Running the Model}
 
@@ -2055,14 +2055,13 @@ we should stick with the default options. The three parameters that we have to m
 
 The total steps taken by each chain is draw+tune. The reason for the tuning steps is
 that the starting position of the chain is probably biased. We would want the starting
-position to be a random sample from the posterior so that it could be considered a true
-sample. We can do this by letting the chain first take
+position to be equivalent to a random sample from the posterior. We can do this by letting the chain first take
 a number of steps and as its moves through the posterior its location distribution will start to
 reflect the actual posterior. If we would not have the tuning steps it would be possible
-that the chain starts in a weird position and the first steps it takes don't reflect the
+to have the chain starts in a weird position and the first steps it takes don't reflect the
 posterior as it might have to make lots of moves in a certain direction to get to the
 representative parts of the distribution. In principle, we could use the tuning steps
-also for the calculation as long as we have enough steps as the product would
+for the calculation as long as we have enough steps as the product would
 still eventually converge to the same distribution, but it is more efficient to just drop these
 values so that we don't have to add more steps to compensate the possible bias introduced by
 them. The more draws and tuning steps we take the better the estimation will be, but the
@@ -2075,7 +2074,7 @@ model.
 
 As modern CPUs have usually multiple cores, we can speed up the calculation by running
 multiple chains in parallel. Each chain is independent of each other and will
-take the same amount of draws and tuning steps. As the chains can runs in parallel, having
+take the same amount of draws and tuning steps. As the chains can run in parallel, having
 multiple chains running can dramatically speed up our estimation. The total number of steps that
 the posterior will be calculated with is the combined draws (not tuning steps) of the
 chains. So in our case, we will use 3 cores and have 3 chains (running this on a 4 core
@@ -2096,7 +2095,7 @@ CPU so we will leave 1 core free for other tasks), these chains will make in tot
 
 Now that we have run the model we need to evaluate if the algorithm did a good job with
 the estimation. We can get a sense of this by looking at diagnostic plots and metrics.
-Lets first look at the visualizations of the chain steps called trace plots:
+Let's first look at the visualizations of the chain steps called traceplots:
 
 \begin{figure}[H]
     \caption{Single Patient Traceplots}\label{traceplots}
@@ -2105,7 +2104,7 @@ Lets first look at the visualizations of the chain steps called trace plots:
 
 On the right side in figure\ \ref{traceplots} we can see the timeline of the values of the
 four parameters in the steps taken by each of our
-chains (remember from chapter\ \ref{bayesinferencechallenges} that
+chains (remember from Chapter\ \ref{bayesinferencechallenges} that
 each chain always evaluates all parameters). These are just the steps used for the
 posterior estimation and don't include the
 tuning steps. Each chain is portrayed in a different colour. What we want to see
@@ -2175,8 +2174,8 @@ also make the initial movements of the chain better, decreasing the time that th
 need to converge to the posterior distribution. We could also try to increase the
 parameter \pyv{target_accept} that defines the target acceptance rate for the steps
 that the chains take. Increasing this value from the default 0.8 to 0.9 or 0.95 makes the
-steps smaller and increases autocorrelation, but lessens the change that chain gets
-stuck. If this does not help we
+steps smaller and increases autocorrelation, but lessens the change that chains get
+stuck. If this does not help, we
 can think about reparametrizing our model. We could change the distributions and prior
 values used, simplify our model by getting rid of possible unimportant variables and making
 some variables deterministic by estimating their value straight from the data (e.g.
@@ -2217,12 +2216,12 @@ with their posterior mean and highest posterior density interval (HPD) for appro
 95 \% standard is arbitrary.}. We can see that even though the posterior means between
 the two treatment options are clearly different, there is some overlap. When
 trying to estimate the difference of the parameters we should not trust the posteriors of
-the individual parameters, as this does not take into account the possible correlations
-between these. For this reason, we have defined the difference between these two
-parameters and can use this to give us the result we are interested in. We can see
-that as the mean is positive and the HPD does not include zero, so we can be quite certain that
+the individual parameters, as this does not take into account the possible depencies
+between these. For this reason, we defined the difference between these two
+parameters as a separate deterministic parameter and can now use it to give us the result we are interested in. We can see
+that for this difference the mean is positive and the HPD does not include zero, so we can be quite certain that
 treatment A is a worse option for this patient than treatment B, with the likely values of
-the difference falling between 0.3 and 0.8.
+the difference falling roughly between 0.3 and 0.8.
 
 \subsubsection*{Part 9: Checking Model Fit with Posterior Sampling}
 
@@ -2241,17 +2240,15 @@ the difference falling between 0.3 and 0.8.
 \end{pyverbatim}
 \smallskip
 
-Even though we already checked that the estimation seems to be working correctly and saw
-that the posterior estimates favour treatment option B for this patient, there is
-still one important thing that we should check before announcing our results: we should
+There is still one important thing that we should check before announcing our results: we should
 make sure that our model is a good fit for our data. Even if we have precise
-results, if our model does a poor job at reflecting the reality, we should not get too excited.
-
+results, if our model does a poor job at reflecting the reality, we should not get too
+excited.
 Checking model fit for Bayesian models can be done with posterior sampling. We start by generating samples from
-the posterior distributions (in our case 500 samples) and for each of these samples, we create a simulated dataset based
+the posterior distributions and for each of these samples, we create a simulated dataset based
 on the chosen parameter values that replicate the experiment. Then we compare these
 simulated datasets to the actual data. What we want to see is that actual data looks
-like a typical case for a simulated dataset.
+like a typical simulated dataset.
 
 The logic behind this can be appreciated by thinking of a comparison between a case
 where the real data is created with a mean and a strong trend, but our model only includes a
@@ -2269,8 +2266,8 @@ the data created based on its estimates should be hard to distinguish from the r
 data, with little or no systematic errors\footnote{Of course this might not be true if the
 real data is a true outlier.}.
 
-PyMC3 has an inbuilt method for taking the posterior samples and we can use each of
-these samples. The function needs the original model so we use it in the context manager
+PyMC3 has an inbuilt method for taking the posterior samples. This function needs access
+to the original model so we use it in the context manager
 to give it access to this. With the simulated samples, we can recreate a timeline of
 measurements and see how well the simulated timelines match with the real data.
 This can be seen in figure\ \ref{singlepatientposteriortimeline}.
@@ -2293,10 +2290,14 @@ calculates from each posterior sample the mean of the measurements under each tr
 these means. It then plots the distribution of these values
 against the values calculated from the
 original data. For the difference between the means, it also plots the actual
-difference of the true parameters. Normally we would not know
-this true value, but in this case, we do as we generated the data ourselves and have
-access to these parameters. This makes it possible to see how accurate the model really
-is. The graphs created by this function can be seen in figure\ \ref{singlepatientposteriorsampling}.
+difference of the true parameters making it possible to see how accurate the model really
+is. The graphs created by this function can be seen in figure\
+\ref{singlepatientposteriorsampling}.
+We see that the distribution of the mean treatment effectiveness calculated from the
+posterior samples matches nicely with the actual mean of the data. There is also a good
+match when comparing the true difference in the parameter values with the distribution of
+the difference in the simulated datasets. This indicated that our
+model seems to be a good approximation of reality.
 
 \bigskip
 \begin{figure}[H]
@@ -2306,18 +2307,12 @@ is. The graphs created by this function can be seen in figure\ \ref{singlepatien
 \end{figure}
 \bigskip
 
-We see that the distribution of the mean treatment effectiveness calculated from the
-posterior samples matches nicely with the actual mean of the data. There is also a good
-match when comparing the true difference in the parameter values with the distribution of
-the difference in the simulated datasets. This indicated that our
-model seems to be a good approximation of reality.
-
 \subsection{Results and Interpretation}
 
 We have now completed the single patient analysis after going through the following steps:
 
 \begin{enumerate}
-    \item Define the model
+    \item Define the model and the priors
     \item Implement the model in PyMC3
     \item Calculate the results
     \item Evaluate the estimation process
@@ -2431,13 +2426,13 @@ parameters of these distributions as we are now talking about a different level 
 analysis. For prior values for the means of the treatment effect and trend means
 we can obviously use the same means as in single patient model (10 for both treatments and 0.2 for
 trend), but standard deviation needs some consideration. As in this case we are talking about the
-distribution of means we should calculate the standard error from the existing patient
-data. With the estimate of the standard error of the mean being defined as
+distribution of means we should use the estimated standard error instead of standard
+deviation from the existing patient data. With the estimate of the standard error of the mean being defined as
 \( \sigma_{y} \approx \frac{s}{\sqrt{n}} \), we can just divide the standard deviations
 we calculated for the single patient model with 5 (\(\sqrt{25} = 5\)) and end up with
 prior values for the standard deviation of the treatment effect means being 0.6 and 0.16 for the trend. Remember that
 we already multiplied the actual calculated standard deviations by 2 in the single
-patient, so we are still adjusting for the uncertain representativeness of the
+patient model, so we are still adjusting for the uncertain representativeness of the
 existing data. The case for the priors of standard deviations for treatment effects and
 trends is interesting. Here can just use the standard deviations we calculated for
 the single patient model for the scale values. What this means in practice is that we expect the
@@ -2468,8 +2463,7 @@ our hierarchical model are summarized in table\ \ref{hierarchicalmodelpriorvalue
 Next, we move to implement our hierarchical model in PyMC3. As by now we are already
 familiar with the basics of PyMC3, we can skip explaining most of the code to focus
 just on the differences with the single patient model. The reader will quickly
-see that the model we have here seems to be a bit different from the one we defined
-above and we will give the reasoning behind this a lot of focus. Here is the full
+see that the model we have here is quite different and we will give the reasons behind this a lot of focus. Here is the full
 implementation, that we will afterwards break down piece by piece:
 
 \bigskip
@@ -2647,18 +2641,19 @@ change to our previously defined model, in practice the model is still the same 
 the changes are just made to ensure efficient sampling.
 
 The problem with hierarchical
-models, where standard deviation parameters are hierarchical, is that when the sampler is
-exploring the posterior distribution where the higher-level standard deviation values
+models where standard deviation parameters are hierarchical is that when the sampler is
+exploring the part of posterior distribution where the higher-level standard deviation values
 are close to zero the sampler can easily get stuck. This happens because
 when the population standard deviation is close to zero the patient level parameters
-have very tiny parameter space where the values are reasonable. This, in turn, will mean
+have very tiny parameter space where the values are reasonable as they have match almost
+perfectly with the population level values. This, in turn, will mean
 that most of the values suggested by the sampler in this space are highly improbable and
 most of the steps will not be accepted leaving the chain stuck in place and leading to
 unrepresentative samples. We can fix this by breaking the strong dependency of the
 parameters being estimated with using offsets. With this method, when the value of the
 population-level standard deviations are close to zero, the offset (unlike the
 patient-level parameter value) is not constrained to tight parameter space as because it is
-multiplied by the population-standard deviation and almost any value given to it is
+multiplied by the population-standard deviation and thus almost any value given to it is
 plausible as now it has minimal impact on the actual patient-level treatment effect.
 Now there is much less chance for the chains to get stuck and sampling is more
 efficient. Importantly this way of parameterizing the model has minimal impact on the end
@@ -2724,13 +2719,12 @@ want to use different standard deviations for different patients.
 \bigskip
 
 As our model is now much more complex than with the single patient model with much
-more parameters, we need to use more tuning and calculation steps. It turns out that this model is
-much harder to estimate and we have to bump the tuning steps from 600 to all the way to
+more parameters, we need to use more tuning and calculation steps. We have to bump the tuning steps from 600 to all the way to
 3000 and the calculation steps from 1000 to 3000. As we will see even this does not
 avoid all problems, but gives us a big enough effective sample size and ensures that
 chains will converge. To prevent the chains from getting stuck we also increase the target
 step acceptance probability \pyv{target_acceptance} from the default 80 \% to 95 \%.
-These forces the NUTS-sampler to take smaller steps, that makes the sampling less
+This forces the NUTS-sampler to take smaller steps, that makes the sampling less
 efficient, but will make it less likely that the chains will end up in a situation where
 they cannot move at all. With the high number of steps we are taking, the reduced
 efficiency should not be a problem. Just like in the single patient model we still use 3
@@ -2769,8 +2763,8 @@ model. In figure\ \ref{hierarchicalmodelpopulationtraceplots} we can see tracepl
 the 6 population-level parameters. Once again, we hope to see that the time series looks
 like noise and that the posterior distributions of the chains align nicely. Everything
 seems to be in order except that we have these black dashes at the bottom of the graphs.
-These mark the divergences of the chains. These mark cases where the chain finds itself
-in situation where it cannot adequately explore the posterior distribution. If we did not
+These mark the divergences of the chains. These mark parts where the chain finds itself
+stuck in one part of the distribution for unexpectedly long. If we did not
 parametrize our model with the offsets, we would have much more of these.
 
 \bigskip
@@ -2781,8 +2775,8 @@ parametrize our model with the offsets, we would have much more of these.
 \end{figure}
 \bigskip
 
-Next, we check the traceplots of the patient-level parameters
-(figure\ \ref{hierarchicalmodelpatienttraceplots}). These look a bit different now as the patient
+Next, we check the traceplots of the patient-level parameters in
+figure\ \ref{hierarchicalmodelpatienttraceplots}. These look a bit different now as the patient
 level parameters are multidimensional with every patient having their own
 parameter. This makes the right side of the plot hard to interpret, but the left side is
 still intelligible and we see that the posteriors of the three chain align even though
@@ -2844,7 +2838,7 @@ an equilibrium distribution.
 \smallskip
 
 After checking the diagnostics, now it's time to see our results. As there are
-now so many parameters, we will only focus on the interesting ones. It's of course always of
+now so many parameters, we will only focus on the interesting ones. It's of course always
 advisable to check every parameter to make sure that the results seem realistic,
 but we skip this here for brevity and clarity.
 
@@ -2856,14 +2850,14 @@ model is working well. It is interesting to note that the
 posterior mean of the population-level treatment effects is not exactly the difference
 between the posterior means 0.4, but 0.531. This is caused by the correlations between
 the treatment mean posteriors. We also see that the 95 \% HPD for the difference does not include 0
-so, for this population, it seems that we can be quite certain that treatment B
-generally works better. Note though that this does not mean that we can say that it is highly
+so it seems that we can be quite certain that treatment B
+generally works better for this population. Note though that this does not mean that we can say that it is highly
 unlikely to see patients where treatment A is better because we are just looking at the
 distribution of mean and not the standard deviance. To understand how likely our model
 would say it is to find a patient with better efficiency with treatment A, we would need
 to calculate the probability for ``drawing'' this kind of patient from a normal
 distribution for each step of our chain using the value of the mean and variance in this
-step and then taking the average of these probabilities. With this method, we would
+step and then take the average of these probabilities. With this method, we would
 account for the combined uncertainty of both the mean and
 the standard deviance and their possible dependencies.
 
@@ -2880,7 +2874,7 @@ Now we turn to the patient-level estimates in figure\
 posterior estimates of the differences of the treatments as these estimates are our
 primary reason for conducting the study. We can see that for all patients
 the mean value is over 0 and also 0 is not included in the 95 \% HPD, meaning that for
-treatment B can be reliably recommended for all our patients.
+treatment B can be confidently recommended for all our patients.
 
 \bigskip
 \begin{figure}[H]
@@ -3006,11 +3000,11 @@ population-level posterior estimate of all the parameters.
 \bigskip
 
 The last question to consider is if the hierarchical model made our estimates more
-accurate. In one way we already saw this as the posterior distribution were made
+accurate. In one way we already saw this in figure \ref{modelcomparisonpatient} where the posterior distributions were made
 tighter for patient 2, reducing the uncertainty, but what we would want to know is if the
 estimates of the treatment effect difference are closer to the true difference of the
-parameters in the hierarchical model. For this purpose, we plotted in figure\
-\ref{modelaccuracycomparison} the means of posterior
+parameters in the hierarchical model. For this purpose, in figure\
+\ref{modelaccuracycomparison} we plot the means of posterior
 estimates of the treatment effect difference for the single patient and hierarchical models
 with true parameter differences by patient. We can see that the posterior means from the
 hierarchical models are generally shifted closer to the true value, but this is not true
@@ -3030,8 +3024,8 @@ the hierarchical model adjusts the estimate in the wrong direction.
 Disregarding cases like patient 4, is true that making the model hierarchical will always
 increase the accuracy of the model on average? Unfortunately, this is not so. Firstly our
 assumption about the hierarchical nature of the data might not be correct. Constructing
-a model that assumes that all patients are drawn from the same distribution, will run
-into problems if that assumption is not true and estimates will be adjusted towards
+a model that assumes that all patients are drawn from the same distribution, will cause
+problems if that assumption is not true and estimates of some patients get adjusted towards
 modes that are not representative of them. For the hierarchical model to work the
 assumptions baked into its structure have to be true, or at least be an accurate enough
 description of the messy reality we are trying to describe. The second thing that might make
@@ -3049,15 +3043,15 @@ By bringing the focus from the group-level analysis, used in random controlled t
 level, N-of-1 experiment designs can change treatment
 recommendations from one-size-fits-all to patient-specific and tailored for
 each unique patient. Although this method is not currently widely
-used, the combined forces of technological progress, that is
-making health tracking easier and cheaper, and changes in the world's disease burden towards
+used, the combined forces of technological progress, making
+health tracking easier and cheaper, and changes in the world's disease burden towards
 chronic illnesses that need long term management, will likely make this method much more
 popular in the future.
 
 The design of N-of-1 trials present challenges to statistical modelling, because
 of the pattern varying treatments and complex autocorrelation patterns. Although the complexity
 of the data might call for a complex model, the small amount of data created from N-of-1
-trials mean that it is important to keep the models only as complex as absolute
+trials mean that it is important to keep the models only as complex as absolutely
 necessary.
 
 When estimating the parameters of the models in N-of-1 trials the setting of their use
@@ -3074,14 +3068,14 @@ methods, they have their own unique challenges. Instead of relying on analytical
 solutions, there is often a need to use algorithmic approaches to get proper
 estimates for the parameters. The need to use priors also poses its own challenges as
 codifying our prior beliefs into mathematical formulas can be tricky and there is often a
-conflicting between the need to take into account prior information, but also let the data ``speak
+conflict between the need to take into account prior information, but also let the data ``speak
 for itself''.
 
 The unique selling point for Bayesian methods in N-of-1 studies is the possibility to
 make the models hierarchical and represent structures connecting different trials in the
 model. This allows intelligent pooling of the data as observations from one patient can
-affect the estimates for another patient, by changing our beliefs about the general
-pattern of the estimates between the patients. This method is superior to simple data pooling
+affect the estimates for another patient, by changing our estimates about the overarching
+patterns connecting the patients. This method is superior to simple data pooling
 as it stays true to goals of N-of-1 trials by allowing the estimates for individual
 patients to vary and only changing them when the data our prior beliefs indicate commonalities
 between the patients.
@@ -3095,8 +3089,8 @@ estimates. This is especially true in hierarchical models, but even single patie
 models sometimes need adjustments.
 
 Although this thesis tried to give a comprehensive starting point for applying Bayesian
-methods for analyzing N-of-1 studies, there are certain critical aspects that we had not
-time to cover. The most important of these is data exploration. When dealing with
+methods for analyzing N-of-1 studies, there are certain critical aspects that we did not
+have space to cover. The most important of these is data exploration. When dealing with
 real-life datasets, it's unwise to jump straight into modelling before one adequately
 understands the structure and patterns of the data and corrects for possible missing
 values and simple errors. For a good introduction to from a graphical perspective,
@@ -3104,99 +3098,102 @@ interested readers are encouraged to read Nathan Yau's
 ``Data points: visualization that means something''\cite{dataexploration}.
 The second topic we did not cover is the practice of model comparison. It is not often
 the case that we can immediately come up with a model that is a good approximation of
-the data creation process and often multiple models have to try. For a good
-introduction to this topic the author recommends chapter 10
+the data creation process and often multiple models have to be tried. For a good
+introduction to this topic the author recommends Chapter 10
 in John Kruschke's ``Doing Bayesian Data Analysis''\cite{kruschke}.
+\break
+\newline
+\emph{Good luck!}
 
 \addcontentsline{toc}{chapter}{Bibliography}
 
 \begin{thebibliography}{4}
+ 
+    \bibitem{offset}
+    Betancourt, Michael, Mark Girolami: Hamiltonian Monte Carlo for hierarchical models.
+    Current trends in Bayesian methodology with applications 79.30 2015;2-4.
 
-    \bibitem{nofone}
-    Richard L. Kravitz, Naihua Duan, Sunita Vohra, Jiang Li: Introduction to to
-    N-of-1 Trials: Indications and Barriers in Design and Implementation of
-    N-of-1 Trials: A User's Guide, AHRQ, 2014.
+    \bibitem{rhatrule}
+    Gabry, Jonah, Ben Goodrich: \\
+    https://cran.r-project.org/web/packages/rstanarm/vignettes/rstanarm.html, 2020.
+   
+    \bibitem{gelman}
+    Gelman, Andrew, John Carlin, Hal Stern, David Dunson, Aki Vehtari, Donald B.
+    Rubin: Bayesian Data Analysis, CRC Press, 2013.
 
-    \bibitem{costs}
-    Wilson D. Pace, Elizabeth W. Staton, Eric B. Larson: Financing and Economics
-    of Conducting N-of-1 Trials in Design and Implementation of N-of-1 Trials: A
-    User's Guide, AHRQ, 2014.
-
-    \bibitem{stat}
-    Christopher H. Schmid, Naihua Duan: Statistical Design and Analytic
-    Considerations in Design and Implementation of N-of-1 Trials: A User's
-    Guide, AHRQ, 2014.
-
+    \bibitem{variancepriors}
+    Gelman, Andrew: Prior distributions for variance parameters in hierarchical models
+    (comment on article by Browne and Draper). Bayesian Analysis 1.3, 2006;515-534.
+    
     \bibitem{clinbayes}
-    Christoper J. Gill, Lora Savin, Christopher H. Schmid: Why clinicians are
+    Gill, Christoper, Lora Savin, Christopher H. Schmid: Why clinicians are
     natural Bayesians, British Medical Journal 2005;330(7499):1080-1083.
-
-    \bibitem{diseaseburden}
-    Colin D. Mathers, Dejan Loncar: Projections of global mortality and burden
-    of disease from 2002 to 2030, PLoS medicine 2016;3.11:e442.
-
+    
     \bibitem{cgm}
-    Irl B. Hirsch, et al.: Clinical application of emerging sensor technologies
+    Hirsch, Irl, et al.: Clinical application of emerging sensor technologies
     in diabetes management: consensus guidelines for continuous glucose
     monitoring (CGM). Diabetes Technology and Therapeutics 2018;10.4:232-246.
 
-    \bibitem{kruschke}
-    John K. Kruschke: Doing Bayesian Data Analysis: A Tutorial With R, JAGS, and Stan
-    (2nd), Academic Press, 2014.
-
-    \bibitem{gelman}
-    Andrew Gelman, John B. Carlin, Hal Stern, David Dunson, Aki Vehtari, Donald B.
-    Rubin: Bayesian Data Analysis, CRC Press, 2013
-
-    \bibitem{HTE1}
-    Peter Rothwell: External Validity of Randomised Controlled Trials: “To Whom Do the
-    Results of This Trial Apply?”, Lancet, Jan 1-7 2005;365(9453):82-93.15
-
-    \bibitem{HTE2}
-    Peter Rothwell: Treating individuals 2. Subgroup Analysis in Randomised Controlled
-    Trials: Importance, Indications, and Interpretation, Lancet, Jan 8-14
-    2005;365(9454):176-186.16
-
-    \bibitem{HTE3}
-    Diane Warden, John Rush, Madhukar Trivedi, et al.: The STAR*D Project Results: A Comprehensive Review of Findings, Current Psychiatry Reports, Dec 2007;9(6):449-459
-
-    \bibitem{HTE4}
-    David Kent, Peter Rothwell, John Ioannidis, et al.: Assessing and Reporting Heterogeneity in
-    Treatment Effects in Clinical Trials: A Proposal, Trials, 2010;11:85
-
-    \bibitem{pymc3}
-    John Salvatier, Thomas Wiecki, Christopher Fonnesbeck: Probabilistic Programming in Python Using PyMC3, PeerJ Computer
-    Science, 2016, 2:e55
-
-    \bibitem{variancepriors}
-    Andrew Gelman: Prior distributions for variance parameters in hierarchical models
-    (comment on article by Browne and Draper). Bayesian Analysis 1.3, 2006;515-534.
-
-    \bibitem{rhatrule}
-    Jonah Gabry, Ben Goodrich:
-    https://cran.r-project.org/web/packages/rstanarm/vignettes/rstanarm.html, 2020.
-    
     \bibitem{nuts}
-    Matthew Hoffman, Andrew Gelman: The No-U-Turn sampler: adaptively setting path
+    Hoffman, Matthew, Andrew Gelman: The No-U-Turn sampler: adaptively setting path
     lengths in Hamiltonian Monte Carlo. Journal of Machine Learning Research. 15.1,
     2014;1593-1623.
-    
-    \bibitem{essbulk}
-    Aki Vehtari, Andrew Gelman, Daniel Simpson, Bob Carpenter, Paul-Christian Bürkner:
-    Rank-normalization, folding, and localization: An improved $\widehat {R} $ for
-    assessing convergence of MCMC. Bayesian Analysis, 2020.
-
-    \bibitem{offset}
-    Michael Betancourt, Mark Girolami: Hamiltonian Monte Carlo for hierarchical models.
-    Current trends in Bayesian methodology with applications 79.30 2015;2-4.
 
     \bibitem{github}
-    Tuomo Kareoja: https://github.com/TuomoKareoja/hierarchical-bayes-nof1-thesis,
+    Kareoja, Tuomo: https://github.com/TuomoKareoja/hierarchical-bayes-nof1-thesis,
     GitHub repository, 2020.
+ 
+    \bibitem{HTE4}
+    Kent, David, Peter Rothwell, John Ioannidis, et al.: Assessing and Reporting Heterogeneity in
+    Treatment Effects in Clinical Trials: A Proposal, Trials, 2010;11:85.
+
+    \bibitem{nofone}
+    Kravitz, Richard, Naihua Duan, Sunita Vohra, Jiang Li: Introduction to
+    N-of-1 Trials: Indications and Barriers in Design and Implementation of
+    N-of-1 Trials: A User's Guide, AHRQ, 2014.
     
+    \bibitem{kruschke}
+    Kruschke, John: Doing Bayesian Data Analysis: A Tutorial With R, JAGS, and Stan
+    (2nd), Academic Press, 2014.
+    
+    \bibitem{diseaseburden}
+    Mathers, Colin, Dejan Loncar: Projections of global mortality and burden
+    of disease from 2002 to 2030, PLoS medicine 2016;3.11:e442.
+
     \bibitem{dataexploration}
-    Nathan Yau: Data points: visualization that means something.
+    Nathan Yau: Data points: Visualization That Means Something.
     John Wiley \& Sons, 2013.
 
+    \bibitem{costs}
+    Pace, Wilson, Elizabeth Staton, Eric Larson: Financing and Economics
+    of Conducting N-of-1 Trials in Design and Implementation of N-of-1 Trials: A
+    User's Guide, AHRQ, 2014.
+
+    \bibitem{HTE1}
+    Rothwell, Peter: External Validity of Randomised Controlled Trials: “To Whom Do the
+    Results of This Trial Apply?”, Lancet, Jan 1-7 2005;365(9453):82-93.15.
+
+    \bibitem{HTE2}
+    Rothwell, Peter: Treating individuals 2. Subgroup Analysis in Randomised Controlled
+    Trials: Importance, Indications, and Interpretation, Lancet, Jan 8-14
+    2005;365(9454):176-186.16.
+    
+    \bibitem{pymc3}
+    Salvatier, John, Thomas Wiecki, Christopher Fonnesbeck: Probabilistic Programming in Python Using PyMC3, PeerJ Computer
+    Science, 2016, 2:e55.
+
+    \bibitem{stat}
+    Schmid, Christopher, Naihua Duan: Statistical Design and Analytic
+    Considerations in Design and Implementation of N-of-1 Trials: A User's
+    Guide, AHRQ, 2014.
+
+    \bibitem{essbulk}
+    Vehtari, Aki, Andrew Gelman, Daniel Simpson, Bob Carpenter, Paul-Christian Bürkner:
+    Rank-normalization, folding, and localization: An improved $\widehat {R} $ for
+    assessing convergence of MCMC. Bayesian Analysis, 2020.
+   
+    \bibitem{HTE3}
+    Warden, Diane, John Rush, Madhukar Trivedi, et al.: The STAR*D Project Results: A Comprehensive Review of Findings, Current Psychiatry Reports, Dec 2007;9(6):449-459.
+  
 \end{thebibliography}
 \end{document}
