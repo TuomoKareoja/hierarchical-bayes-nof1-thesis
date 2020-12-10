@@ -60,6 +60,86 @@
 
 \maketitle
 
+\chapter*{Introduction}\label{intro}
+
+Lääketieteellisessä ympäristössä N-of-1-menetelmällä viitataan tutkimusasetelmiin,
+joissa yksittäiselle potilaalle kokeillaan useita eri hoitovaihtoehtoja peräkkäisissä
+hoitojaksoissa. Kukin hoitojakso sisältää vain yhtä tutkittavina olevista hoidoista ja
+nämä hoitojaksot on jaksotettu isompiin kokonaisuuksiin, joita kutsutaan blokeiksi.
+Kukin blokki sisältää yhden hoitojakson kullakin tutkittavista hoidoista ja hoitojaksot
+on blokin sisällä järjestetty joko satunnaisesti tai niin että seuraava blokki sisältää
+hoitojaksot käännetyssä järjestyksessä (balansoitu koeasetelma). Tämä tutkimusrakenne
+mahdollistaa luotettavampien johtopäätösten tekemisen hoitojen vaikutuksesta, koska
+toistamalla käyttämällä samaa hoitoa tutkimuksen eri vaiheissa voidaan minimoida
+mittausajanjaksoon liittyvien tekijöiden vaikutukset (esim. potilaan sairauden tasainen
+vaikeutuminen).
+
+Toisin kuin lääketieteellisessä tutkimuksessa yleisesti käytetty satunnaistettu
+vertailukoe (randomized controlled trial eli RCT), N-of-1-tutkimuksien tavoitteena on
+löytää tutkimuksen kohteena olevalle potilaalle parhaiten sopiva hoito. Siinä missä
+satunnaistetuissa vertailututkimuksissa käytetään useampaa potilasta, jotka arvotaan
+ryhmiin, joista kukin saa vain yhtä hoitoa, N-of-1-tutkimuksessa käytetään vain yhtä
+potilasta, joka saa useampaa hoitovaihtoehtoa. Sen sijaan että vertaillaan eri hoitoa
+saaneiden potilasryhmien tuloksia, vertaillaan saman potilaan tuloksia eri hoitojen
+aikana.
+
+N-of-1-menetelmä soveltuu tilanteisiin, joissa potilaalle parhaiten soveltuvasta
+hoitovaihtoehdosta ei ole varmuutta ja potilaan sairaus vaatii pitkäaikaista ylläpitävää
+hoitoa. Hyvä esimerkki ovat sydän- ja verisuonitaudit. Kun potilas tulee tarvitsemaan
+hoitoa vuosien ajan, on tärkeää löytää hänelle parhaiten soveltuva hoito parhaan
+mahdollisen elämän laadun varmistamiseksi.
+
+Tilastotieteilijän näkökulmasta N-of-1-menetelmällä saatujen mittausten muuttaminen
+hoitosuosituksiksi on haastava kokemus. Kun puhutaan yhdestä potilaasta pidemmän
+ajanjakson aikana tehtävistä mittauksista, kyseessä on selvästi aikasarja-analyysi,
+mutta toistuvat hoitomuotojen vaihdokset tutkimuksen aikana tekevät N-of-1 menetelmällä
+tuotettujen mittausten analyysistä epätyypillisen haasteen. Lisähaastetta tuo myös se,
+että analyysin tulosten pitäisi olla helposti ymmärrettäviä myös potilaalle ja
+hoitavalle lääkärille, koska jos he eivät ymmärrä tuloksia, he eivät luultavasti
+myöskään luota niihin, ja näin ollen tulokset eivät ohjaisi hoitosuositusten
+muodostamista.
+
+Nimenomaan tuloksien kansantajuinen viestintä on yksi tärkeimmistä syistä, miksi
+Bayes-tilastomenetelmien käyttäminen N-of-1-tutkimusten analysointiin on suositeltavaa.
+Sen sijaan, että puhutaan vaikeasti ymmärrettävistä käsitteistä, kuten luottamusväli,
+voidaan puhua yksinkertaisesti vain todennäköisyyksistä, joilla hoitovaihtoehto X on
+parempi kuin hoitovaihtoehto Y. Bayes-menetelmät mahdollistavat myös aiemman
+tutkimustiedon hyödyntämisen analyysissä käyttämällä informoituja priorijakaumia, jotka
+voidaan perustaa samoista hoitomuodoista aiemmin tehdyn tutkimuksen varaan.
+
+Vaikka N-of-1-tutkimukset on suunnattu yksittäisen hoidon parantamiseen, voidaan useasta
+samanlaisesta, mutta eri potilaille suoritetusta, tutkimuksesta tehdä myös laajempia
+johtopäätöksiä. Helpoin tapa tähän on vain käyttää kaikista tutkimuksista saatua dataa
+ja verrata mikä hoitovaihtoehto on yleisellä tasolla paras, mutta Bayes-menetelmiä
+käyttämällä tämä voidaan tehdä älykkäämmällä tavalla. Sen sijaan, että usealta
+potilaalta saatuja mittauksia käsitellään yhtenä massana, mittaukset voidaan yhä merkitä
+yksittäisille potilaille ja yhdistäminen tehdään tilastollisessa mallissa käytettyjen
+parametrien tasolla. Kullakin potilaalla ajatellaan olevan jokaiselle hoidolle jokin
+hoitovaste, jota potilaskohtaiset parametrit mallintavat. Näiden potilaskohtaisten
+parametrien voidaan mallintaa tulevan tuntemattomista populaatiojakaumista, jotka
+mallintavat millainen hoitovaste potilailla yleisesti on eri hoitoihin. Näiden
+populaatiojakaumien muotoa hallitseville parametreille annetaan priorijakaumien kautta
+tiettyjä oletuksia, jotka voidaan perustaa aiempaan tutkimukseen. Analysoimalla
+mittauksia tällaisella hierarkkisella Bayes-mallilla, yksittäisen potilaan
+mittaustulokset informoivat meitä populaatiotason jakaumien muodosta ja tätä kautta myös
+muiden potilaiden parametreja. Analyysin tuloksena yksittäisten potilaiden hoitovaste
+parametrit ovat paremmin informoituja ja lisäksi tutkimalla mittaustulosten informoivaa
+populaatiojakaumaa saadaan käsitys hoitojen yleisestä tehosta.
+
+Hierarkkisia Bayes-menetelmiä käyttämällä voidaan tutkimusasetelman päätarkoitus eli
+parhaan hoitovaihtoehdon löytäminen, myös tilanteessa jossa analysoidaan useampaa
+N-of-1-tutkimusta useammalta potilaalta. Koska potilaiden mittaustulokset informoivat
+meitä sekä potilaskohtaisista hoitovasteista että näiden hoitovasteiden populaatiotason
+jakaumasta, voi sama tutkimus antaa sekä potilaskohtaisia hoitosuosituksia, että
+populaatiotason arvion eri hoitomuotojen paremmuudesta. Vaikka tarvittava
+tilastomenetelmä on varsin monimutkainen, sen käyttäminen avaa oven hyvin erilaiseen
+lääketieteelliseen tutkimukseen kuin tyypillisesti on tapana. Sen sijaan että potilaat
+osallistuvat tutkimuksiin vain antaakseen tietoa tutkijoille hoitojen keskinäisesti
+keskiarvoisesta tehosta he osallistuvat koska he saavat tutkimuksen tuloksena heille
+räätälöidyn hoitosuosituksen. Samaan aikaan perinteisen tutkimuksen tavoite yksittäisten
+potilaiden tapausten ylittävien yleisten kaavamaisuuksien löytämiselle toteutuu, kuten
+perinteisemmillä tutkimusmenetelmillä.
+
 \tableofcontents
 
 \chapter*{Introduction}\label{intro}
