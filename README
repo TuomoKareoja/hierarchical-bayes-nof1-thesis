@@ -1,4 +1,5 @@
-# Hierarchical Bayesian Models for N-of-1 Trials
+Hierarchical Bayesian Models for N-of-1 Trials
+==============================
 
 This repository the text and code for my statistics thesis applying Bayesian hierarchical models to analyze N-of-1 clinical trials.
 
@@ -8,7 +9,8 @@ The downside of N-of-1 trials is that they take a lot of effort that only benefi
 
 I argue that we can combine the benefits with of the N-of-1 method with the generalizability of RCTs. This can be done by applying hiearchical bayesian model to a group of N-of-1 studies. In this approach the results from the other patients can inform the results of the patient in question (if treatment A worked better than B for 90 % of other patients it is likely to work better for this patient too), without forcing the treatment recommendation to always match the one given to other patients (if after trying out treament A and B for this patient B worked significantly better this information, when strong enough, can inform the prior believe of the superiority of treatment A).
 
-## Key Features
+Key Features
+------------
 
 - Implementation of Bayesian models using PyMC3
 - Simulation framework for creating realistic, but simple N-of-1 trial data
@@ -16,7 +18,8 @@ I argue that we can combine the benefits with of the N-of-1 method with the gene
 - Hierarchical models that allow intelligent pooling of information
 - Visualization tools for posterior distributions and model checking
 
-## Technical Approach
+Technical Approach
+------------
 
 The models account for:
 - Patient-specific treatment effects
